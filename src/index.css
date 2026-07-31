@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 4%;
+    --foreground: 160 10% 88%;
+
+    --card: 220 18% 7%;
+    --card-foreground: 160 10% 88%;
+
+    --popover: 220 18% 7%;
+    --popover-foreground: 160 10% 88%;
+
+    --primary: 160 100% 40%;
+    --primary-foreground: 220 20% 4%;
+
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 160 10% 75%;
+
+    --muted: 220 15% 10%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 160 80% 35%;
+    --accent-foreground: 220 20% 4%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 14%;
+    --input: 220 15% 14%;
+    --ring: 160 100% 40%;
+
+    --radius: 0.5rem;
+
+    --signal-buy: 160 100% 40%;
+    --signal-sell: 0 72% 51%;
+    --signal-hold: 45 100% 50%;
+    --chart-up: 160 100% 40%;
+    --chart-down: 0 72% 51%;
+    --chart-volume: 220 60% 50%;
+    --glow-primary: 0 0 20px hsl(160 100% 40% / 0.15);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --font-heading: 'Space Grotesk', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  .dark {
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer utilities {
+  .glow-primary {
+    box-shadow: var(--glow-primary);
+  }
+
+  .text-signal-buy {
+    color: hsl(var(--signal-buy));
+  }
+
+  .text-signal-sell {
+    color: hsl(var(--signal-sell));
+  }
+
+  .text-signal-hold {
+    color: hsl(var(--signal-hold));
+  }
+
+  .bg-signal-buy {
+    background-color: hsl(var(--signal-buy));
+  }
+
+  .bg-signal-sell {
+    background-color: hsl(var(--signal-sell));
+  }
+
+  .bg-signal-hold {
+    background-color: hsl(var(--signal-hold));
+  }
+}
