@@ -5,6 +5,9 @@ import { ArrowUp, ArrowDown, ChevronDown } from 'lucide-react';
 import type { OptionRow } from '@/lib/optionsMockData';
 import { TrackButton } from '@/components/options/TrackButton';
 import { useStockDetail } from '@/context/StockDetailContext';
+import { OptionRiskDialogButton } from '@/components/tools/OptionRiskDialogButton';
+import { EarningsBadge } from '@/components/EarningsBadge';
+import { useEarningsCalendar } from '@/hooks/useEarningsCalendar';
 
 const INITIAL = 20;
 const STEP = 20;
@@ -35,6 +38,7 @@ const COLUMNS: Array<{ key: SortKey; label: string }> = [
 
 export const ScannerTable = ({ rows, trackedIds, onTrack }: Props) => {
   const { open } = useStockDetail();
+  const { earningsBySymbol } = useEarningsCalendar();
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [visible, setVisible] = useState(INITIAL);
@@ -96,7 +100,10 @@ export const ScannerTable = ({ rows, trackedIds, onTrack }: Props) => {
                   <tr key={r.id} className="border-b last:border-0">
                     <td className="py-2 pr-3 font-bold text-primary">{r.score}</td>
                     <td className="py-2 pr-3">
-                      <button onClick={() => open(r.ticker)} className="font-semibold hover:text-primary hover:underline">{r.ticker}</button>
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => open(r.ticker)} className="font-semibold hover:text-primary hover:underline">{r.ticker}</button>
+                        <EarningsBadge earnings={earningsBySymbol.get(r.ticker)} referenceDate={r.expiration} size="xs" />
+                      </div>
                     </td>
                     <td className="py-2 pr-3">${r.stockPrice.toFixed(2)}</td>
                     <td className="py-2 pr-3">{r.cp}{r.strike}</td>
@@ -110,7 +117,17 @@ export const ScannerTable = ({ rows, trackedIds, onTrack }: Props) => {
                     <td className="py-2 pr-3">{r.expectedMovePct != null ? `±${r.expectedMovePct.toFixed(1)}%` : '—'}</td>
                     <td className="py-2 pr-3">{r.oneDayExpectedMovePct != null ? `±${r.oneDayExpectedMovePct.toFixed(2)}%` : '—'}</td>
                     <td className="py-2 pr-3">
-                      <TrackButton tracked={tracked} onTrack={(portfolioName) => onTrack(r, portfolioName)} />
+                      <div className="flex items-center gap-1">
+                        <OptionRiskDialogButton
+                          ticker={r.ticker}
+                          cp={r.cp}
+                          strike={r.strike}
+                          spot={r.stockPrice}
+                          premium={r.ask > 0 ? r.ask : r.price}
+                          expiration={r.expiration}
+                        />
+                        <TrackButton tracked={tracked} onTrack={(portfolioName) => onTrack(r, portfolioName)} />
+                      </div>
                     </td>
                   </tr>
                 );

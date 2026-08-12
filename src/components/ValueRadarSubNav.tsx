@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 const TABS = [
   { label: 'Quality Screen', to: '/value-radar' },
   { label: 'Price-to-Sales', to: '/value-radar/price-to-sales' },
+  { label: 'Small-Cap Value', to: '/value-radar/small-cap' },
   { label: 'Short Candidates', to: '/value-radar/short-candidates' },
 ];
 

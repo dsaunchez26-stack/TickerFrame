@@ -6,6 +6,8 @@ import { Disclaimer } from '@/components/Disclaimer';
 import { ValueRadarDetail } from '@/components/ValueRadarDetail';
 import { ValueRadarPageHeader } from '@/components/ValueRadarPageHeader';
 import { useValueRadar } from '@/context/ValueRadarContext';
+import { broadSector } from '@/lib/sectorMapping';
+import { computeSectorBenchmarks, relativeScore } from '@/lib/sectorRelativeValuation';
 import type { Database } from '@/integrations/supabase/types';
 
 type FundamentalsRow = Database['public']['Tables']['stock_fundamentals']['Row'];
@@ -19,12 +21,11 @@ const fmtMarketCap = (v: number | null) => {
   return `$${v.toFixed(0)}M`;
 };
 
-// Converts P/S into the same 0-100 scale as balance_sheet_score/growth_score
-// so it can be blended into one composite ranking rather than only used as a
-// pass/fail gate. Calibrated so the 0.5-2x slider range lands roughly in the
-// 40-85 band -- cheaper still scores higher, but doesn't dominate the other
-// two factors the way an unbounded ratio would.
-const psToScore = (ps: number) => Math.max(0, Math.min(100, 100 - ps * 30));
+// Flat fallback for when a stock's sector doesn't have enough tracked peers
+// (fewer than 4) to trust a median -- same calibration as before: a 0.5-2x
+// P/S lands roughly in the 40-85 band. Used only as a last resort; the
+// primary score is now relative to the stock's own sector.
+const absolutePsToScore = (ps: number) => Math.max(0, Math.min(100, 100 - ps * 30));
 
 const ValueRadarPriceToSales = () => {
   const { rows, loading, scanning, runScan } = useValueRadar();
@@ -33,21 +34,35 @@ const ValueRadarPriceToSales = () => {
   const [minGrowthPS, setMinGrowthPS] = useState(40);
   const [selected, setSelected] = useState<FundamentalsRow | null>(null);
 
+  const sectorBenchmarks = useMemo(() => computeSectorBenchmarks(rows), [rows]);
+
   // Cheap relative to revenue is not the same thing as "good" -- a lot of
   // sub-2x-sales stocks are cheap because the business itself is declining
   // or structurally weak (a value trap), not because the market is
   // overlooking it. Gating on balance-sheet/growth quality is what separates
-  // "cheap for a bad reason" from "cheap and still fundamentally sound";
-  // ranking by a composite of all three (rather than P/S alone) is what
-  // puts the single best combination -- cheap AND strong AND growing -- at
-  // the top, instead of just whichever name is cheapest among qualifiers.
+  // "cheap for a bad reason" from "cheap and still fundamentally sound".
+  //
+  // The cheapness score itself is relative to the stock's own sector's
+  // median P/S among tracked peers, not one flat cutoff applied to every
+  // industry alike -- a software company and a grocery retailer don't trade
+  // at the same "normal" multiple, so comparing both against a flat 2x
+  // rewards whichever sector is structurally cheaper rather than whichever
+  // stock is actually a good relative value within its own industry. Falls
+  // back to the flat scale only when a sector has too few tracked peers
+  // (under 4) for a median to mean anything.
   const psValueCandidates = useMemo(
     () => rows
       .filter(r => r.ps_ratio !== null && r.ps_ratio > 0 && r.ps_ratio <= maxPS
         && r.balance_sheet_score >= minBalancePS && r.growth_score >= minGrowthPS)
-      .map(r => ({ row: r, composite: (psToScore(r.ps_ratio!) + r.balance_sheet_score + r.growth_score) / 3 }))
+      .map(r => {
+        const sector = broadSector(r.symbol, r.sector);
+        const benchmark = sectorBenchmarks.get(sector);
+        const relPS = relativeScore(r.ps_ratio, benchmark?.medianPS ?? null);
+        const cheapnessScore = relPS ?? absolutePsToScore(r.ps_ratio!);
+        return { row: r, sector, benchmark, usedSectorRelative: relPS !== null, composite: (cheapnessScore + r.balance_sheet_score + r.growth_score) / 3 };
+      })
       .sort((a, b) => b.composite - a.composite),
-    [rows, maxPS, minBalancePS, minGrowthPS],
+    [rows, maxPS, minBalancePS, minGrowthPS, sectorBenchmarks],
   );
 
   return (
@@ -113,9 +128,11 @@ const ValueRadarPriceToSales = () => {
                   <thead className="border-b text-left text-muted-foreground">
                     <tr>
                       <th className="py-2 pr-3">Ticker</th>
+                      <th className="py-2 pr-3">Sector</th>
                       <th className="py-2 pr-3">Price</th>
                       <th className="py-2 pr-3">Market Cap</th>
                       <th className="py-2 pr-3">P/S Ratio</th>
+                      <th className="py-2 pr-3">vs Sector Median</th>
                       <th className="py-2 pr-3">Net Margin</th>
                       <th className="py-2 pr-3">Rev Growth YoY</th>
                       <th className="py-2 pr-3">Balance Sheet</th>
@@ -124,12 +141,18 @@ const ValueRadarPriceToSales = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {psValueCandidates.map(({ row: r, composite }) => (
+                    {psValueCandidates.map(({ row: r, sector, benchmark, usedSectorRelative, composite }) => (
                       <tr key={r.symbol} onClick={() => setSelected(r)} className="cursor-pointer border-b last:border-0 hover:bg-secondary/40">
                         <td className="py-2 pr-3 font-semibold">{r.symbol}</td>
+                        <td className="py-2 pr-3 text-muted-foreground">{sector}</td>
                         <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                         <td className="py-2 pr-3 text-muted-foreground">{fmtMarketCap(r.market_cap)}</td>
                         <td className="py-2 pr-3 font-bold text-signal-buy">{r.ps_ratio!.toFixed(2)}x</td>
+                        <td className="py-2 pr-3">
+                          {usedSectorRelative && benchmark?.medianPS
+                            ? `${(r.ps_ratio! / benchmark.medianPS).toFixed(2)}x (${benchmark.peerCount} peers)`
+                            : <span className="text-muted-foreground">too few peers</span>}
+                        </td>
                         <td className="py-2 pr-3">{fmtPct(r.net_margin)}</td>
                         <td className="py-2 pr-3">{fmtPct(r.revenue_growth_yoy)}</td>
                         <td className={`py-2 pr-3 font-bold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
@@ -142,9 +165,12 @@ const ValueRadarPriceToSales = () => {
               </div>
             )}
             <p className="mt-3 text-[10px] italic text-muted-foreground/70">
-              P/S Ratio = market cap ÷ trailing-twelve-months revenue. <strong className="text-foreground/80">Combined Score</strong> averages
-              a cheapness score (derived from P/S), Balance Sheet, and Growth into one 0–100 ranking, so the stock at the top is the best
-              overall mix of "cheap," "financially sound," and "growing" — not just whichever is cheapest. Click any row for the full breakdown.
+              P/S Ratio = market cap ÷ trailing-twelve-months revenue. <strong className="text-foreground/80">vs Sector Median</strong> compares
+              that ratio against the median P/S of this stock's own sector among tracked peers (shown when at least 4 peers report the metric —
+              below that, it falls back to a flat benchmark instead of a median that thin). <strong className="text-foreground/80">Combined Score</strong> averages
+              that sector-relative cheapness score, Balance Sheet, and Growth into one 0–100 ranking, so the stock at the top is the best
+              overall mix of "cheap for its own industry," "financially sound," and "growing" — not just whichever sector happens to trade cheaper
+              across the board. Click any row for the full breakdown.
             </p>
           </CardContent>
         </Card>
@@ -153,7 +179,7 @@ const ValueRadarPriceToSales = () => {
           <CardHeader><CardTitle className="text-sm font-semibold">How this is calculated</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-xs text-muted-foreground">
             <p><strong className="text-foreground">Price/Sales Ratio:</strong> market cap divided by trailing-twelve-months revenue. Says nothing about profitability on its own — a company can have a low P/S and still be losing money, or a high P/S and be highly profitable.</p>
-            <p><strong className="text-foreground">Combined Score:</strong> the average of a P/S-derived cheapness score, Balance Sheet Strength, and Growth & Momentum (each 0–100) — candidates are ranked by this, not by P/S alone, so the best all-around mix rises to the top rather than just the single cheapest name that happens to clear the quality bar.</p>
+            <p><strong className="text-foreground">Combined Score:</strong> the average of a sector-relative cheapness score (this stock's P/S vs. the median P/S of its own sector among tracked peers), Balance Sheet Strength, and Growth & Momentum (each 0–100) — candidates are ranked by this, not by raw P/S alone, so a software company isn't penalized just for its industry structurally trading at a higher multiple than a grocery retailer.</p>
             <p>Data comes from each company's own reported financials (via Finnhub) — not a scrape of any single site, and not analyst price targets or projections.</p>
           </CardContent>
         </Card>

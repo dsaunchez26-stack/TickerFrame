@@ -7,6 +7,8 @@ import { Plus, Trash2, Pencil, Check, X, TrendingUp, TrendingDown, Loader2 } fro
 import { supabase } from '@/integrations/supabase/client';
 import type { OptionRow, CallPut } from '@/lib/optionsMockData';
 import { addPick, loadCloudPicks, removeCloudPick, saveCloudPick, updatePick, TrackedPick } from '@/lib/optionPicks';
+import { EarningsBadge } from '@/components/EarningsBadge';
+import { useEarningsCalendar } from '@/hooks/useEarningsCalendar';
 
 interface Props {
   portfolioName: string;
@@ -19,6 +21,7 @@ const emptyRow = (): OptionRow => ({
 });
 
 export const PortfolioOptions = ({ portfolioName }: Props) => {
+  const { earningsBySymbol } = useEarningsCalendar();
   const [allPicks, setAllPicks] = useState<TrackedPick[]>([]);
   const [loading, setLoading] = useState(true);
   const [liveQuotes, setLiveQuotes] = useState<Record<string, number>>({});
@@ -165,6 +168,7 @@ export const PortfolioOptions = ({ portfolioName }: Props) => {
                   <div className="flex items-center gap-2">
                     <span className="font-heading text-sm font-bold">{p.row.ticker} {p.row.cp === 'P' ? 'Put' : 'Call'} ${p.row.strike}</span>
                     {isExpired && <span className="text-[9px] rounded bg-muted px-1 py-0.5 text-muted-foreground">Expired</span>}
+                    {!isExpired && <EarningsBadge earnings={earningsBySymbol.get(p.row.ticker)} referenceDate={p.row.expiration} size="xs" />}
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap gap-x-2">
                     <span>Entry ${p.entryPrice.toFixed(2)} × {qty} · Now ${currentPremium.toFixed(2)} · Exp {p.row.expiration}</span>

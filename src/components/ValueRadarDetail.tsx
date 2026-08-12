@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CheckCircle2, XCircle, MinusCircle } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
+import { broadSector } from '@/lib/sectorMapping';
+import { computeSectorBenchmarks } from '@/lib/sectorRelativeValuation';
 
 type FundamentalsRow = Database['public']['Tables']['stock_fundamentals']['Row'];
 interface EpsQuarter { period: string; actual: number; estimate: number; surprisePct: number }
@@ -76,7 +78,13 @@ export const ValueRadarDetail = ({ row, allRows, onClose }: Props) => {
 
     const epsHistory = (Array.isArray(row.eps_surprise_history) ? row.eps_surprise_history : []) as unknown as EpsQuarter[];
 
-    return { peerCount, debtPct, currentPct, marginPct, revGrowthPct, epsGrowthPct, surprisePct, epsHistory };
+    const sector = broadSector(row.symbol, row.sector);
+    const benchmark = computeSectorBenchmarks(allRows).get(sector);
+
+    return {
+      peerCount, debtPct, currentPct, marginPct, revGrowthPct, epsGrowthPct, surprisePct, epsHistory,
+      sector, sectorMedianPE: benchmark?.medianPE ?? null, sectorMedianPB: benchmark?.medianPB ?? null, sectorMedianPS: benchmark?.medianPS ?? null,
+    };
   }, [row, allRows]);
 
   return (
@@ -88,11 +96,14 @@ export const ValueRadarDetail = ({ row, allRows, onClose }: Props) => {
               <DialogTitle className="flex items-center gap-3">
                 <span>{row.symbol}</span>
                 <span className="text-sm font-normal text-muted-foreground">${row.price.toFixed(2)}</span>
-                {row.ps_ratio !== null && (
-                  <span className="text-xs font-normal text-muted-foreground">
-                    P/S {row.ps_ratio.toFixed(2)}x{row.market_cap !== null && ` · ${fmtMarketCap(row.market_cap)} cap`}
-                  </span>
-                )}
+                <span className="text-xs font-normal text-muted-foreground">
+                  {stats.sector && `${stats.sector} · `}
+                  {row.dividend_yield !== null && `Yield ${row.dividend_yield.toFixed(2)}% · `}
+                  {row.pe_ratio !== null && `P/E ${row.pe_ratio.toFixed(1)}${stats.sectorMedianPE !== null ? ` (sector ${stats.sectorMedianPE.toFixed(1)})` : ''} · `}
+                  {row.pb_ratio !== null && `P/B ${row.pb_ratio.toFixed(2)}${stats.sectorMedianPB !== null ? ` (sector ${stats.sectorMedianPB.toFixed(2)})` : ''} · `}
+                  {row.ps_ratio !== null && `P/S ${row.ps_ratio.toFixed(2)}x${stats.sectorMedianPS !== null ? ` (sector ${stats.sectorMedianPS.toFixed(2)}x)` : ''}`}
+                  {row.market_cap !== null && ` · ${fmtMarketCap(row.market_cap)} cap`}
+                </span>
               </DialogTitle>
             </DialogHeader>
 

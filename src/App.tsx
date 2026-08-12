@@ -23,12 +23,16 @@ const OptionsIncome = lazy(() => import("./pages/OptionsIncome.tsx"));
 const OptionsTracked = lazy(() => import("./pages/OptionsTracked.tsx"));
 const OptionsFlowNews = lazy(() => import("./pages/OptionsFlowNews.tsx"));
 const Futures = lazy(() => import("./pages/Futures.tsx"));
+const RiskCalculator = lazy(() => import("./pages/RiskCalculator.tsx"));
+const InsiderActivity = lazy(() => import("./pages/InsiderActivity.tsx"));
+const DividendIncome = lazy(() => import("./pages/DividendIncome.tsx"));
 const Calls = lazy(() => import("./pages/Calls.tsx"));
 const Puts = lazy(() => import("./pages/Puts.tsx"));
 const Patterns = lazy(() => import("./pages/Patterns.tsx"));
 const ValueRadar = lazy(() => import("./pages/ValueRadar.tsx"));
 const ValueRadarPriceToSales = lazy(() => import("./pages/ValueRadarPriceToSales.tsx"));
 const ValueRadarShort = lazy(() => import("./pages/ValueRadarShort.tsx"));
+const ValueRadarSmallCap = lazy(() => import("./pages/ValueRadarSmallCap.tsx"));
 const News = lazy(() => import("./pages/News.tsx"));
 const PortfolioPage = lazy(() => import("./pages/PortfolioPage.tsx"));
 const Performance = lazy(() => import("./pages/Performance.tsx"));
@@ -125,10 +129,14 @@ const App = () => (
               </Route>
               <Route path="/patterns" element={<Patterns />} />
               <Route path="/futures" element={<Futures />} />
+              <Route path="/tools/risk-calculator" element={<RiskCalculator />} />
+              <Route path="/insider-activity" element={<InsiderActivity />} />
+              <Route path="/dividend-income" element={<DividendIncome />} />
               <Route element={<ValueRadarLayout />}>
                 <Route path="/value-radar" element={<ValueRadar />} />
                 <Route path="/value-radar/price-to-sales" element={<ValueRadarPriceToSales />} />
                 <Route path="/value-radar/short-candidates" element={<ValueRadarShort />} />
+                <Route path="/value-radar/small-cap" element={<ValueRadarSmallCap />} />
               </Route>
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/performance" element={<Performance />} />

@@ -1,84 +1,11 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
-// Same equity universe as fetch-stock-data, minus index ETFs (SPY/QQQ) --
-// balance-sheet metrics like debt/equity don't mean anything for a fund.
-const SYMBOLS: Array<{ symbol: string; name: string }> = [
-  { symbol: "AAPL", name: "Apple Inc" },
-  { symbol: "NVDA", name: "NVIDIA Corp" },
-  { symbol: "TSLA", name: "Tesla Inc" },
-  { symbol: "AMD", name: "Advanced Micro Devices" },
-  { symbol: "META", name: "Meta Platforms" },
-  { symbol: "MSFT", name: "Microsoft Corp" },
-  { symbol: "GOOGL", name: "Alphabet Inc" },
-  { symbol: "AMZN", name: "Amazon.com Inc" },
-  { symbol: "PLTR", name: "Palantir Technologies" },
-  { symbol: "NFLX", name: "Netflix Inc" },
-  { symbol: "DIS", name: "Walt Disney Co" },
-  { symbol: "JPM", name: "JPMorgan Chase & Co" },
-  { symbol: "BAC", name: "Bank of America Corp" },
-  { symbol: "XOM", name: "Exxon Mobil Corp" },
-  { symbol: "JNJ", name: "Johnson & Johnson" },
-  { symbol: "KO", name: "Coca-Cola Co" },
-  { symbol: "WMT", name: "Walmart Inc" },
-  { symbol: "V", name: "Visa Inc" },
-  { symbol: "CRM", name: "Salesforce Inc" },
-  { symbol: "ORCL", name: "Oracle Corp" },
-  { symbol: "INTC", name: "Intel Corp" },
-  { symbol: "ADBE", name: "Adobe Inc" },
-  { symbol: "UBER", name: "Uber Technologies" },
-  { symbol: "SOFI", name: "SoFi Technologies" },
-  { symbol: "NIO", name: "NIO Inc" },
-  { symbol: "PLUG", name: "Plug Power Inc" },
-  { symbol: "SIRI", name: "Sirius XM Holdings" },
-  { symbol: "NOK", name: "Nokia Corp" },
-  { symbol: "F", name: "Ford Motor Co" },
-  { symbol: "GPRO", name: "GoPro Inc" },
-  { symbol: "CLOV", name: "Clover Health Investments" },
-  { symbol: "BBAI", name: "BigBear.ai Holdings" },
-  { symbol: "MARA", name: "MARA Holdings" },
-  { symbol: "RIOT", name: "Riot Platforms" },
-  { symbol: "SNDL", name: "SNDL Inc" },
-  { symbol: "LCID", name: "Lucid Group" },
-  { symbol: "CHPT", name: "ChargePoint Holdings" },
-  { symbol: "FCEL", name: "FuelCell Energy" },
-  { symbol: "IQ", name: "iQIYI Inc" },
-  { symbol: "SNOW", name: "Snowflake Inc" },
-  { symbol: "DDOG", name: "Datadog Inc" },
-  { symbol: "NET", name: "Cloudflare Inc" },
-  { symbol: "SHOP", name: "Shopify Inc" },
-  { symbol: "PYPL", name: "PayPal Holdings" },
-  { symbol: "ROKU", name: "Roku Inc" },
-  { symbol: "SNAP", name: "Snap Inc" },
-  { symbol: "ABNB", name: "Airbnb Inc" },
-  { symbol: "DASH", name: "DoorDash Inc" },
-  { symbol: "TGT", name: "Target Corp" },
-  { symbol: "LULU", name: "Lululemon Athletica" },
-  { symbol: "NKE", name: "Nike Inc" },
-  { symbol: "SBUX", name: "Starbucks Corp" },
-  { symbol: "CMG", name: "Chipotle Mexican Grill" },
-  { symbol: "MS", name: "Morgan Stanley" },
-  { symbol: "SCHW", name: "Charles Schwab Corp" },
-  { symbol: "COF", name: "Capital One Financial" },
-  { symbol: "MRNA", name: "Moderna Inc" },
-  { symbol: "GILD", name: "Gilead Sciences" },
-  { symbol: "CVS", name: "CVS Health Corp" },
-  { symbol: "BA", name: "Boeing Co" },
-  { symbol: "GE", name: "General Electric Co" },
-  { symbol: "FDX", name: "FedEx Corp" },
-  { symbol: "UPS", name: "United Parcel Service" },
-  { symbol: "DAL", name: "Delta Air Lines" },
-  { symbol: "UAL", name: "United Airlines Holdings" },
-  { symbol: "AAL", name: "American Airlines Group" },
-  { symbol: "LUV", name: "Southwest Airlines Co" },
-  { symbol: "MU", name: "Micron Technology" },
-  { symbol: "QCOM", name: "Qualcomm Inc" },
-  { symbol: "RIVN", name: "Rivian Automotive" },
-  { symbol: "GM", name: "General Motors Co" },
-  { symbol: "T", name: "AT&T Inc" },
-  { symbol: "VZ", name: "Verizon Communications" },
-  { symbol: "CMCSA", name: "Comcast Corp" },
-];
+import { TRACKED_SYMBOLS } from "../_shared/symbols.ts";
+import { logCronRun } from "../_shared/logCronRun.ts";
+
+// Same equity universe as fetch-stock-data -- see _shared/symbols.ts.
+const SYMBOLS = TRACKED_SYMBOLS;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -114,10 +41,39 @@ Deno.serve(async (req) => {
     .in("symbol", SYMBOLS.map((s) => s.symbol));
   const priceBySymbol = new Map((cachedPrices ?? []).map((r) => [r.symbol, Number(r.price)]));
 
-  // Finnhub's free tier allows ~60 req/min. Basic financials + earnings is
-  // 2 calls x ~70 symbols, spaced out so the sustained rate stays near the
-  // limit instead of bursting through it in the first few seconds.
-  for (const { symbol, name } of SYMBOLS) {
+  // The tracked list has grown past what fits in one invocation: Finnhub's
+  // free tier is ~60 req/min and this makes 2 calls/symbol, so respecting
+  // that rate for the full list would take longer than Supabase's 150s edge
+  // function idle timeout. Processing every symbol in the same fixed array
+  // order each run would mean whichever symbols sit near the end NEVER get
+  // reached (the run always dies at the same relative position) -- so
+  // instead each run processes only the stalest symbols (never-scanned ones
+  // first, then oldest updated_at), capped to a batch that reliably
+  // finishes in time. Every symbol eventually gets its turn across
+  // successive cron ticks rather than a fixed tail being permanently
+  // starved, and fundamentals move slowly enough that a multi-run cycle to
+  // refresh everything is fine.
+  const BATCH_LIMIT = 55;
+  const { data: existingRows } = await supabase
+    .from("stock_fundamentals")
+    .select("symbol, updated_at, sector")
+    .in("symbol", SYMBOLS.map((s) => s.symbol));
+  const updatedAtBySymbol = new Map((existingRows ?? []).map((r) => [r.symbol, r.updated_at]));
+  // Sector essentially never changes, so once known it's carried forward
+  // without spending another Finnhub call re-fetching it every scan.
+  const sectorBySymbol = new Map((existingRows ?? []).map((r) => [r.symbol, r.sector as string | null]));
+  const batch = [...SYMBOLS]
+    .sort((a, b) => {
+      const aTime = updatedAtBySymbol.get(a.symbol);
+      const bTime = updatedAtBySymbol.get(b.symbol);
+      if (!aTime && !bTime) return 0;
+      if (!aTime) return -1; // never scanned -- highest priority
+      if (!bTime) return 1;
+      return new Date(aTime).getTime() - new Date(bTime).getTime(); // oldest first
+    })
+    .slice(0, BATCH_LIMIT);
+
+  for (const { symbol, name } of batch) {
     try {
       const [metricRes, earningsRes] = await Promise.all([
         fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FINNHUB_API_KEY}`),
@@ -131,6 +87,19 @@ Deno.serve(async (req) => {
       const price = priceBySymbol.get(symbol) ?? null;
       if (!price) throw new Error("No cached price available");
 
+      // Only spend a 3rd Finnhub call on symbols that don't already have a
+      // sector on file -- needed for the value screens to compare a stock's
+      // valuation multiples against its own sector's peers instead of one
+      // flat number applied to every industry alike.
+      let sector = sectorBySymbol.get(symbol) ?? null;
+      if (!sector) {
+        const profileRes = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
+        if (profileRes.ok) {
+          const profileJson = await profileRes.json();
+          sector = typeof profileJson?.finnhubIndustry === "string" ? profileJson.finnhubIndustry : null;
+        }
+      }
+
       const debtToEquity = numOrNull(m["totalDebt/totalEquityAnnual"] ?? m["totalDebt/totalEquityQuarterly"]);
       const currentRatio = numOrNull(m["currentRatioAnnual"] ?? m["currentRatioQuarterly"]);
       const netMargin = numOrNull(m["netProfitMarginAnnual"] ?? m["netProfitMarginTTM"]);
@@ -143,6 +112,17 @@ Deno.serve(async (req) => {
       // which can otherwise lag up to ~a year behind for a business whose
       // revenue has meaningfully changed since its last annual close.
       const psRatio = numOrNull(m["psTTM"] ?? m["psAnnual"]);
+      // peTTM can be negative or absurdly large for a barely-profitable
+      // company (net income near zero) -- neither is a meaningful "cheap"
+      // signal, so those get dropped rather than passed through as-is.
+      const peRawTTM = numOrNull(m["peTTM"] ?? m["peAnnual"]);
+      const peRatio = peRawTTM !== null && peRawTTM > 0 && peRawTTM < 500 ? peRawTTM : null;
+      const pbRatio = numOrNull(m["pbAnnual"] ?? m["pbQuarterly"]);
+      // Finnhub reports this as a percent already (e.g. 3.2 = 3.2%), not a
+      // fraction -- indicatedAnnual reflects the current declared rate,
+      // TTM can lag a recent hike or cut.
+      const dividendYield = numOrNull(m["dividendYieldIndicatedAnnual"] ?? m["currentDividendYieldTTM"]);
+      const payoutRatio = numOrNull(m["payoutRatioTTM"] ?? m["payoutRatioAnnual"]);
       // Finnhub reports this in millions of dollars.
       const marketCap = numOrNull(m["marketCapitalization"]);
 
@@ -180,6 +160,7 @@ Deno.serve(async (req) => {
       rows.push({
         symbol,
         name,
+        sector,
         price,
         week52_low: week52Low,
         week52_high: week52High,
@@ -193,6 +174,10 @@ Deno.serve(async (req) => {
         balance_sheet_score: balanceSheetScore,
         growth_score: growthScore,
         ps_ratio: psRatio,
+        pe_ratio: peRatio,
+        pb_ratio: pbRatio,
+        dividend_yield: dividendYield,
+        payout_ratio: payoutRatio,
         market_cap: marketCap,
         updated_at: new Date().toISOString(),
       });
@@ -213,7 +198,12 @@ Deno.serve(async (req) => {
     await supabase.from("stock_fundamentals").upsert(rows, { onConflict: "symbol" });
   }
 
-  return new Response(JSON.stringify({ scanned: SYMBOLS.length, errors }), {
+  // rows.length alone would undercount here -- it gets spliced empty by the
+  // incremental-upsert step inside the loop above, so by this point it only
+  // holds whatever's left of the last partial batch, not the run's total.
+  await logCronRun(supabase, "fundamentals-scanner", true, batch.length - errors.length, errors.length ? `${errors.length} symbol errors` : null);
+
+  return new Response(JSON.stringify({ scanned: batch.length, tracked: SYMBOLS.length, errors }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });

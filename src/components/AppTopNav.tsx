@@ -1,12 +1,12 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, LineChart, TrendingUp, TrendingDown, Activity, Briefcase, BarChart3,
-  Newspaper, ShieldCheck, Gem, Radar, ListFilter, Wallet, Bookmark, Rss, Coins, Target, Layers, DollarSign,
+  Newspaper, ShieldCheck, Gem, Radar, ListFilter, Wallet, Bookmark, Rss, Coins, Target, Layers, DollarSign, ChevronDown,
+  Calculator, Users, Building2, Percent,
 } from 'lucide-react';
 import {
-  NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink,
-  NavigationMenuList, NavigationMenuTrigger,
-} from '@/components/ui/navigation-menu';
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -36,70 +36,71 @@ const groups: NavGroup[] = [
   { label: 'Research', items: [
     { title: 'Quality Screen', url: '/value-radar', icon: Gem },
     { title: 'Price-to-Sales', url: '/value-radar/price-to-sales', icon: DollarSign },
+    { title: 'Small-Cap Value', url: '/value-radar/small-cap', icon: Building2 },
     { title: 'Short Candidates', url: '/value-radar/short-candidates', icon: TrendingDown },
+    { title: 'Insider Activity', url: '/insider-activity', icon: Users },
+    { title: 'Dividend Income', url: '/dividend-income', icon: Percent },
     { title: 'News & Catalysts', url: '/news', icon: Newspaper },
+  ]},
+  { label: 'Tools', items: [
+    { title: 'Risk Calculator', url: '/tools/risk-calculator', icon: Calculator },
   ]},
 ];
 
 const dropdownLinkClass = ({ isActive }: { isActive: boolean }) => cn(
-  'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
-  isActive && 'bg-accent/60 font-medium text-foreground',
+  'flex w-full items-center gap-2 cursor-pointer',
+  isActive && 'text-primary font-medium',
 );
 
 const flatLinkClass = (active: boolean) => cn(
-  'inline-flex h-10 items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+  'inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
   active && 'bg-accent/50 text-foreground',
 );
 
-// Replaces the old left-side vertical sidebar -- with ~20 nav items spread
-// across groups, that sidebar either had to scroll or hide items below the
-// fold. A horizontal top bar keeps every group's label visible in one row
-// at all times; each group opens as a dropdown rather than requiring a
-// scroll to find an item.
+const groupActiveClass = (active: boolean) => cn(
+  'inline-flex h-9 items-center gap-1 rounded-md px-3 text-sm font-medium outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50',
+  active && 'bg-accent/50 text-foreground',
+);
+
+// Replaces the old left-side vertical sidebar with a horizontal top bar --
+// every group is visible in one row without scrolling. Uses independent
+// per-trigger DropdownMenus (not Radix's NavigationMenu) specifically
+// because NavigationMenu drives a single shared content viewport positioned
+// relative to the whole menu root; the moment this row needs to wrap onto
+// multiple lines on a narrower screen, that shared viewport's position
+// calculation breaks -- the dropdown panel rendered detached from whichever
+// trigger was actually clicked, floating over unrelated page content
+// instead of anchored right below its own trigger. Each DropdownMenu here
+// manages its own independently-positioned content, so wrapping the row
+// doesn't affect where any single dropdown opens.
 export const AppTopNav = () => {
   const { pathname } = useLocation();
   const { isAdmin } = useAuth();
   const isActive = (p: string) => pathname === p;
+  const isGroupActive = (g: NavGroup) => g.items.some(item => item.url === pathname);
 
   return (
-    // No overflow-x-auto here: setting overflow-x alone forces the browser's
-    // computed overflow-y to 'auto' too (CSS overflow spec), which clipped
-    // the dropdown content panels -- they render as an absolutely-positioned
-    // child that pops out below the trigger, so any ancestor overflow other
-    // than visible cuts them off entirely.
-    <div className="flex items-center gap-1 flex-wrap">
+    <div className="flex flex-wrap items-center gap-1">
       <Link to="/" className={flatLinkClass(pathname === '/')}>
         <LayoutDashboard className="h-4 w-4" /> Dashboard
       </Link>
-      <NavigationMenu>
-        {/* flex-wrap override -- NavigationMenuList's base styles have no
-            wrap, so on a narrow viewport its triggers overflow straight past
-            the edge instead of dropping to a new line the way everything
-            else in this row does. */}
-        <NavigationMenuList className="flex-wrap justify-start space-x-0 gap-1">
-          {groups.map(g => (
-            <NavigationMenuItem key={g.label}>
-              <NavigationMenuTrigger className="h-10 bg-transparent text-sm font-medium">
-                {g.label}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid w-56 gap-1 p-2">
-                  {g.items.map(item => (
-                    <li key={item.url}>
-                      <NavigationMenuLink asChild>
-                        <NavLink to={item.url} className={dropdownLinkClass}>
-                          <item.icon className="h-4 w-4 shrink-0" />
-                          {item.title}
-                        </NavLink>
-                      </NavigationMenuLink>
-                    </li>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-          ))}
-        </NavigationMenuList>
-      </NavigationMenu>
+      {groups.map(g => (
+        <DropdownMenu key={g.label}>
+          <DropdownMenuTrigger className={groupActiveClass(isGroupActive(g))}>
+            {g.label} <ChevronDown className="h-3 w-3" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            {g.items.map(item => (
+              <DropdownMenuItem key={item.url} asChild>
+                <NavLink to={item.url} className={dropdownLinkClass}>
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  {item.title}
+                </NavLink>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ))}
       <Link to="/futures" className={flatLinkClass(isActive('/futures'))}>
         <Layers className="h-4 w-4" /> Futures
       </Link>

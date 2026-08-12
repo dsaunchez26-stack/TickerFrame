@@ -26,16 +26,17 @@ interface ErrorLog {
   created_at: string;
 }
 
+// The 4 edge functions actually registered as cron jobs (see
+// supabase/migrations/*_cron.sql) -- this list previously named 7 functions
+// that don't exist anywhere in this codebase (leftover from an earlier
+// iteration) and was missing 3 that do, so this panel showed "never" for
+// real jobs and silently made up rows for phantom ones regardless of what
+// was actually scheduled.
 const TRACKED_JOBS = [
-  'snapshot-signals',
-  'track-signal-marks',
-  'resolve-signal-outcomes',
-  'calibrate-factor-weights',
-  'snapshot-iv-history',
-  'options-scanner',
   'fetch-stock-data',
-  'finnhub-news',
-  'refresh-macro',
+  'fundamentals-scanner',
+  'insider-scanner',
+  'earnings-scanner',
 ];
 
 const FRESHNESS_TARGETS: Array<{ table: string; column: string; staleAfterMin: number; label: string }> = [

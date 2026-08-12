@@ -11,6 +11,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Disclaimer } from '@/components/Disclaimer';
 import { PatternBadge } from '@/components/PatternBadge';
+import { EarningsBadge } from '@/components/EarningsBadge';
+import { useEarningsCalendar } from '@/hooks/useEarningsCalendar';
 import { PortfolioRating } from '@/components/PortfolioRating';
 import { PortfolioTrend } from '@/components/PortfolioTrend';
 import { PortfolioOptions } from '@/components/PortfolioOptions';
@@ -130,6 +132,7 @@ const Kpi = ({ label, value, sub, positive }: { label: string; value: string; su
 const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
   const { user } = useAuth();
   const { enriched, totals, isLoading, addStock, removeStock } = usePortfolioEnriched(name);
+  const { earningsBySymbol } = useEarningsCalendar();
   const [showForm, setShowForm] = useState(false);
   const [sym, setSym] = useState(''); const [bp, setBp] = useState(''); const [qty, setQty] = useState('1');
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
@@ -206,6 +209,7 @@ const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
                   <div className="flex items-center gap-2">
                     <span className="font-heading text-sm font-bold">{e.symbol}</span>
                     {e.pattern && <PatternBadge pattern={e.pattern} confidence={e.patternConfidence} size="xs" />}
+                    <EarningsBadge earnings={earningsBySymbol.get(e.symbol)} size="xs" />
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap gap-x-2">
                     <span>Buy ${e.buy_price.toFixed(2)} × {e.quantity} · Now ${e.currentPrice.toFixed(2)}</span>

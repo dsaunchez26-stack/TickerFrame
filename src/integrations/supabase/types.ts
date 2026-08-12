@@ -75,6 +75,108 @@ export type Database = {
         }
         Relationships: []
       }
+      cron_runs: {
+        Row: {
+          id: string
+          job_name: string
+          notes: string | null
+          ok: boolean
+          ran_at: string
+          rows: number | null
+        }
+        Insert: {
+          id?: string
+          job_name: string
+          notes?: string | null
+          ok: boolean
+          ran_at?: string
+          rows?: number | null
+        }
+        Update: {
+          id?: string
+          job_name?: string
+          notes?: string | null
+          ok?: boolean
+          ran_at?: string
+          rows?: number | null
+        }
+        Relationships: []
+      }
+      earnings_calendar: {
+        Row: {
+          hour: string | null
+          next_earnings_date: string | null
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          hour?: string | null
+          next_earnings_date?: string | null
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          hour?: string | null
+          next_earnings_date?: string | null
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      insider_activity: {
+        Row: {
+          accession_number: string
+          created_at: string
+          filer_name: string
+          filer_title: string | null
+          filing_date: string
+          filing_url: string
+          form_type: string
+          id: string
+          price_per_share: number | null
+          shares: number | null
+          shares_owned_after: number | null
+          ticker: string
+          total_value: number | null
+          transaction_code: string | null
+          transaction_date: string | null
+        }
+        Insert: {
+          accession_number: string
+          created_at?: string
+          filer_name: string
+          filer_title?: string | null
+          filing_date: string
+          filing_url: string
+          form_type: string
+          id: string
+          price_per_share?: number | null
+          shares?: number | null
+          shares_owned_after?: number | null
+          ticker: string
+          total_value?: number | null
+          transaction_code?: string | null
+          transaction_date?: string | null
+        }
+        Update: {
+          accession_number?: string
+          created_at?: string
+          filer_name?: string
+          filer_title?: string | null
+          filing_date?: string
+          filing_url?: string
+          form_type?: string
+          id?: string
+          price_per_share?: number | null
+          shares?: number | null
+          shares_owned_after?: number | null
+          ticker?: string
+          total_value?: number | null
+          transaction_code?: string | null
+          transaction_date?: string | null
+        }
+        Relationships: []
+      }
       option_iv_history: {
         Row: {
           id: number
@@ -360,15 +462,20 @@ export type Database = {
           balance_sheet_score: number
           current_ratio: number | null
           debt_to_equity: number | null
+          dividend_yield: number | null
           eps_growth_yoy: number | null
           eps_surprise_history: Json | null
           growth_score: number
           market_cap: number | null
           name: string
           net_margin: number | null
+          payout_ratio: number | null
+          pb_ratio: number | null
+          pe_ratio: number | null
           price: number
           ps_ratio: number | null
           revenue_growth_yoy: number | null
+          sector: string | null
           symbol: string
           updated_at: string
           week52_high: number | null
@@ -380,15 +487,20 @@ export type Database = {
           balance_sheet_score: number
           current_ratio?: number | null
           debt_to_equity?: number | null
+          dividend_yield?: number | null
           eps_growth_yoy?: number | null
           eps_surprise_history?: Json | null
           growth_score: number
           market_cap?: number | null
           name: string
           net_margin?: number | null
+          payout_ratio?: number | null
+          pb_ratio?: number | null
+          pe_ratio?: number | null
           price: number
           ps_ratio?: number | null
           revenue_growth_yoy?: number | null
+          sector?: string | null
           symbol: string
           updated_at?: string
           week52_high?: number | null
@@ -400,15 +512,20 @@ export type Database = {
           balance_sheet_score?: number
           current_ratio?: number | null
           debt_to_equity?: number | null
+          dividend_yield?: number | null
           eps_growth_yoy?: number | null
           eps_surprise_history?: Json | null
           growth_score?: number
           market_cap?: number | null
           name?: string
           net_margin?: number | null
+          payout_ratio?: number | null
+          pb_ratio?: number | null
+          pe_ratio?: number | null
           price?: number
           ps_ratio?: number | null
           revenue_growth_yoy?: number | null
+          sector?: string | null
           symbol?: string
           updated_at?: string
           week52_high?: number | null

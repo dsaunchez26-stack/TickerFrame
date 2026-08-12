@@ -1,93 +1,13 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
-// Real US equities tracked across the app. All live under category='core'
-// since every current consumer of stock_cache reads that category by default.
-// Deliberately a mix of large/mega-caps and lower-priced, higher-volatility
-// names rather than either extreme -- still a curated list, not the whole
-// market (see MARKETDATA covering options below for the same tradeoff).
-const SYMBOLS: Array<{ symbol: string; name: string }> = [
-  // Mega/large-cap
-  { symbol: "AAPL", name: "Apple Inc" },
-  { symbol: "NVDA", name: "NVIDIA Corp" },
-  { symbol: "TSLA", name: "Tesla Inc" },
-  { symbol: "AMD", name: "Advanced Micro Devices" },
-  { symbol: "META", name: "Meta Platforms" },
-  { symbol: "MSFT", name: "Microsoft Corp" },
-  { symbol: "GOOGL", name: "Alphabet Inc" },
-  { symbol: "AMZN", name: "Amazon.com Inc" },
-  { symbol: "SPY", name: "SPDR S&P 500 ETF" },
-  { symbol: "QQQ", name: "Invesco QQQ Trust" },
-  { symbol: "PLTR", name: "Palantir Technologies" },
-  { symbol: "NFLX", name: "Netflix Inc" },
-  { symbol: "DIS", name: "Walt Disney Co" },
-  { symbol: "JPM", name: "JPMorgan Chase & Co" },
-  { symbol: "BAC", name: "Bank of America Corp" },
-  { symbol: "XOM", name: "Exxon Mobil Corp" },
-  { symbol: "JNJ", name: "Johnson & Johnson" },
-  { symbol: "KO", name: "Coca-Cola Co" },
-  { symbol: "WMT", name: "Walmart Inc" },
-  { symbol: "V", name: "Visa Inc" },
-  { symbol: "CRM", name: "Salesforce Inc" },
-  { symbol: "ORCL", name: "Oracle Corp" },
-  { symbol: "INTC", name: "Intel Corp" },
-  { symbol: "ADBE", name: "Adobe Inc" },
-  { symbol: "UBER", name: "Uber Technologies" },
-  // Lower-priced / higher-volatility
-  { symbol: "SOFI", name: "SoFi Technologies" },
-  { symbol: "NIO", name: "NIO Inc" },
-  { symbol: "PLUG", name: "Plug Power Inc" },
-  { symbol: "SIRI", name: "Sirius XM Holdings" },
-  { symbol: "NOK", name: "Nokia Corp" },
-  { symbol: "F", name: "Ford Motor Co" },
-  { symbol: "GPRO", name: "GoPro Inc" },
-  { symbol: "CLOV", name: "Clover Health Investments" },
-  { symbol: "BBAI", name: "BigBear.ai Holdings" },
-  { symbol: "MARA", name: "MARA Holdings" },
-  { symbol: "RIOT", name: "Riot Platforms" },
-  { symbol: "SNDL", name: "SNDL Inc" },
-  { symbol: "LCID", name: "Lucid Group" },
-  { symbol: "CHPT", name: "ChargePoint Holdings" },
-  { symbol: "FCEL", name: "FuelCell Energy" },
-  { symbol: "IQ", name: "iQIYI Inc" },
-  // Mid-range ($10-250ish) -- neither mega-cap nor penny stock, spread
-  // across sectors so "stocks of the day" reflects more than two extremes.
-  { symbol: "SNOW", name: "Snowflake Inc" },
-  { symbol: "DDOG", name: "Datadog Inc" },
-  { symbol: "NET", name: "Cloudflare Inc" },
-  { symbol: "SHOP", name: "Shopify Inc" },
-  { symbol: "PYPL", name: "PayPal Holdings" },
-  { symbol: "ROKU", name: "Roku Inc" },
-  { symbol: "SNAP", name: "Snap Inc" },
-  { symbol: "ABNB", name: "Airbnb Inc" },
-  { symbol: "DASH", name: "DoorDash Inc" },
-  { symbol: "TGT", name: "Target Corp" },
-  { symbol: "LULU", name: "Lululemon Athletica" },
-  { symbol: "NKE", name: "Nike Inc" },
-  { symbol: "SBUX", name: "Starbucks Corp" },
-  { symbol: "CMG", name: "Chipotle Mexican Grill" },
-  { symbol: "MS", name: "Morgan Stanley" },
-  { symbol: "SCHW", name: "Charles Schwab Corp" },
-  { symbol: "COF", name: "Capital One Financial" },
-  { symbol: "MRNA", name: "Moderna Inc" },
-  { symbol: "GILD", name: "Gilead Sciences" },
-  { symbol: "CVS", name: "CVS Health Corp" },
-  { symbol: "BA", name: "Boeing Co" },
-  { symbol: "GE", name: "General Electric Co" },
-  { symbol: "FDX", name: "FedEx Corp" },
-  { symbol: "UPS", name: "United Parcel Service" },
-  { symbol: "DAL", name: "Delta Air Lines" },
-  { symbol: "UAL", name: "United Airlines Holdings" },
-  { symbol: "AAL", name: "American Airlines Group" },
-  { symbol: "LUV", name: "Southwest Airlines Co" },
-  { symbol: "MU", name: "Micron Technology" },
-  { symbol: "QCOM", name: "Qualcomm Inc" },
-  { symbol: "RIVN", name: "Rivian Automotive" },
-  { symbol: "GM", name: "General Motors Co" },
-  { symbol: "T", name: "AT&T Inc" },
-  { symbol: "VZ", name: "Verizon Communications" },
-  { symbol: "CMCSA", name: "Comcast Corp" },
-];
+import { TRACKED_SYMBOLS } from "../_shared/symbols.ts";
+import { logCronRun } from "../_shared/logCronRun.ts";
+
+// Real US equities tracked across the app -- see _shared/symbols.ts for the
+// full list. All live under category='core' since every current consumer
+// of stock_cache reads that category by default.
+const SYMBOLS = TRACKED_SYMBOLS;
 
 function sma(values: number[], period: number): number {
   const slice = values.slice(-period);
@@ -293,12 +213,32 @@ Deno.serve(async (req) => {
     };
   };
 
-  // Finnhub's free tier caps out at 60 calls/minute, and the tracked list
-  // has grown past that -- a handful of these may 429 on any given run.
-  // That's fine: fetchOne already turns a bad response into a per-symbol
-  // error via Promise.allSettled, so it just skips this cycle and picks
-  // up fresh data on the next 5-minute cron tick instead of failing hard.
-  const settled = await Promise.allSettled(SYMBOLS.map(fetchOne));
+  // Firing all of SYMBOLS at once used to look like it "mostly worked" (the
+  // first ~54 requests would win a race for a limited pool of concurrent
+  // outbound connections, the rest would 429/error) -- but that's a
+  // deterministic split, not a rolling rate-limit window: since JS array
+  // order is stable, it's consistently the SAME tail of symbols losing that
+  // race on every single run, not a random subset that self-heals on the
+  // next cron tick. Any symbol appended near the end of SYMBOLS would never
+  // get a price at all. Small concurrent batches with a short pause between
+  // them keeps every symbol rotating through instead of a fixed subset
+  // always winning.
+  // Finnhub's free tier is 60 calls/minute. 3 symbols every 3.6s averages
+  // 50/min -- real headroom below the ceiling, not just under it, since this
+  // function's own quota usage stacks with whatever else in this project
+  // shares the same Finnhub key in the same window. (An earlier version of
+  // this fix used 15 concurrent every 1.1s, which just traded the
+  // connection-pool race this was fixing for straightforwardly exceeding
+  // the rate limit instead -- sitting exactly at 57/min with no margin left
+  // that same problem half-open.)
+  const BATCH_SIZE = 3;
+  const BATCH_PAUSE_MS = 3600;
+  const settled: PromiseSettledResult<Awaited<ReturnType<typeof fetchOne>>>[] = [];
+  for (let i = 0; i < SYMBOLS.length; i += BATCH_SIZE) {
+    const batch = SYMBOLS.slice(i, i + BATCH_SIZE);
+    settled.push(...await Promise.allSettled(batch.map(fetchOne)));
+    if (i + BATCH_SIZE < SYMBOLS.length) await new Promise((r) => setTimeout(r, BATCH_PAUSE_MS));
+  }
   const results: Array<Record<string, unknown>> = [];
   settled.forEach((r, i) => {
     if (r.status === "fulfilled") results.push(r.value);
@@ -308,6 +248,7 @@ Deno.serve(async (req) => {
   if (results.length > 0) {
     const { error } = await supabase.from("stock_cache").upsert(results, { onConflict: "symbol" });
     if (error) {
+      await logCronRun(supabase, "fetch-stock-data", false, 0, error.message);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -324,6 +265,8 @@ Deno.serve(async (req) => {
   // per symbol, so anything older than 7 days is pure dead weight.
   const cutoff = new Date(Date.now() - 7 * 86400_000).toISOString();
   await supabase.from("stock_price_history").delete().lt("recorded_at", cutoff);
+
+  await logCronRun(supabase, "fetch-stock-data", true, results.length, errors.length ? `${errors.length} symbol errors` : null);
 
   return new Response(
     JSON.stringify({ updated: results.length, errors }),
