@@ -209,6 +209,7 @@ export type Database = {
           row: Json
           stop_loss_pct: number | null
           target_gain_pct: number | null
+          user_id: string
         }
         Insert: {
           entry_price: number
@@ -220,6 +221,7 @@ export type Database = {
           row: Json
           stop_loss_pct?: number | null
           target_gain_pct?: number | null
+          user_id: string
         }
         Update: {
           entry_price?: number
@@ -231,6 +233,7 @@ export type Database = {
           row?: Json
           stop_loss_pct?: number | null
           target_gain_pct?: number | null
+          user_id?: string
         }
         Relationships: []
       }

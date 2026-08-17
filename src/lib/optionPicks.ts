@@ -62,8 +62,11 @@ export const loadCloudPicks = async (): Promise<TrackedPick[]> => {
 };
 
 export const saveCloudPick = async (pick: TrackedPick) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
   const { error } = await supabase.from('option_tracked_picks').upsert([{
     id: pick.id,
+    user_id: user.id,
     picked_at: pick.pickedAt,
     entry_price: pick.entryPrice,
     row: pick.row as unknown as Json,
@@ -78,8 +81,11 @@ export const saveCloudPick = async (pick: TrackedPick) => {
 
 export const saveCloudPicks = async (picks: TrackedPick[]) => {
   if (!picks.length) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
   const { error } = await supabase.from('option_tracked_picks').upsert(picks.map(pick => ({
     id: pick.id,
+    user_id: user.id,
     picked_at: pick.pickedAt,
     entry_price: pick.entryPrice,
     row: pick.row as unknown as Json,
