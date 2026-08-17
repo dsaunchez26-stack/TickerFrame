@@ -10,6 +10,8 @@ export interface TrackedPick {
   notes?: string;
   portfolioName?: string | null;
   quantity?: number;
+  targetGainPct?: number | null;
+  stopLossPct?: number | null;
 }
 
 const KEY = 'option_picks_v1';
@@ -27,7 +29,7 @@ export const savePicks = (picks: TrackedPick[]) => {
   localStorage.setItem(KEY, JSON.stringify(picks));
 };
 
-const normalizePick = (record: { id: string; picked_at: string; entry_price: number; row: unknown; notes?: string | null; portfolio_name?: string | null; quantity?: number | null }): TrackedPick => ({
+const normalizePick = (record: { id: string; picked_at: string; entry_price: number; row: unknown; notes?: string | null; portfolio_name?: string | null; quantity?: number | null; target_gain_pct?: number | null; stop_loss_pct?: number | null }): TrackedPick => ({
   id: record.id,
   pickedAt: record.picked_at,
   entryPrice: Number(record.entry_price),
@@ -35,6 +37,8 @@ const normalizePick = (record: { id: string; picked_at: string; entry_price: num
   notes: record.notes ?? undefined,
   portfolioName: record.portfolio_name ?? null,
   quantity: record.quantity != null ? Number(record.quantity) : 1,
+  targetGainPct: record.target_gain_pct ?? null,
+  stopLossPct: record.stop_loss_pct ?? null,
 });
 
 export const mergePicks = (...groups: TrackedPick[][]): TrackedPick[] => {
@@ -50,7 +54,7 @@ export const mergePicks = (...groups: TrackedPick[][]): TrackedPick[] => {
 export const loadCloudPicks = async (): Promise<TrackedPick[]> => {
   const { data, error } = await supabase
     .from('option_tracked_picks')
-    .select('id,picked_at,entry_price,row,notes,portfolio_name,quantity')
+    .select('id,picked_at,entry_price,row,notes,portfolio_name,quantity,target_gain_pct,stop_loss_pct')
     .order('picked_at', { ascending: false });
 
   if (error || !data) return [];
@@ -66,6 +70,8 @@ export const saveCloudPick = async (pick: TrackedPick) => {
     notes: pick.notes ?? null,
     portfolio_name: pick.portfolioName ?? null,
     quantity: pick.quantity ?? 1,
+    target_gain_pct: pick.targetGainPct ?? null,
+    stop_loss_pct: pick.stopLossPct ?? null,
   }], { onConflict: 'id' });
   if (error) console.warn('saveCloudPick failed:', error.message);
 };
@@ -80,6 +86,8 @@ export const saveCloudPicks = async (picks: TrackedPick[]) => {
     notes: pick.notes ?? null,
     portfolio_name: pick.portfolioName ?? null,
     quantity: pick.quantity ?? 1,
+    target_gain_pct: pick.targetGainPct ?? null,
+    stop_loss_pct: pick.stopLossPct ?? null,
   })), { onConflict: 'id' });
   if (error) console.warn('saveCloudPicks failed:', error.message);
 };
@@ -106,7 +114,7 @@ export const removePick = (id: string): TrackedPick[] => {
 // pick was ever mirrored into localStorage -- components that load picks
 // straight from the cloud (e.g. PortfolioOptions) never populate the local
 // cache, so a lookup-by-id against localStorage alone would silently no-op.
-export const updatePick = async (pick: TrackedPick, updates: { entryPrice?: number; quantity?: number }): Promise<TrackedPick> => {
+export const updatePick = async (pick: TrackedPick, updates: { entryPrice?: number; quantity?: number; targetGainPct?: number | null; stopLossPct?: number | null }): Promise<TrackedPick> => {
   const updated: TrackedPick = { ...pick, ...updates };
   const local = loadPicks();
   const idx = local.findIndex(p => p.id === pick.id);

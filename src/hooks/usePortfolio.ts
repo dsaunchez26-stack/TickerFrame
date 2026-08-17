@@ -13,6 +13,8 @@ export interface PortfolioEntry {
   portfolio_type: 'day_trade' | 'long_term' | 'watchlist';
   portfolio_name?: string;
   portfolio_color?: string;
+  target_gain_pct: number | null;
+  stop_loss_pct: number | null;
 }
 
 export const usePortfolio = (portfolioType?: 'day_trade' | 'long_term' | 'watchlist', portfolioName?: string) => {
@@ -84,5 +86,29 @@ export const usePortfolio = (portfolioType?: 'day_trade' | 'long_term' | 'watchl
     onError: (e: any) => toast.error(e.message),
   });
 
-  return { ...query, addStock, removeStock };
+  // Purely a user-set threshold on an existing position -- doesn't touch
+  // buy_price/quantity, so this is a separate mutation from addStock rather
+  // than requiring every caller to know and re-send the current price/qty
+  // just to adjust an alert level.
+  const updateAlerts = useMutation({
+    mutationFn: async (arg: { symbol: string; portfolio_type: 'day_trade' | 'long_term' | 'watchlist'; portfolio_name?: string; target_gain_pct: number | null; stop_loss_pct: number | null }) => {
+      if (!user) throw new Error('Sign in to manage your portfolio.');
+      let q = supabase.from('portfolio').update({
+        target_gain_pct: arg.target_gain_pct,
+        stop_loss_pct: arg.stop_loss_pct,
+      })
+        .eq('user_id', user.id)
+        .eq('symbol', arg.symbol.toUpperCase())
+        .eq('portfolio_type', arg.portfolio_type);
+      if (arg.portfolio_name) q = q.eq('portfolio_name', arg.portfolio_name);
+      const { error } = await q;
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return { ...query, addStock, removeStock, updateAlerts };
 };

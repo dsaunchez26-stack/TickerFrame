@@ -9,6 +9,7 @@ import type { OptionRow, CallPut } from '@/lib/optionsMockData';
 import { addPick, loadCloudPicks, removeCloudPick, saveCloudPick, updatePick, TrackedPick } from '@/lib/optionPicks';
 import { EarningsBadge } from '@/components/EarningsBadge';
 import { useEarningsCalendar } from '@/hooks/useEarningsCalendar';
+import { PositionAlertBadge } from '@/components/PositionAlertBadge';
 
 interface Props {
   portfolioName: string;
@@ -36,6 +37,8 @@ export const PortfolioOptions = ({ portfolioName }: Props) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPremium, setEditPremium] = useState('');
   const [editContracts, setEditContracts] = useState('');
+  const [editTarget, setEditTarget] = useState('');
+  const [editStop, setEditStop] = useState('');
 
   const refresh = async () => {
     setLoading(true);
@@ -94,12 +97,19 @@ export const PortfolioOptions = ({ portfolioName }: Props) => {
     setEditingId(p.id);
     setEditPremium(String(p.entryPrice));
     setEditContracts(String(p.quantity ?? 1));
+    setEditTarget(p.targetGainPct != null ? String(p.targetGainPct) : '');
+    setEditStop(p.stopLossPct != null ? String(p.stopLossPct) : '');
   };
 
   const cancelEdit = () => setEditingId(null);
 
   const saveEdit = async (pick: TrackedPick) => {
-    await updatePick(pick, { entryPrice: parseFloat(editPremium) || 0, quantity: parseFloat(editContracts) || 1 });
+    await updatePick(pick, {
+      entryPrice: parseFloat(editPremium) || 0,
+      quantity: parseFloat(editContracts) || 1,
+      targetGainPct: editTarget.trim() ? parseFloat(editTarget) : null,
+      stopLossPct: editStop.trim() ? parseFloat(editStop) : null,
+    });
     setEditingId(null);
     refresh();
   };
@@ -155,10 +165,12 @@ export const PortfolioOptions = ({ portfolioName }: Props) => {
         return (
           <div key={p.id} className="rounded-md border border-border/40 p-2 hover:bg-secondary/40">
             {isEditing ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold shrink-0">{p.row.ticker} {p.row.cp === 'P' ? 'Put' : 'Call'} ${p.row.strike}</span>
-                <Input placeholder="Premium/contract" type="number" value={editPremium} onChange={e => setEditPremium(e.target.value)} className="h-7 text-xs" />
-                <Input placeholder="Contracts" type="number" value={editContracts} onChange={e => setEditContracts(e.target.value)} className="h-7 text-xs" />
+                <Input placeholder="Premium/contract" type="number" value={editPremium} onChange={e => setEditPremium(e.target.value)} className="h-7 w-24 text-xs" />
+                <Input placeholder="Contracts" type="number" value={editContracts} onChange={e => setEditContracts(e.target.value)} className="h-7 w-16 text-xs" />
+                <Input placeholder="Target %" type="number" value={editTarget} onChange={e => setEditTarget(e.target.value)} className="h-7 w-20 text-xs" title="Alert me when up this much (optional, your own number)" />
+                <Input placeholder="Stop %" type="number" value={editStop} onChange={e => setEditStop(e.target.value)} className="h-7 w-20 text-xs" title="Alert me when down this much (optional, your own number)" />
                 <button onClick={() => saveEdit(p)} className="p-1 rounded hover:bg-signal-buy/10 text-signal-buy shrink-0"><Check className="h-3.5 w-3.5" /></button>
                 <button onClick={cancelEdit} className="p-1 rounded hover:bg-secondary text-muted-foreground shrink-0"><X className="h-3.5 w-3.5" /></button>
               </div>
@@ -169,6 +181,7 @@ export const PortfolioOptions = ({ portfolioName }: Props) => {
                     <span className="font-heading text-sm font-bold">{p.row.ticker} {p.row.cp === 'P' ? 'Put' : 'Call'} ${p.row.strike}</span>
                     {isExpired && <span className="text-[9px] rounded bg-muted px-1 py-0.5 text-muted-foreground">Expired</span>}
                     {!isExpired && <EarningsBadge earnings={earningsBySymbol.get(p.row.ticker)} referenceDate={p.row.expiration} size="xs" />}
+                    <PositionAlertBadge pnlPct={pnlPct} targetGainPct={p.targetGainPct ?? null} stopLossPct={p.stopLossPct ?? null} size="xs" />
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap gap-x-2">
                     <span>Entry ${p.entryPrice.toFixed(2)} × {qty} · Now ${currentPremium.toFixed(2)} · Exp {p.row.expiration}</span>

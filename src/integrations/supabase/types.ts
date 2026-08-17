@@ -207,6 +207,8 @@ export type Database = {
           portfolio_name: string | null
           quantity: number
           row: Json
+          stop_loss_pct: number | null
+          target_gain_pct: number | null
         }
         Insert: {
           entry_price: number
@@ -216,6 +218,8 @@ export type Database = {
           portfolio_name?: string | null
           quantity?: number
           row: Json
+          stop_loss_pct?: number | null
+          target_gain_pct?: number | null
         }
         Update: {
           entry_price?: number
@@ -225,6 +229,8 @@ export type Database = {
           portfolio_name?: string | null
           quantity?: number
           row?: Json
+          stop_loss_pct?: number | null
+          target_gain_pct?: number | null
         }
         Relationships: []
       }
@@ -256,7 +262,9 @@ export type Database = {
           portfolio_name: string
           portfolio_type: string
           quantity: number
+          stop_loss_pct: number | null
           symbol: string
+          target_gain_pct: number | null
           user_id: string
         }
         Insert: {
@@ -268,7 +276,9 @@ export type Database = {
           portfolio_name?: string
           portfolio_type?: string
           quantity?: number
+          stop_loss_pct?: number | null
           symbol: string
+          target_gain_pct?: number | null
           user_id: string
         }
         Update: {
@@ -280,7 +290,9 @@ export type Database = {
           portfolio_name?: string
           portfolio_type?: string
           quantity?: number
+          stop_loss_pct?: number | null
           symbol?: string
+          target_gain_pct?: number | null
           user_id?: string
         }
         Relationships: []

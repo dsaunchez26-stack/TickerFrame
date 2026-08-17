@@ -13,6 +13,7 @@ import { Disclaimer } from '@/components/Disclaimer';
 import { PatternBadge } from '@/components/PatternBadge';
 import { EarningsBadge } from '@/components/EarningsBadge';
 import { useEarningsCalendar } from '@/hooks/useEarningsCalendar';
+import { PositionAlertBadge } from '@/components/PositionAlertBadge';
 import { PortfolioRating } from '@/components/PortfolioRating';
 import { PortfolioTrend } from '@/components/PortfolioTrend';
 import { PortfolioOptions } from '@/components/PortfolioOptions';
@@ -21,7 +22,7 @@ type ViewMode = 'compare' | 'single';
 
 function usePortfolioEnriched(name: string) {
   const { user } = useAuth();
-  const { data: portfolio, isLoading, addStock, removeStock } = usePortfolio(undefined, name);
+  const { data: portfolio, isLoading, addStock, removeStock, updateAlerts } = usePortfolio(undefined, name);
   const { data: stockData } = useStockData('all');
   const cached = useMemo(() => new Set((stockData?.stocks ?? []).map(s => s.symbol)), [stockData]);
   const missing = useMemo(() => (portfolio ?? []).map(p => p.symbol).filter(s => !cached.has(s)), [portfolio, cached]);
@@ -118,7 +119,7 @@ function usePortfolioEnriched(name: string) {
     })();
   }, [user, name, totals.positions, hasLiveData]);
 
-  return { enriched, totals, isLoading, addStock, removeStock };
+  return { enriched, totals, isLoading, addStock, removeStock, updateAlerts };
 }
 
 const Kpi = ({ label, value, sub, positive }: { label: string; value: string; sub?: string; positive?: boolean | null }) => (
@@ -131,12 +132,13 @@ const Kpi = ({ label, value, sub, positive }: { label: string; value: string; su
 
 const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
   const { user } = useAuth();
-  const { enriched, totals, isLoading, addStock, removeStock } = usePortfolioEnriched(name);
+  const { enriched, totals, isLoading, addStock, removeStock, updateAlerts } = usePortfolioEnriched(name);
   const { earningsBySymbol } = useEarningsCalendar();
   const [showForm, setShowForm] = useState(false);
   const [sym, setSym] = useState(''); const [bp, setBp] = useState(''); const [qty, setQty] = useState('1');
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
   const [editBp, setEditBp] = useState(''); const [editQty, setEditQty] = useState('');
+  const [editTarget, setEditTarget] = useState(''); const [editStop, setEditStop] = useState('');
 
   const handleAdd = () => {
     if (!sym) return;
@@ -144,14 +146,23 @@ const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
     setSym(''); setBp(''); setQty('1'); setShowForm(false);
   };
 
-  const startEdit = (e: { symbol: string; buy_price: number; quantity: number }) => {
+  const startEdit = (e: { symbol: string; buy_price: number; quantity: number; target_gain_pct: number | null; stop_loss_pct: number | null }) => {
     setEditingSymbol(e.symbol);
     setEditBp(String(e.buy_price));
     setEditQty(String(e.quantity));
+    setEditTarget(e.target_gain_pct !== null ? String(e.target_gain_pct) : '');
+    setEditStop(e.stop_loss_pct !== null ? String(e.stop_loss_pct) : '');
   };
 
   const saveEdit = (e: Pick<PortfolioEntry, 'symbol' | 'portfolio_type'>) => {
     addStock.mutate({ symbol: e.symbol, buy_price: parseFloat(editBp) || 0, quantity: parseFloat(editQty) || 1, portfolio_type: e.portfolio_type, portfolio_name: name });
+    updateAlerts.mutate({
+      symbol: e.symbol,
+      portfolio_type: e.portfolio_type,
+      portfolio_name: name,
+      target_gain_pct: editTarget.trim() ? parseFloat(editTarget) : null,
+      stop_loss_pct: editStop.trim() ? parseFloat(editStop) : null,
+    });
     setEditingSymbol(null);
   };
 
@@ -196,10 +207,12 @@ const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
           return (
           <div key={e.id} className="rounded-md border border-border/40 p-2 hover:bg-secondary/40">
             {isEditing ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold shrink-0">{e.symbol}</span>
-                <Input placeholder="Buy $" type="number" value={editBp} onChange={ev => setEditBp(ev.target.value)} className="h-7 text-xs" />
-                <Input placeholder="Qty" type="number" value={editQty} onChange={ev => setEditQty(ev.target.value)} className="h-7 text-xs" />
+                <Input placeholder="Buy $" type="number" value={editBp} onChange={ev => setEditBp(ev.target.value)} className="h-7 w-20 text-xs" />
+                <Input placeholder="Qty" type="number" value={editQty} onChange={ev => setEditQty(ev.target.value)} className="h-7 w-16 text-xs" />
+                <Input placeholder="Target %" type="number" value={editTarget} onChange={ev => setEditTarget(ev.target.value)} className="h-7 w-20 text-xs" title="Alert me when up this much (optional, your own number)" />
+                <Input placeholder="Stop %" type="number" value={editStop} onChange={ev => setEditStop(ev.target.value)} className="h-7 w-20 text-xs" title="Alert me when down this much (optional, your own number)" />
                 <button onClick={() => saveEdit(e)} className="p-1 rounded hover:bg-signal-buy/10 text-signal-buy shrink-0"><Check className="h-3.5 w-3.5" /></button>
                 <button onClick={() => setEditingSymbol(null)} className="p-1 rounded hover:bg-secondary text-muted-foreground shrink-0"><X className="h-3.5 w-3.5" /></button>
               </div>
@@ -210,6 +223,7 @@ const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
                     <span className="font-heading text-sm font-bold">{e.symbol}</span>
                     {e.pattern && <PatternBadge pattern={e.pattern} confidence={e.patternConfidence} size="xs" />}
                     <EarningsBadge earnings={earningsBySymbol.get(e.symbol)} size="xs" />
+                    <PositionAlertBadge pnlPct={e.pnlPct} targetGainPct={e.target_gain_pct} stopLossPct={e.stop_loss_pct} size="xs" />
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap gap-x-2">
                     <span>Buy ${e.buy_price.toFixed(2)} × {e.quantity} · Now ${e.currentPrice.toFixed(2)}</span>
