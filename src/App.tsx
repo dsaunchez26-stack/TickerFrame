@@ -39,6 +39,7 @@ const Performance = lazy(() => import("./pages/Performance.tsx"));
 const Legal = lazy(() => import("./pages/Legal.tsx"));
 const Methodology = lazy(() => import("./pages/Methodology.tsx"));
 const Health = lazy(() => import("./pages/Health.tsx"));
+const SettingsPage = lazy(() => import("./pages/Settings.tsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 import { AuthProvider } from "@/hooks/useAuth";
@@ -141,6 +142,7 @@ const App = () => (
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/performance" element={<Performance />} />
               <Route path="/news" element={<News />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route path="/health" element={<ProtectedRoute requireAdmin><Health /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Route>

@@ -37,6 +37,7 @@ const TRACKED_JOBS = [
   'fundamentals-scanner',
   'insider-scanner',
   'earnings-scanner',
+  'portfolio-alerts',
 ];
 
 const FRESHNESS_TARGETS: Array<{ table: string; column: string; staleAfterMin: number; label: string }> = [

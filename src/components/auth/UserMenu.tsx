@@ -1,4 +1,4 @@
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, Settings, User as UserIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,10 @@ export const UserMenu = () => {
           {isAdmin && <span className="ml-1 font-semibold text-primary">· Admin</span>}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate('/settings')} className="text-xs">
+          <Settings className="mr-2 h-3.5 w-3.5" />
+          Settings
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleSignOut} className="text-xs">
           <LogOut className="mr-2 h-3.5 w-3.5" />
           Sign out

@@ -333,6 +333,24 @@ export type Database = {
         }
         Relationships: []
       }
+      sent_alerts: {
+        Row: {
+          alert_key: string
+          id: string
+          sent_at: string
+        }
+        Insert: {
+          alert_key: string
+          id?: string
+          sent_at?: string
+        }
+        Update: {
+          alert_key?: string
+          id?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       signal_log: {
         Row: {
           confidence: string
@@ -566,6 +584,33 @@ export type Database = {
           price?: number
           recorded_at?: string
           symbol?: string
+        }
+        Relationships: []
+      }
+      user_notification_settings: {
+        Row: {
+          alerts_insider: boolean
+          alerts_target_stop: boolean
+          alerts_value_ideas: boolean
+          slack_webhook_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alerts_insider?: boolean
+          alerts_target_stop?: boolean
+          alerts_value_ideas?: boolean
+          slack_webhook_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alerts_insider?: boolean
+          alerts_target_stop?: boolean
+          alerts_value_ideas?: boolean
+          slack_webhook_url?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
