@@ -589,7 +589,10 @@ export type Database = {
       }
       user_notification_settings: {
         Row: {
+          alerts_big_move: boolean
+          alerts_earnings: boolean
           alerts_insider: boolean
+          alerts_pattern: boolean
           alerts_target_stop: boolean
           alerts_value_ideas: boolean
           slack_webhook_url: string | null
@@ -597,7 +600,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          alerts_big_move?: boolean
+          alerts_earnings?: boolean
           alerts_insider?: boolean
+          alerts_pattern?: boolean
           alerts_target_stop?: boolean
           alerts_value_ideas?: boolean
           slack_webhook_url?: string | null
@@ -605,7 +611,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          alerts_big_move?: boolean
+          alerts_earnings?: boolean
           alerts_insider?: boolean
+          alerts_pattern?: boolean
           alerts_target_stop?: boolean
           alerts_value_ideas?: boolean
           slack_webhook_url?: string | null

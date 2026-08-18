@@ -14,6 +14,9 @@ interface Settings {
   alerts_insider: boolean;
   alerts_target_stop: boolean;
   alerts_value_ideas: boolean;
+  alerts_big_move: boolean;
+  alerts_pattern: boolean;
+  alerts_earnings: boolean;
 }
 
 const DEFAULTS: Settings = {
@@ -21,6 +24,9 @@ const DEFAULTS: Settings = {
   alerts_insider: true,
   alerts_target_stop: true,
   alerts_value_ideas: true,
+  alerts_big_move: true,
+  alerts_pattern: true,
+  alerts_earnings: true,
 };
 
 const SettingsPage = () => {
@@ -34,7 +40,7 @@ const SettingsPage = () => {
     if (!user) return;
     supabase
       .from('user_notification_settings')
-      .select('slack_webhook_url, alerts_insider, alerts_target_stop, alerts_value_ideas')
+      .select('slack_webhook_url, alerts_insider, alerts_target_stop, alerts_value_ideas, alerts_big_move, alerts_pattern, alerts_earnings')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -44,6 +50,9 @@ const SettingsPage = () => {
             alerts_insider: data.alerts_insider,
             alerts_target_stop: data.alerts_target_stop,
             alerts_value_ideas: data.alerts_value_ideas,
+            alerts_big_move: data.alerts_big_move,
+            alerts_pattern: data.alerts_pattern,
+            alerts_earnings: data.alerts_earnings,
           });
         }
         setLoading(false);
@@ -59,6 +68,9 @@ const SettingsPage = () => {
       alerts_insider: settings.alerts_insider,
       alerts_target_stop: settings.alerts_target_stop,
       alerts_value_ideas: settings.alerts_value_ideas,
+      alerts_big_move: settings.alerts_big_move,
+      alerts_pattern: settings.alerts_pattern,
+      alerts_earnings: settings.alerts_earnings,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
     setSaving(false);
@@ -125,6 +137,30 @@ const SettingsPage = () => {
                 <p className="text-[11px] text-muted-foreground">Notify when a new stock scores 65+ on the Small-Cap Value screen (weekly, per idea).</p>
               </div>
               <Switch id="ideas" checked={settings.alerts_value_ideas} onCheckedChange={v => setSettings(s => ({ ...s, alerts_value_ideas: v }))} />
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="bigmove" className="text-xs">Big price moves</Label>
+                <p className="text-[11px] text-muted-foreground">Notify when a stock you hold moves ±6% or more in a day — so a big swing doesn't go unnoticed.</p>
+              </div>
+              <Switch id="bigmove" checked={settings.alerts_big_move} onCheckedChange={v => setSettings(s => ({ ...s, alerts_big_move: v }))} />
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="pattern" className="text-xs">Chart pattern alerts</Label>
+                <p className="text-[11px] text-muted-foreground">Notify when a bullish or bearish chart pattern (breakout, flag, etc.) is detected on a tracked holding.</p>
+              </div>
+              <Switch id="pattern" checked={settings.alerts_pattern} onCheckedChange={v => setSettings(s => ({ ...s, alerts_pattern: v }))} />
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="earnings" className="text-xs">Upcoming earnings</Label>
+                <p className="text-[11px] text-muted-foreground">Notify when a stock you hold reports earnings within the next 3 days.</p>
+              </div>
+              <Switch id="earnings" checked={settings.alerts_earnings} onCheckedChange={v => setSettings(s => ({ ...s, alerts_earnings: v }))} />
             </div>
 
             <Button onClick={save} disabled={saving} size="sm" className="gap-1.5">
