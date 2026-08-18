@@ -67,6 +67,10 @@ export const StockChart = ({ symbol: controlledSymbol, onSymbolChange }: Props =
         </Select>
       </CardHeader>
       <CardContent>
+        <div className="mb-1.5 flex items-center gap-3 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#f0b429' }} />moving average</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 border-t border-dashed border-muted-foreground" />last close</span>
+        </div>
         <div className="h-64">
           {loading ? (
             <div className="flex h-full items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>

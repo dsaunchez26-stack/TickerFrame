@@ -2,6 +2,7 @@ import { Outlet, Link } from 'react-router-dom';
 import { AppTopNav } from '@/components/AppTopNav';
 import { Activity, Zap } from 'lucide-react';
 import { StockDetailProvider } from '@/context/StockDetailContext';
+import { StockSearchBar } from '@/components/StockSearchBar';
 import { UserMenu } from '@/components/auth/UserMenu';
 import { useEffect, useState } from 'react';
 import { getMarketStatus, marketStatusLabel, type MarketStatus } from '@/lib/marketHours';
@@ -32,6 +33,7 @@ export default function AppLayout() {
               <span className="text-xs text-muted-foreground hidden sm:inline">Professional Trading Suite</span>
             </div>
             <div className="flex items-center gap-3">
+              <StockSearchBar />
               <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 ${pillClass}`}>
                 <span className="relative flex h-1.5 w-1.5">
                   {isLive && <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${dotClass}`} />}

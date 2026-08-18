@@ -1,5 +1,3 @@
-import { GovTradesPanel } from '@/components/GovTradesPanel';
-import { InstitutionalPanel } from '@/components/InstitutionalPanel';
 import { EarningsCalendar } from '@/components/options/EarningsCalendar';
 import { NewsFeed } from '@/components/options/NewsFeed';
 import { RegulatoryFilings } from '@/components/options/RegulatoryFilings';
@@ -19,8 +17,6 @@ const News = () => (
       <RegulatoryFilings />
     </div>
     <EarningsCalendar />
-    <GovTradesPanel />
-    <InstitutionalPanel />
   </div>
 );
 
