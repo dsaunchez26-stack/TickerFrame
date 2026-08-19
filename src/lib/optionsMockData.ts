@@ -22,6 +22,11 @@ export interface OptionRow {
   ivRegime?: 'cheap' | 'neutral' | 'expensive';
   ivRankIsReal?: boolean;
   ivPct?: number;
+  // Current IV / the underlying's realized volatility -- > 1 means the
+  // options market is pricing in more movement than the stock has actually
+  // been making (premium rich relative to real behavior), < 1 the reverse.
+  // Null when there isn't yet a realized-vol estimate for this ticker.
+  ivRvRatio?: number | null;
   volume: number;
   oi: number;
   voi: number;

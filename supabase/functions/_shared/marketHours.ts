@@ -17,12 +17,21 @@ const NYSE_EARLY_CLOSE: ReadonlySet<string> = new Set([
   '2027-11-26',
 ]);
 
+// Constructing Intl.DateTimeFormat is expensive in V8 -- built once at
+// module scope and reused, instead of per-call. Fine when this only ran
+// once per invocation (portfolio-alerts), but realized-volatility-scanner
+// calls this once per historical price sample (100,000+ times per run
+// across the full tracked universe) and a fresh formatter per call was
+// enough to blow through the edge function's compute budget
+// (WORKER_RESOURCE_LIMIT) on its own, before any real work got done.
+const ET_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short',
+});
+
 export function isMarketOpen(d: Date = new Date()): boolean {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short',
-  }).formatToParts(d);
+  const parts = ET_FORMATTER.formatToParts(d);
   const m: Record<string, string> = {};
   for (const p of parts) m[p.type] = p.value;
   const dowMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };

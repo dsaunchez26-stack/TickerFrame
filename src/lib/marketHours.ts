@@ -13,12 +13,17 @@ const NYSE_EARLY_CLOSE: ReadonlySet<string> = new Set([
   '2027-11-26',
 ]);
 
+// Built once and reused -- constructing Intl.DateTimeFormat on every call
+// is measurably expensive, and this runs on a 30s interval for as long as
+// the app is open.
+const ET_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short',
+});
+
 function toET(d: Date = new Date()) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hour12: false, weekday: 'short',
-  }).formatToParts(d);
+  const parts = ET_FORMATTER.formatToParts(d);
   const m: Record<string, string> = {};
   for (const p of parts) m[p.type] = p.value;
   const dowMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };

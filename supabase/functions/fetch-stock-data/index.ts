@@ -44,6 +44,32 @@ function macd(values: number[]): number {
   return ema(values, 12) - ema(values, 26);
 }
 
+function emaSeries(values: number[], period: number): number[] {
+  if (!values.length) return [];
+  const k = 2 / (period + 1);
+  const out: number[] = [values[0]];
+  for (let i = 1; i < values.length; i++) out.push(values[i] * k + out[i - 1] * (1 - k));
+  return out;
+}
+
+// The MACD *line* alone (ema12 - ema26) only says "is the short-term trend
+// above or below the long-term trend" -- it says nothing about whether that
+// gap is currently widening (accelerating momentum) or narrowing (fading
+// momentum). The signal line -- a 9-period EMA of the MACD line itself --
+// is what standard technical analysis actually uses to gate entries: MACD
+// above its own signal line means bullish momentum is still building, not
+// just present. Used below as a confirmation filter so a plain RSI-oversold
+// reading (which can stay "oversold" for a long time in a real downtrend --
+// the classic RSI trap) doesn't fire a buy signal on its own.
+function macdHistogram(values: number[]): number {
+  const ema12 = emaSeries(values, 12);
+  const ema26 = emaSeries(values, 26);
+  const macdLine = ema12.map((v, i) => v - ema26[i]);
+  const signalLine = emaSeries(macdLine, 9);
+  const last = macdLine.length - 1;
+  return last >= 0 ? macdLine[last] - signalLine[last] : 0;
+}
+
 // %B: where price sits within the 20-period Bollinger Bands (2 std dev).
 // 0 = at the lower band, 1 = at the upper band, >1 = above the upper band
 // (stretched to the upside), <0 = below the lower band (stretched down).
@@ -182,8 +208,17 @@ Deno.serve(async (req) => {
     const ema9 = ema(closes, 9) || price;
     const rsiVal = rsi(closes);
     const macdVal = macd(closes);
+    const macdHist = macdHistogram(closes);
 
-    const signal = rsiVal < 35 && price >= sma20 ? "buy" : rsiVal > 68 ? "sell" : "hold";
+    // RSI-oversold/overbought alone is a classic mean-reversion trap -- a
+    // stock in a real downtrend can sit under RSI 35 for a long stretch
+    // while still making new lows. Requiring MACD momentum to already agree
+    // with the direction (above its signal line for a buy, below for a
+    // sell) cuts down on exactly that false-positive pattern, on top of the
+    // existing price-vs-SMA20 trend filter.
+    const signal = rsiVal < 35 && price >= sma20 && macdHist > 0 ? "buy"
+      : rsiVal > 68 && macdHist < 0 ? "sell"
+      : "hold";
     const entry = signal === "buy" ? price * 0.99 : price;
     const exitPrice = signal === "buy" ? price * 1.08 : price * 0.95;
     const { pattern, confidence: patternConfidence } = detectPattern(closes);

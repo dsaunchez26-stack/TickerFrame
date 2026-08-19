@@ -3,6 +3,16 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 import { TRACKED_SYMBOLS } from "../_shared/symbols.ts";
 import { logCronRun } from "../_shared/logCronRun.ts";
+import {
+  broadSector,
+} from "../_shared/sectorMapping.ts";
+import {
+  computeFundamentalsBenchmarks,
+  relativeScoreLowerBetter,
+  relativeScoreHigherBetterRatio,
+  relativeScoreDiff,
+  MAX_TRUSTED_DEBT_TO_EQUITY,
+} from "../_shared/sectorRelativeFundamentals.ts";
 
 // Same equity universe as fetch-stock-data -- see _shared/symbols.ts.
 const SYMBOLS = TRACKED_SYMBOLS;
@@ -56,12 +66,34 @@ Deno.serve(async (req) => {
   const BATCH_LIMIT = 55;
   const { data: existingRows } = await supabase
     .from("stock_fundamentals")
-    .select("symbol, updated_at, sector")
+    .select("symbol, updated_at, sector, debt_to_equity, current_ratio, net_margin, revenue_growth_yoy, eps_growth_yoy")
     .in("symbol", SYMBOLS.map((s) => s.symbol));
   const updatedAtBySymbol = new Map((existingRows ?? []).map((r) => [r.symbol, r.updated_at]));
   // Sector essentially never changes, so once known it's carried forward
   // without spending another Finnhub call re-fetching it every scan.
   const sectorBySymbol = new Map((existingRows ?? []).map((r) => [r.symbol, r.sector as string | null]));
+
+  // Sector medians for Balance Sheet / Growth scoring, computed from
+  // whatever's already on file rather than blocking on a fresh fetch for
+  // the full universe -- fundamentals move slowly enough that peers' last-
+  // known values are a fine benchmark, and this naturally self-improves
+  // across runs as more of the universe gets (re)scanned. Same
+  // sector-relative approach already used for P/E, P/B, P/S in the value
+  // screens, extended here to leverage, liquidity, margin, and growth so a
+  // stock isn't judged against one flat cutoff that ignores what's normal
+  // for its own industry.
+  const benchmarks = computeFundamentalsBenchmarks(
+    (existingRows ?? []).map((r) => ({
+      symbol: r.symbol,
+      sector: r.sector,
+      debt_to_equity: r.debt_to_equity !== null ? Number(r.debt_to_equity) : null,
+      current_ratio: r.current_ratio !== null ? Number(r.current_ratio) : null,
+      net_margin: r.net_margin !== null ? Number(r.net_margin) : null,
+      revenue_growth_yoy: r.revenue_growth_yoy !== null ? Number(r.revenue_growth_yoy) : null,
+      eps_growth_yoy: r.eps_growth_yoy !== null ? Number(r.eps_growth_yoy) : null,
+    })),
+  );
+
   const batch = [...SYMBOLS]
     .sort((a, b) => {
       const aTime = updatedAtBySymbol.get(a.symbol);
@@ -140,20 +172,41 @@ Deno.serve(async (req) => {
       const surprises = epsHistory.map((h) => h.surprisePct);
       const avgEpsSurprisePct = surprises.length ? surprises.reduce((a, b) => a + b, 0) / surprises.length : null;
 
-      // Balance Sheet Strength: rewards low leverage, healthy liquidity, real
-      // margins. Each factor only contributes if the data is actually present,
-      // so a missing field doesn't drag the score toward either extreme.
+      // Balance Sheet Strength: rewards low leverage (vs. sector peers),
+      // healthy liquidity (vs. sector peers), real margins (vs. sector
+      // peers). Each factor only contributes if the data is actually
+      // present, so a missing field doesn't drag the score toward either
+      // extreme. Falls back to the old flat absolute scale when the sector
+      // doesn't have enough tracked peers (< 4) to trust a median yet.
+      const sector_ = broadSector(symbol, sector);
+      const benchmark = benchmarks.get(sector_);
       const parts: number[] = [];
-      if (debtToEquity !== null) parts.push(clamp(100 - debtToEquity * 40, 0, 100));
-      if (currentRatio !== null) parts.push(clamp((currentRatio / 2) * 100, 0, 100));
-      if (netMargin !== null) parts.push(clamp(50 + netMargin * 2.5, 0, 100));
+      // A D/E ratio this extreme is far more likely to be a near-zero-
+      // book-equity artifact than genuine comparable leverage -- excluded
+      // rather than scored as confirmed-worst (previously floored to 0
+      // indistinguishably from a merely-bad-but-real ratio).
+      if (debtToEquity !== null && debtToEquity <= MAX_TRUSTED_DEBT_TO_EQUITY) {
+        parts.push(relativeScoreLowerBetter(debtToEquity, benchmark?.medianDebtToEquity ?? null) ?? clamp(100 - debtToEquity * 40, 0, 100));
+      }
+      if (currentRatio !== null) {
+        parts.push(relativeScoreHigherBetterRatio(currentRatio, benchmark?.medianCurrentRatio ?? null) ?? clamp((currentRatio / 2) * 100, 0, 100));
+      }
+      if (netMargin !== null) {
+        parts.push(relativeScoreDiff(netMargin, benchmark?.medianNetMargin ?? null, 2.5) ?? clamp(50 + netMargin * 2.5, 0, 100));
+      }
       const balanceSheetScore = parts.length ? Math.round(parts.reduce((a, b) => a + b, 0) / parts.length) : 50;
 
-      // Growth & Momentum: rewards actual revenue/EPS growth and a recent
-      // track record of beating (not missing) earnings estimates.
+      // Growth & Momentum: rewards actual revenue/EPS growth relative to
+      // sector peers (a mature staples company growing 15% is exceptional;
+      // a hypergrowth software company growing 15% is mediocre) and a
+      // recent track record of beating (not missing) earnings estimates.
       const gparts: number[] = [];
-      if (revenueGrowth !== null) gparts.push(clamp(50 + revenueGrowth * 2.5, 0, 100));
-      if (epsGrowth !== null) gparts.push(clamp(50 + epsGrowth * 1.5, 0, 100));
+      if (revenueGrowth !== null) {
+        gparts.push(relativeScoreDiff(revenueGrowth, benchmark?.medianRevenueGrowth ?? null, 2.5) ?? clamp(50 + revenueGrowth * 2.5, 0, 100));
+      }
+      if (epsGrowth !== null) {
+        gparts.push(relativeScoreDiff(epsGrowth, benchmark?.medianEpsGrowth ?? null, 1.5) ?? clamp(50 + epsGrowth * 1.5, 0, 100));
+      }
       if (avgEpsSurprisePct !== null) gparts.push(clamp(50 + avgEpsSurprisePct * 4, 0, 100));
       const growthScore = gparts.length ? Math.round(gparts.reduce((a, b) => a + b, 0) / gparts.length) : 50;
 

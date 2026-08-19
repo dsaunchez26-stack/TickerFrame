@@ -24,6 +24,26 @@ const fmtMarketCap = (v: number | null) => {
 // negative (clamped to 0) once payout crosses 100%.
 const payoutSafetyScore = (payoutRatio: number) => Math.max(0, Math.min(100, 100 - payoutRatio * 0.8));
 
+// Diminishing returns instead of a raw multiplier -- an unbounded "yield x8"
+// let the single highest number dominate the composite regardless of how
+// extreme it was. Capping here means a 10%+ yield (already an unusually
+// high, often distress-signaling level for most sectors) doesn't keep
+// scoring higher than a 6% yield just for being bigger.
+const yieldScore = (yield_: number) => Math.max(0, Math.min(100, yield_ * 10));
+
+// Yield is a ratio of dividend to PRICE -- a falling price inflates yield
+// without the dividend itself getting any safer, the classic "yield trap."
+// 52-week high/low (already fetched, no extra cost) is a simple proxy for
+// how volatile/distressed the price has actually been: a stock that's swung
+// 80-100%+ over the past year carries real risk the current price (and
+// therefore the current yield) won't hold, even if today's payout ratio
+// still looks fine.
+const priceStabilityScore = (week52High: number, week52Low: number, price: number) => {
+  if (price <= 0) return 60;
+  const rangePct = ((week52High - week52Low) / price) * 100;
+  return Math.max(0, Math.min(100, 100 - rangePct));
+};
+
 const DividendIncome = () => {
   const [rows, setRows] = useState<FundamentalsRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +81,10 @@ const DividendIncome = () => {
         && r.balance_sheet_score >= minBalance)
       .map(r => {
         const safety = r.payout_ratio !== null ? payoutSafetyScore(r.payout_ratio) : 60; // unreported payout ratio -- neutral, not penalized
-        const composite = (r.dividend_yield! * 8 + safety + r.balance_sheet_score) / 3;
+        const stability = r.week52_high !== null && r.week52_low !== null
+          ? priceStabilityScore(r.week52_high, r.week52_low, r.price)
+          : 60; // unreported range -- neutral, not penalized
+        const composite = (yieldScore(r.dividend_yield!) + safety + r.balance_sheet_score + stability) / 4;
         return { row: r, composite };
       })
       .sort((a, b) => b.composite - a.composite),
@@ -160,10 +183,12 @@ const DividendIncome = () => {
               </div>
             )}
             <p className="mt-3 text-[10px] italic text-muted-foreground/70">
-              <strong className="text-foreground/80">Combined Score</strong> blends yield, payout-ratio safety (how
-              comfortably the dividend is covered by earnings), and Balance Sheet Strength into one ranking — a stock
-              with the single highest yield can still rank below one with a smaller but safer, better-covered payout.
-              Click any row for the full breakdown.
+              <strong className="text-foreground/80">Combined Score</strong> blends yield (capped, not a straight
+              multiplier, so an extreme number can't dominate on size alone), payout-ratio safety (how comfortably the
+              dividend is covered by earnings), 52-week price stability (a wide trading range is a proxy for the price
+              volatility/distress risk behind a yield spike), and Balance Sheet Strength into one ranking — a stock with
+              the single highest yield can still rank below one with a smaller but safer, steadier, better-covered
+              payout. Click any row for the full breakdown.
             </p>
           </CardContent>
         </Card>

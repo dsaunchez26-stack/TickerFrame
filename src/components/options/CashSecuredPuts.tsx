@@ -32,6 +32,25 @@ function patternAgreement(r: OptionRow): number {
   return 0;
 }
 
+const IV_RV_HIGH = 1.15;
+const IV_RV_LOW = 0.85;
+
+// When current IV is running well above the stock's own realized
+// volatility, premium is rich relative to what the stock is actually
+// doing -- a shorter duration captures that richness via faster theta
+// decay before it's likely to mean-revert. When IV is running well below
+// realized vol, premium is comparatively cheap, so a longer duration
+// collects more total premium before needing to be rolled rather than
+// repeatedly re-entering at a discount. Near-parity (or no realized-vol
+// estimate yet) doesn't favor either term.
+function termAgreement(r: OptionRow): number {
+  const ratio = r.ivRvRatio;
+  if (ratio === null || ratio === undefined) return 0;
+  if (ratio >= IV_RV_HIGH) return r.type === 'Weekly' ? 1 : r.type === 'Monthly' ? -1 : 0;
+  if (ratio <= IV_RV_LOW) return r.type === 'Monthly' ? 1 : r.type === 'Weekly' ? -1 : 0;
+  return 0;
+}
+
 function pickBest(pool: OptionRow[], count: number) {
   const sorted = [...pool].sort((a, b) => {
     // "Beyond" the expected move (safer) is prioritized ahead of "Within"
@@ -43,6 +62,8 @@ function pickBest(pool: OptionRow[], count: number) {
     if (aBeyond !== bBeyond) return bBeyond - aBeyond;
     const patternDiff = patternAgreement(b) - patternAgreement(a);
     if (patternDiff !== 0) return patternDiff;
+    const termDiff = termAgreement(b) - termAgreement(a);
+    if (termDiff !== 0) return termDiff;
     return annualizedYield(b) - annualizedYield(a);
   });
   // A single ticker with many strikes near the delta band could otherwise
@@ -67,7 +88,14 @@ const Row = ({ r, tracked, onTrack }: { r: OptionRow; tracked: boolean; onTrack:
     <td className="py-2 pr-3">
       <button onClick={() => open(r.ticker)} className="font-semibold hover:text-primary hover:underline">{r.ticker}</button>
     </td>
-    <td className="py-2 pr-3 text-muted-foreground">{r.type}</td>
+    <td className="py-2 pr-3 text-muted-foreground">
+      {r.type}
+      {r.ivRvRatio != null && (
+        <span className="ml-1 text-[10px]" title="Current IV vs. this stock's realized volatility -- above 1x means options premium is pricing in more movement than the stock has actually been making.">
+          · IV/RV {r.ivRvRatio.toFixed(1)}x
+        </span>
+      )}
+    </td>
     <td className="py-2 pr-3">${r.strike}</td>
     <td className="py-2 pr-3">${r.stockPrice.toFixed(2)}</td>
     <td className="py-2 pr-3">${r.price.toFixed(2)}</td>

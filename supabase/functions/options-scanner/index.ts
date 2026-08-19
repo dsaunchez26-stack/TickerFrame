@@ -1,18 +1,15 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { TRACKED_TICKERS } from "../_shared/symbols.ts";
 
-// Same universe fetch-stock-data tracks, so every stock covered elsewhere in
-// the app now gets options coverage too instead of a separate, smaller list.
-const TICKERS = [
-  "AAPL", "NVDA", "TSLA", "AMD", "META", "MSFT", "GOOGL", "AMZN", "SPY", "QQQ",
-  "PLTR", "NFLX", "DIS", "JPM", "BAC", "XOM", "JNJ", "KO", "WMT", "V",
-  "CRM", "ORCL", "INTC", "ADBE", "UBER", "SOFI", "NIO", "PLUG", "SIRI", "NOK",
-  "F", "GPRO", "CLOV", "BBAI", "MARA", "RIOT", "SNDL", "LCID", "CHPT", "FCEL",
-  "IQ", "SNOW", "DDOG", "NET", "SHOP", "PYPL", "ROKU", "SNAP", "ABNB", "DASH",
-  "TGT", "LULU", "NKE", "SBUX", "CMG", "MS", "SCHW", "COF", "MRNA", "GILD",
-  "CVS", "BA", "GE", "FDX", "UPS", "DAL", "UAL", "AAL", "LUV", "MU",
-  "QCOM", "RIVN", "GM", "T", "VZ", "CMCSA",
-];
+// This used to be its own hand-copied 76-symbol list that never got updated
+// when the shared tracked universe grew to 114 (the same ticker-list-drift
+// bug already found and fixed in the other 4 scanners) -- silently missing
+// options coverage on every ticker added since. SPY/QQQ are added back
+// explicitly: they're intentionally included for options liquidity as
+// broad-market index ETFs, not because they're part of the tracked-stock
+// fundamentals universe, so they aren't in TRACKED_TICKERS itself.
+const TICKERS = [...TRACKED_TICKERS, "SPY", "QQQ"];
 
 interface TradierOption {
   strike: number;
@@ -266,6 +263,23 @@ Deno.serve(async (req) => {
     patternBySymbol.set(row.symbol, { pattern: row.pattern, confidence: row.pattern_confidence });
   }
 
+  // The underlying's actual realized volatility (computed separately by
+  // realized-volatility-scanner on its own schedule -- an expensive
+  // per-ticker history calc doesn't belong inline in a function this
+  // latency-sensitive). IV Rank alone only says "rich or cheap relative to
+  // this ticker's OWN past IV" -- it says nothing about whether the options
+  // market is currently pricing in more or less movement than the stock is
+  // actually making. That IV/RV ratio is what the income-strategy screens
+  // use to prefer shorter-dated contracts when premium is rich relative to
+  // realized movement, and longer-dated ones when it isn't.
+  const { data: rvRows } = await supabase
+    .from("realized_volatility")
+    .select("symbol, rv_annualized")
+    .in("symbol", TICKERS);
+  const rvBySymbol = new Map<string, number | null>(
+    (rvRows ?? []).map((r) => [r.symbol, r.rv_annualized !== null ? Number(r.rv_annualized) : null]),
+  );
+
   // One batched call for every ticker's spot price, instead of one call per
   // ticker -- Tradier's chain endpoint doesn't include the underlying price
   // the way the previous provider's did.
@@ -322,6 +336,12 @@ Deno.serve(async (req) => {
       if (Math.abs(o.strike - spot) / spot < 0.05) atmIvs.push(iv);
     }
     const currentIv = atmIvs.length ? atmIvs.reduce((a, b) => a + b, 0) / atmIvs.length : null;
+
+    // > 1 means the market is pricing in more movement than the stock has
+    // actually been making (premium looks rich relative to real behavior);
+    // < 1 means the reverse (premium looks cheap relative to real behavior).
+    const rv = rvBySymbol.get(ticker) ?? null;
+    const ivRvRatio = currentIv !== null && rv !== null && rv > 0 ? +(currentIv / rv).toFixed(2) : null;
 
     let ivRank = 50;
     if (currentIv !== null) {
@@ -472,6 +492,7 @@ Deno.serve(async (req) => {
         gamma,
         gpRatio: +((gamma / Math.max(price, 0.5)) * 100).toFixed(2),
         ivRank,
+        ivRvRatio,
         volume,
         oi,
         voi: +voi.toFixed(2),
