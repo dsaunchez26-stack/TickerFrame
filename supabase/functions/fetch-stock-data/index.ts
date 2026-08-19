@@ -7,7 +7,21 @@ import { logCronRun } from "../_shared/logCronRun.ts";
 // Real US equities tracked across the app -- see _shared/symbols.ts for the
 // full list. All live under category='core' since every current consumer
 // of stock_cache reads that category by default.
-const SYMBOLS = TRACKED_SYMBOLS;
+//
+// SPY/QQQ added on top: options-scanner and realized-volatility-scanner
+// both include them (the two most liquid, most-traded options underlyings)
+// for options coverage, but neither actually collects price history --
+// this is the only function that populates stock_price_history, so without
+// this, SPY/QQQ's realized volatility could never be computed and their
+// IV/RV ratio would silently stay null forever. Appended only to this
+// function's own local list, not to the shared TRACKED_SYMBOLS -- the other
+// 3 scanners (fundamentals/insider/earnings) don't apply to index ETFs the
+// way they do to individual companies.
+const SYMBOLS = [
+  ...TRACKED_SYMBOLS,
+  { symbol: "SPY", name: "SPDR S&P 500 ETF Trust" },
+  { symbol: "QQQ", name: "Invesco QQQ Trust" },
+];
 
 function sma(values: number[], period: number): number {
   const slice = values.slice(-period);

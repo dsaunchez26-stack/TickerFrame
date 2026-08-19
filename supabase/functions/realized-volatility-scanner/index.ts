@@ -24,14 +24,22 @@ const ANNUALIZATION_FACTOR = Math.sqrt(77 * 252);
 
 // A first attempt querying stock_price_history per-symbol (up to ~300
 // separate paginated round trips across 116 tickers) hit the edge
-// function's compute/resource ceiling. Same fix as fetch-stock-data's own
-// history fetch: one set of paginated bulk queries across every symbol at
-// once instead of N small ones -- and a shorter 3-day window (still ~230
-// market-hours samples per symbol, plenty for a short-term realized-vol
-// estimate) instead of the full 7-day retention, to keep total row volume
-// well inside what one invocation can hold and process.
+// function's compute/resource ceiling -- root cause turned out to be an
+// unrelated per-call Intl.DateTimeFormat construction in isMarketOpen (see
+// _shared/marketHours.ts), not data volume. Still switched to one set of
+// paginated bulk queries across every symbol at once instead of N small
+// ones, matching fetch-stock-data's own history fetch, and a shorter 3-day
+// window instead of the full 7-day retention.
+//
+// Rows interleave across all TICKERS.length symbols by recorded_at, so the
+// per-symbol row budget needs real headroom above "samples actually
+// needed": at ~900/symbol (24/7 raw rows, most of which are closed-market)
+// this reaches back roughly 3 real days per symbol, yielding the ~200+
+// market-hours samples after filtering that a 300/symbol budget (only
+// ~25 hours per symbol once interleaved) fell well short of.
 const LOOKBACK_DAYS = 3;
 const PAGE_SIZE = 1000;
+const TARGET_ROWS_PER_SYMBOL = 900;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -43,7 +51,7 @@ Deno.serve(async (req) => {
 
   try {
     const cutoff = new Date(Date.now() - LOOKBACK_DAYS * 86400_000).toISOString();
-    const HISTORY_TARGET = TICKERS.length * 300;
+    const HISTORY_TARGET = TICKERS.length * TARGET_ROWS_PER_SYMBOL;
     const pointsBySymbol = new Map<string, Array<{ price: number; recorded_at: string }>>();
 
     // Newest-first, not oldest-first: rows interleave across all 116
