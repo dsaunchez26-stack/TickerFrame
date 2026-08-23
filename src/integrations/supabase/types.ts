@@ -333,6 +333,30 @@ export type Database = {
         }
         Relationships: []
       }
+      realized_volatility: {
+        Row: {
+          price_change_pct: number | null
+          rv_annualized: number | null
+          sample_count: number
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          price_change_pct?: number | null
+          rv_annualized?: number | null
+          sample_count?: number
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          price_change_pct?: number | null
+          rv_annualized?: number | null
+          sample_count?: number
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sent_alerts: {
         Row: {
           alert_key: string

@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, LineChart, TrendingUp, TrendingDown, Activity, Briefcase, BarChart3,
   Newspaper, ShieldCheck, Gem, Radar, ListFilter, Wallet, Bookmark, Rss, Coins, Target, Layers, DollarSign, ChevronDown,
-  Calculator, Users, Building2, Percent,
+  Calculator, Users, Building2, Percent, RotateCcw,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -40,6 +40,7 @@ const groups: NavGroup[] = [
     { title: 'Short Candidates', url: '/value-radar/short-candidates', icon: TrendingDown },
     { title: 'Insider Activity', url: '/insider-activity', icon: Users },
     { title: 'Dividend Income', url: '/dividend-income', icon: Percent },
+    { title: 'Sector Rotation', url: '/sector-rotation', icon: RotateCcw },
     { title: 'News & Catalysts', url: '/news', icon: Newspaper },
   ]},
   { label: 'Tools', items: [

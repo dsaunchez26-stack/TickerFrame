@@ -40,6 +40,7 @@ const Legal = lazy(() => import("./pages/Legal.tsx"));
 const Methodology = lazy(() => import("./pages/Methodology.tsx"));
 const Health = lazy(() => import("./pages/Health.tsx"));
 const SettingsPage = lazy(() => import("./pages/Settings.tsx"));
+const SectorRotation = lazy(() => import("./pages/SectorRotation.tsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 import { AuthProvider } from "@/hooks/useAuth";
@@ -133,6 +134,7 @@ const App = () => (
               <Route path="/tools/risk-calculator" element={<RiskCalculator />} />
               <Route path="/insider-activity" element={<InsiderActivity />} />
               <Route path="/dividend-income" element={<DividendIncome />} />
+              <Route path="/sector-rotation" element={<SectorRotation />} />
               <Route element={<ValueRadarLayout />}>
                 <Route path="/value-radar" element={<ValueRadar />} />
                 <Route path="/value-radar/price-to-sales" element={<ValueRadarPriceToSales />} />

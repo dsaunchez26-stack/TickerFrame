@@ -82,12 +82,24 @@ Deno.serve(async (req) => {
     }
     for (const list of pointsBySymbol.values()) list.reverse();
 
-    const rows: Array<{ symbol: string; rv_annualized: number | null; sample_count: number; updated_at: string }> = [];
+    const rows: Array<{ symbol: string; rv_annualized: number | null; sample_count: number; price_change_pct: number | null; updated_at: string }> = [];
     const now = new Date().toISOString();
 
     for (const symbol of TICKERS) {
       const allPoints = pointsBySymbol.get(symbol) ?? [];
       const sessionPoints = allPoints.filter((p) => isMarketOpen(new Date(p.recorded_at)));
+
+      // Simple oldest-vs-newest change over the lookback window, independent
+      // of the realized-vol calc below (used by the Sector Rotation screen
+      // as a momentum signal, not a volatility one) -- doesn't need the
+      // session-hours filtering or the 30-return floor RV does, just two
+      // real prices bounding whatever window this run actually reached.
+      let priceChangePct: number | null = null;
+      if (allPoints.length >= 2) {
+        const oldest = allPoints[0];
+        const newest = allPoints[allPoints.length - 1];
+        if (oldest.price > 0) priceChangePct = ((newest.price - oldest.price) / oldest.price) * 100;
+      }
 
       const logReturns: number[] = [];
       for (let i = 1; i < sessionPoints.length; i++) {
@@ -103,7 +115,7 @@ Deno.serve(async (req) => {
       // number means anything -- a handful of returns from a quiet
       // afternoon shouldn't be presented as "this stock's volatility."
       if (logReturns.length < 30) {
-        rows.push({ symbol, rv_annualized: null, sample_count: logReturns.length, updated_at: now });
+        rows.push({ symbol, rv_annualized: null, sample_count: logReturns.length, price_change_pct: priceChangePct, updated_at: now });
         continue;
       }
 
@@ -112,7 +124,7 @@ Deno.serve(async (req) => {
       const stdDev = Math.sqrt(variance);
       const rvAnnualized = stdDev * ANNUALIZATION_FACTOR;
 
-      rows.push({ symbol, rv_annualized: rvAnnualized, sample_count: logReturns.length, updated_at: now });
+      rows.push({ symbol, rv_annualized: rvAnnualized, sample_count: logReturns.length, price_change_pct: priceChangePct, updated_at: now });
     }
 
     if (rows.length > 0) {
