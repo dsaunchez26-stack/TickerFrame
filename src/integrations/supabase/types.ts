@@ -102,6 +102,30 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_closes: {
+        Row: {
+          close_price: number
+          symbol: string
+          trade_date: string
+          updated_at: string
+          volume: number | null
+        }
+        Insert: {
+          close_price: number
+          symbol: string
+          trade_date: string
+          updated_at?: string
+          volume?: number | null
+        }
+        Update: {
+          close_price?: number
+          symbol?: string
+          trade_date?: string
+          updated_at?: string
+          volume?: number | null
+        }
+        Relationships: []
+      }
       earnings_calendar: {
         Row: {
           hour: string | null
@@ -629,18 +653,21 @@ export type Database = {
           price: number
           recorded_at: string
           symbol: string
+          volume: number | null
         }
         Insert: {
           id?: never
           price: number
           recorded_at?: string
           symbol: string
+          volume?: number | null
         }
         Update: {
           id?: never
           price?: number
           recorded_at?: string
           symbol?: string
+          volume?: number | null
         }
         Relationships: []
       }

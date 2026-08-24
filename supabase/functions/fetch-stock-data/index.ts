@@ -306,7 +306,21 @@ Deno.serve(async (req) => {
 
     // One batched insert for every symbol's new sample instead of N separate ones.
     await supabase.from("stock_price_history").insert(
-      results.map((r) => ({ symbol: r.symbol, price: r.price })),
+      results.map((r) => ({ symbol: r.symbol, price: r.price, volume: r.volume })),
+    );
+
+    // One row per symbol per trading day, upserted on every run -- by the
+    // time a given day's cron runs stop (market closes), whatever was the
+    // last price fetched that day is left sitting in the row, which
+    // approximates a real closing price closely enough for a daily chart.
+    // This is the only way longer-horizon (1M+) charts can ever show real
+    // data: Finnhub's free tier doesn't include historical daily candles,
+    // so there's nothing to backfill with -- this starts accumulating
+    // today and the frontend hides those views until there's enough of it.
+    const today = new Date().toISOString().slice(0, 10);
+    await supabase.from("daily_closes").upsert(
+      results.map((r) => ({ symbol: r.symbol, trade_date: today, close_price: r.price, volume: r.volume, updated_at: new Date().toISOString() })),
+      { onConflict: "symbol,trade_date" },
     );
   }
 
