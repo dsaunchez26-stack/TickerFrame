@@ -27,7 +27,14 @@ export const StockSearchBar = () => {
 
   return (
     <div className="relative w-full max-w-[180px] sm:max-w-[220px]">
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      <button
+        type="button"
+        onClick={submit}
+        className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        aria-label="Search"
+      >
+        <Search className="h-3.5 w-3.5" />
+      </button>
       <Input
         ref={inputRef}
         value={value}
