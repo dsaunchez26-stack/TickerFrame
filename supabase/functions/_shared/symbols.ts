@@ -128,6 +128,7 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   { symbol: "DUK", name: "Duke Energy Corp" },
   { symbol: "SO", name: "Southern Co" },
   { symbol: "MDT", name: "Medtronic plc" },
+  { symbol: "MP", name: "MP Materials Corp" },
 ];
 
 export const TRACKED_TICKERS: string[] = TRACKED_SYMBOLS.map((s) => s.symbol);
