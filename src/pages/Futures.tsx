@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Disclaimer } from '@/components/Disclaimer';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { TrackButton } from '@/components/options/TrackButton';
 
 interface FutureRow {
   code: string;
@@ -36,9 +39,40 @@ interface ScanResponse {
 const fmt = (v: number | null, digits = 2) => (v === null ? '—' : v.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits }));
 
 const Futures = () => {
+  const { user } = useAuth();
   const [data, setData] = useState<ScanResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [trackedCodes, setTrackedCodes] = useState<Set<string>>(new Set());
+
+  const loadTracked = async () => {
+    if (!user) { setTrackedCodes(new Set()); return; }
+    const { data: rows } = await supabase.from('futures_positions').select('product_code').eq('user_id', user.id);
+    setTrackedCodes(new Set((rows ?? []).map(r => r.product_code)));
+  };
+
+  useEffect(() => { loadTracked(); }, [user]);
+
+  const addToPortfolio = async (r: FutureRow, portfolioName: string | null) => {
+    if (!user) return;
+    if (r.last === null) {
+      toast.error('No live price available for this contract right now — try again once pricing is back.');
+      return;
+    }
+    const { error: insertError } = await supabase.from('futures_positions').insert({
+      user_id: user.id,
+      product_code: r.code,
+      product_name: r.name,
+      contract_symbol: r.symbol,
+      entry_price: r.last,
+      quantity: 1,
+      expiration: r.expiration,
+      portfolio_name: portfolioName,
+    });
+    if (insertError) { toast.error(insertError.message); return; }
+    toast.success(`${r.code} added${portfolioName ? ` to ${portfolioName}` : ''} at $${r.last.toFixed(2)} — adjust quantity or entry price from the Portfolio page.`);
+    loadTracked();
+  };
 
   const load = async () => {
     setLoading(true);
@@ -129,6 +163,7 @@ const Futures = () => {
                         <th className="py-2 pr-3">Last</th>
                         <th className="py-2 pr-3">Bid / Ask</th>
                         <th className="py-2 pr-3">Change</th>
+                        <th className="py-2 pr-3" />
                       </tr>
                     </thead>
                     <tbody>
@@ -150,6 +185,14 @@ const Futures = () => {
                                 {r.change >= 0 ? '+' : ''}{fmt(r.change)} ({r.changePercent >= 0 ? '+' : ''}{fmt(r.changePercent, 1)}%)
                               </span>
                             ) : '—'}
+                          </td>
+                          <td className="py-2 pr-3">
+                            {user && (
+                              <TrackButton
+                                tracked={trackedCodes.has(r.code)}
+                                onTrack={(portfolioName) => addToPortfolio(r, portfolioName)}
+                              />
+                            )}
                           </td>
                         </tr>
                       ))}

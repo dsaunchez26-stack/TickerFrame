@@ -14,6 +14,7 @@ import { PATTERN_BIAS } from "../_shared/patternBias.ts";
 //   4. big intraday price moves
 //   5. new bullish/bearish chart patterns
 //   6. earnings reports coming up within 3 days
+//   7. target-gain/stop-loss and big moves on futures positions
 // ...then posts whatever's new straight to that user's Slack webhook. Runs
 // every 30 minutes during market hours via cron; sent_alerts is the dedupe
 // log so the same filing/hit/idea/move/pattern/earnings date isn't
@@ -97,6 +98,30 @@ Deno.serve(async (req) => {
           return { symbol: r.symbol, sector, composite };
         })
         .filter((v): v is { symbol: string; sector: string; composite: number } => v !== null && v.composite >= IDEA_MIN_SCORE);
+    }
+
+    // Futures pricing (once per run, not once per user) -- futures-scanner
+    // calls out to tastytrade's own API for every product, so this is the
+    // one alert type that costs a real external round trip rather than a
+    // local table read. There's no futures price-history table at all
+    // (nothing else in this app persists it either), so this is the only
+    // way to know a held future's current price and today's change.
+    const futuresBySymbol = new Map<string, { last: number; changePercent: number | null }>();
+    if (activeUsers.some(u => u.alerts_target_stop || u.alerts_big_move)) {
+      const { data: anyFuturesHeld } = await supabase.from("futures_positions").select("id").limit(1);
+      if (anyFuturesHeld && anyFuturesHeld.length > 0) {
+        try {
+          const res = await fetch(
+            "https://xikmfhipjhabhwxtpyfn.supabase.co/functions/v1/futures-scanner",
+            { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer sb_publishable_SIJ2mxUscsis16keH6rYeA_ULXImGhs" }, body: "{}" },
+          );
+          const json = await res.json();
+          const rows: Array<{ code: string; last: number | null; changePercent: number | null }> = Array.isArray(json?.rows) ? json.rows : [];
+          for (const r of rows) {
+            if (r.last !== null) futuresBySymbol.set(r.code, { last: r.last, changePercent: r.changePercent });
+          }
+        } catch { /* futures pricing unavailable this run -- skip futures checks below, everything else still runs */ }
+      }
     }
 
     const now = new Date();
@@ -201,6 +226,43 @@ Deno.serve(async (req) => {
           const emoji = md.changePercent >= 0 ? "🚀" : "⚠️";
           lines.push(`${emoji} *${symbol}* is ${dir} ${Math.abs(md.changePercent).toFixed(1)}% today ($${md.price.toFixed(2)}) — worth deciding whether to act`);
           newKeys.push(key);
+        }
+      }
+
+      // --- Futures: target/stop-loss and big moves ---
+      if ((user.alerts_target_stop || user.alerts_big_move) && futuresBySymbol.size > 0) {
+        const { data: futuresPositions } = await supabase
+          .from("futures_positions")
+          .select("product_code, product_name, entry_price, target_gain_pct, stop_loss_pct")
+          .eq("user_id", user.user_id);
+
+        for (const f of futuresPositions ?? []) {
+          const live = futuresBySymbol.get(f.product_code);
+          if (!live) continue;
+          const gainPct = ((live.last - Number(f.entry_price)) / Number(f.entry_price)) * 100;
+
+          if (user.alerts_target_stop && (f.target_gain_pct !== null || f.stop_loss_pct !== null)) {
+            const key = `targetstop:${user.user_id}:futures:${f.product_code}:${today}`;
+            if (!(await alreadySent(key))) {
+              if (f.target_gain_pct !== null && gainPct >= Number(f.target_gain_pct)) {
+                lines.push(`🎯 *${f.product_code}* (${f.product_name}) hit your +${Number(f.target_gain_pct)}% target — currently +${gainPct.toFixed(1)}% ($${live.last.toFixed(2)})`);
+                newKeys.push(key);
+              } else if (f.stop_loss_pct !== null && gainPct <= -Number(f.stop_loss_pct)) {
+                lines.push(`🔻 *${f.product_code}* (${f.product_name}) hit your -${Number(f.stop_loss_pct)}% stop-loss — currently ${gainPct.toFixed(1)}% ($${live.last.toFixed(2)})`);
+                newKeys.push(key);
+              }
+            }
+          }
+
+          if (user.alerts_big_move && live.changePercent !== null && Math.abs(live.changePercent) >= BIG_MOVE_PCT) {
+            const key = `bigmove:${user.user_id}:futures:${f.product_code}:${today}`;
+            if (!(await alreadySent(key))) {
+              const dir = live.changePercent >= 0 ? "up" : "down";
+              const emoji = live.changePercent >= 0 ? "🚀" : "⚠️";
+              lines.push(`${emoji} *${f.product_code}* (${f.product_name}) is ${dir} ${Math.abs(live.changePercent).toFixed(1)}% today ($${live.last.toFixed(2)}) — worth deciding whether to act`);
+              newKeys.push(key);
+            }
+          }
         }
       }
 

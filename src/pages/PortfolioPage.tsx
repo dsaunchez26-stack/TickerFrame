@@ -17,6 +17,7 @@ import { PositionAlertBadge } from '@/components/PositionAlertBadge';
 import { PortfolioRating } from '@/components/PortfolioRating';
 import { PortfolioTrend } from '@/components/PortfolioTrend';
 import { PortfolioOptions } from '@/components/PortfolioOptions';
+import { PortfolioFutures } from '@/components/PortfolioFutures';
 
 type ViewMode = 'compare' | 'single';
 
@@ -252,6 +253,7 @@ const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
       </div>
 
       <PortfolioOptions portfolioName={name} />
+      <PortfolioFutures portfolioName={name} />
     </Card>
   );
 };

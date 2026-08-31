@@ -142,7 +142,7 @@ const SettingsPage = () => {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <Label htmlFor="bigmove" className="text-xs">Big price moves</Label>
-                <p className="text-[11px] text-muted-foreground">Notify when a stock you hold moves ±6% or more in a day — so a big swing doesn't go unnoticed.</p>
+                <p className="text-[11px] text-muted-foreground">Notify when a stock or future you hold moves ±6% or more in a day — so a big swing doesn't go unnoticed.</p>
               </div>
               <Switch id="bigmove" checked={settings.alerts_big_move} onCheckedChange={v => setSettings(s => ({ ...s, alerts_big_move: v }))} />
             </div>

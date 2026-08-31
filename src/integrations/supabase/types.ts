@@ -236,6 +236,54 @@ export type Database = {
         }
         Relationships: []
       }
+      futures_positions: {
+        Row: {
+          contract_symbol: string
+          created_at: string
+          entry_price: number
+          expiration: string | null
+          id: string
+          notes: string | null
+          portfolio_name: string | null
+          product_code: string
+          product_name: string
+          quantity: number
+          stop_loss_pct: number | null
+          target_gain_pct: number | null
+          user_id: string
+        }
+        Insert: {
+          contract_symbol: string
+          created_at?: string
+          entry_price: number
+          expiration?: string | null
+          id?: string
+          notes?: string | null
+          portfolio_name?: string | null
+          product_code: string
+          product_name: string
+          quantity?: number
+          stop_loss_pct?: number | null
+          target_gain_pct?: number | null
+          user_id: string
+        }
+        Update: {
+          contract_symbol?: string
+          created_at?: string
+          entry_price?: number
+          expiration?: string | null
+          id?: string
+          notes?: string | null
+          portfolio_name?: string | null
+          product_code?: string
+          product_name?: string
+          quantity?: number
+          stop_loss_pct?: number | null
+          target_gain_pct?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       insider_activity: {
         Row: {
           accession_number: string
