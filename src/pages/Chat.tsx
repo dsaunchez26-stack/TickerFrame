@@ -1,20 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Briefcase, Gem, Loader2, LayoutDashboard, Plus, RotateCcw, Send, Sparkles, Zap } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { MarketOverview } from '@/components/MarketOverview';
 import type { Database } from '@/integrations/supabase/types';
-
-const QUICK_LINKS = [
-  { to: '/dashboard', icon: LayoutDashboard, title: 'Dashboard', desc: 'Full trading command center' },
-  { to: '/value-radar', icon: Gem, title: 'Quality Screen', desc: 'Fundamentals-ranked stocks' },
-  { to: '/sector-rotation', icon: RotateCcw, title: 'Sector Rotation', desc: 'Out-of-favor sectors, still-strong names' },
-  { to: '/options', icon: Zap, title: 'Options Radar', desc: 'Market pulse, top setups' },
-  { to: '/portfolio', icon: Briefcase, title: 'Portfolio', desc: 'Your tracked positions' },
-];
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -254,43 +245,24 @@ const ChatPage = () => {
         </div>
 
         {!activeId && !loadingMessages ? (
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-3xl px-6 py-10">
-              <div className="mb-8">
-                <div className="font-heading text-2xl font-bold">{greeting()}{user?.email ? `, ${user.email.split('@')[0]}` : ''}</div>
-                <p className="mt-1 text-sm text-muted-foreground">Here's the market right now, quick links to jump in, or just ask me anything below.</p>
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto p-6">
+            <div className="w-full max-w-2xl">
+              <div className="mb-8 text-center">
+                <div className="font-heading text-3xl font-bold sm:text-4xl">
+                  {greeting()}{user?.email ? `, ${user.email.split('@')[0]}` : ''}
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">What do you want to know about the market today?</p>
               </div>
-
-              <MarketOverview />
-
-              <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
-                {QUICK_LINKS.map(q => (
-                  <Link key={q.to} to={q.to} className="group rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/40 hover:bg-secondary/30">
-                    <q.icon className="h-4 w-4 text-primary" />
-                    <div className="mt-1.5 font-heading text-xs font-semibold">{q.title}</div>
-                    <div className="mt-0.5 text-[10px] text-muted-foreground">{q.desc}</div>
-                  </Link>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {SUGGESTIONS.map(s => (
+                  <button
+                    key={s}
+                    onClick={() => send(s)}
+                    className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm hover:border-primary/40 hover:bg-secondary/50 transition-colors"
+                  >
+                    {s}
+                  </button>
                 ))}
-              </div>
-
-              <div className="mt-8">
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
-                    <Sparkles className="h-3 w-3 text-primary" />
-                  </div>
-                  <span className="text-xs font-semibold text-muted-foreground">Or ask me anything</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {SUGGESTIONS.map(s => (
-                    <button
-                      key={s}
-                      onClick={() => send(s)}
-                      className="rounded-lg border border-border bg-card px-3 py-2.5 text-left text-xs hover:bg-secondary/50 transition-colors"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
