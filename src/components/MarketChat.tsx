@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Send, Loader2, Sparkles } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { MessageSquare, Send, Loader2, Sparkles, Maximize2 } from 'lucide-react';
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
@@ -33,13 +35,18 @@ export const MarketChat = () => {
     setStreaming(true);
 
     try {
+      // The publishable key was being sent as the bearer token here, which
+      // satisfies the function's JWT check but carries no actual user
+      // identity -- market-chat can't answer "my portfolio" questions
+      // without the real signed-in user's session token instead.
+      const { data: { session } } = await supabase.auth.getSession();
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/market-chat`;
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string}`,
+          'Authorization': `Bearer ${session?.access_token ?? (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string)}`,
         },
         body: JSON.stringify({ messages: next }),
       });
@@ -106,11 +113,14 @@ export const MarketChat = () => {
         </Button>
       </SheetTrigger>
       <SheetContent className="flex w-full flex-col p-0 sm:max-w-md">
-        <SheetHeader className="border-b border-border px-4 py-3">
+        <SheetHeader className="flex-row items-center justify-between border-b border-border px-4 py-3 space-y-0">
           <SheetTitle className="flex items-center gap-2 font-heading">
             <Sparkles className="h-4 w-4 text-primary" />
             Market Intelligence
           </SheetTitle>
+          <Link to="/chat" className="text-muted-foreground hover:text-foreground" aria-label="Open full chat">
+            <Maximize2 className="h-3.5 w-3.5" />
+          </Link>
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-4 py-3" ref={scrollRef as any}>

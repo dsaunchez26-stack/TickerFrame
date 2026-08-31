@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, LineChart, TrendingUp, TrendingDown, Activity, Briefcase, BarChart3,
   Newspaper, ShieldCheck, Gem, Radar, ListFilter, Wallet, Bookmark, Rss, Coins, Target, Layers, DollarSign, ChevronDown,
-  Calculator, Users, Building2, Percent, RotateCcw,
+  Calculator, Users, Building2, Percent, RotateCcw, Sparkles,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -107,6 +107,9 @@ export const AppTopNav = () => {
       </Link>
       <Link to="/patterns" className={flatLinkClass(isActive('/patterns'))}>
         <Activity className="h-4 w-4" /> Patterns
+      </Link>
+      <Link to="/chat" className={flatLinkClass(isActive('/chat'))}>
+        <Sparkles className="h-4 w-4" /> Assistant
       </Link>
       {isAdmin && (
         <Link to="/health" className={flatLinkClass(isActive('/health'))}>

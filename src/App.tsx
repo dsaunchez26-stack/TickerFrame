@@ -41,6 +41,7 @@ const Methodology = lazy(() => import("./pages/Methodology.tsx"));
 const Health = lazy(() => import("./pages/Health.tsx"));
 const SettingsPage = lazy(() => import("./pages/Settings.tsx"));
 const SectorRotation = lazy(() => import("./pages/SectorRotation.tsx"));
+const ChatPage = lazy(() => import("./pages/Chat.tsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 import { AuthProvider } from "@/hooks/useAuth";
@@ -145,6 +146,7 @@ const App = () => (
               <Route path="/performance" element={<Performance />} />
               <Route path="/news" element={<News />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/chat" element={<ChatPage />} />
               <Route path="/health" element={<ProtectedRoute requireAdmin><Health /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Route>
