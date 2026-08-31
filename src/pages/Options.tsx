@@ -52,7 +52,7 @@ const Options = () => {
               {loading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <RefreshCw className="mr-1 h-3 w-3" />}
               Refresh
             </Button>
-            <Button asChild variant="ghost" size="sm"><Link to="/"><ArrowLeft className="mr-1 h-3 w-3" /> Stocks Dashboard</Link></Button>
+            <Button asChild variant="ghost" size="sm"><Link to="/dashboard"><ArrowLeft className="mr-1 h-3 w-3" /> Stocks Dashboard</Link></Button>
             <Button asChild variant="ghost" size="sm"><Link to="/performance"><TrendingUp className="mr-1 h-3 w-3" /> Track Record</Link></Button>
           </div>
         </div>

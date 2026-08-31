@@ -82,7 +82,7 @@ export const AppTopNav = () => {
 
   return (
     <div className="flex flex-wrap items-center gap-1">
-      <Link to="/" className={flatLinkClass(pathname === '/')}>
+      <Link to="/dashboard" className={flatLinkClass(pathname === '/dashboard')}>
         <LayoutDashboard className="h-4 w-4" /> Dashboard
       </Link>
       {groups.map(g => (
@@ -108,7 +108,7 @@ export const AppTopNav = () => {
       <Link to="/patterns" className={flatLinkClass(isActive('/patterns'))}>
         <Activity className="h-4 w-4" /> Patterns
       </Link>
-      <Link to="/chat" className={flatLinkClass(isActive('/chat'))}>
+      <Link to="/chat" className={flatLinkClass(isActive('/chat') || pathname === '/')}>
         <Sparkles className="h-4 w-4" /> Assistant
       </Link>
       {isAdmin && (

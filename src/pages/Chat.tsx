@@ -230,7 +230,7 @@ const ChatPage = () => {
       {/* Main column */}
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="flex h-12 flex-none items-center gap-2 border-b border-border px-4">
-          <Link to="/" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></Link>
+          <Link to="/dashboard" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></Link>
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="font-heading text-sm font-semibold">Market Intelligence</span>
           <span className="ml-auto text-[10px] text-muted-foreground">Answers use cached market data only</span>

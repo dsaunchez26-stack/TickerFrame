@@ -114,7 +114,8 @@ const App = () => (
 
             {/* Everything else requires a signed-in user */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/" element={<ChatPage />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route element={<StocksLayout />}>
                 <Route path="/stocks" element={<Stocks />} />
                 <Route path="/stocks/chart" element={<StocksChart />} />
