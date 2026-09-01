@@ -168,9 +168,37 @@ Deno.serve(async (req) => {
 
   const errors: Array<{ symbol: string; message: string }> = [];
 
+  // The tracked universe has grown past what one run can fetch from Finnhub
+  // (free tier, 60 req/min) and still finish inside Supabase's ~150s edge
+  // function execution ceiling -- at the old ~118-symbol size and this
+  // function's rate-limit-safe pacing (see BATCH_SIZE/BATCH_PAUSE_MS below),
+  // a full run was already taking ~140s, leaving almost no margin. Rather
+  // than cap the universe size to whatever fits in one 5-minute cron tick,
+  // each run now processes only the stalest symbols (never-fetched first,
+  // then oldest stock_cache.fetched_at), capped to a batch that reliably
+  // finishes with real margin to spare. Every symbol still gets fetched --
+  // it just rotates across a few cron ticks instead of every symbol landing
+  // in the same run, the same tradeoff fundamentals-scanner already makes.
+  const BATCH_LIMIT = 90;
+  const { data: cacheRows } = await supabase
+    .from("stock_cache")
+    .select("symbol, fetched_at")
+    .in("symbol", SYMBOLS.map((s) => s.symbol));
+  const fetchedAtBySymbol = new Map((cacheRows ?? []).map((r) => [r.symbol, r.fetched_at]));
+  const runBatch = [...SYMBOLS]
+    .sort((a, b) => {
+      const aTime = fetchedAtBySymbol.get(a.symbol);
+      const bTime = fetchedAtBySymbol.get(b.symbol);
+      if (!aTime && !bTime) return 0;
+      if (!aTime) return -1; // never fetched -- highest priority
+      if (!bTime) return 1;
+      return new Date(aTime).getTime() - new Date(bTime).getTime(); // oldest first
+    })
+    .slice(0, BATCH_LIMIT);
+
   // Finnhub's free tier no longer includes historical candles, so we maintain
-  // our own rolling price history and compute technicals from it. Fetch all
-  // symbols' history in one round trip instead of one query per symbol.
+  // our own rolling price history and compute technicals from it. Fetch this
+  // run's batch's history in one round trip instead of one query per symbol.
   //
   // IMPORTANT: this table has 100k+ rows, and PostgREST caps every response
   // at 1000 rows *regardless* of an explicit .limit() beyond that -- an
@@ -180,14 +208,14 @@ Deno.serve(async (req) => {
   // clear RSI's 15-sample floor only some of the time, and never enough for
   // Bollinger's 20-sample floor. Paginating with .range() in 1000-row pages
   // is what actually gets each symbol its full 60-sample window.
-  const HISTORY_TARGET = SYMBOLS.length * 60;
+  const HISTORY_TARGET = runBatch.length * 60;
   const PAGE_SIZE = 1000;
   const allHistory: Array<{ symbol: string; price: number; recorded_at: string }> = [];
   for (let offset = 0; offset < HISTORY_TARGET; offset += PAGE_SIZE) {
     const { data: page } = await supabase
       .from("stock_price_history")
       .select("symbol, price, recorded_at")
-      .in("symbol", SYMBOLS.map((s) => s.symbol))
+      .in("symbol", runBatch.map((s) => s.symbol))
       .order("recorded_at", { ascending: false })
       .range(offset, Math.min(offset + PAGE_SIZE, HISTORY_TARGET) - 1);
     if (!page || page.length === 0) break;
@@ -262,16 +290,15 @@ Deno.serve(async (req) => {
     };
   };
 
-  // Firing all of SYMBOLS at once used to look like it "mostly worked" (the
+  // Firing a whole batch at once used to look like it "mostly worked" (the
   // first ~54 requests would win a race for a limited pool of concurrent
   // outbound connections, the rest would 429/error) -- but that's a
   // deterministic split, not a rolling rate-limit window: since JS array
   // order is stable, it's consistently the SAME tail of symbols losing that
   // race on every single run, not a random subset that self-heals on the
-  // next cron tick. Any symbol appended near the end of SYMBOLS would never
-  // get a price at all. Small concurrent batches with a short pause between
-  // them keeps every symbol rotating through instead of a fixed subset
-  // always winning.
+  // next cron tick. Small concurrent batches with a short pause between them
+  // keeps every symbol in this run's batch rotating through instead of a
+  // fixed subset always winning.
   // Finnhub's free tier is 60 calls/minute. 3 symbols every 3.6s averages
   // 50/min -- real headroom below the ceiling, not just under it, since this
   // function's own quota usage stacks with whatever else in this project
@@ -283,15 +310,15 @@ Deno.serve(async (req) => {
   const BATCH_SIZE = 3;
   const BATCH_PAUSE_MS = 3600;
   const settled: PromiseSettledResult<Awaited<ReturnType<typeof fetchOne>>>[] = [];
-  for (let i = 0; i < SYMBOLS.length; i += BATCH_SIZE) {
-    const batch = SYMBOLS.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < runBatch.length; i += BATCH_SIZE) {
+    const batch = runBatch.slice(i, i + BATCH_SIZE);
     settled.push(...await Promise.allSettled(batch.map(fetchOne)));
-    if (i + BATCH_SIZE < SYMBOLS.length) await new Promise((r) => setTimeout(r, BATCH_PAUSE_MS));
+    if (i + BATCH_SIZE < runBatch.length) await new Promise((r) => setTimeout(r, BATCH_PAUSE_MS));
   }
   const results: Array<Record<string, unknown>> = [];
   settled.forEach((r, i) => {
     if (r.status === "fulfilled") results.push(r.value);
-    else errors.push({ symbol: SYMBOLS[i].symbol, message: r.reason instanceof Error ? r.reason.message : String(r.reason) });
+    else errors.push({ symbol: runBatch[i].symbol, message: r.reason instanceof Error ? r.reason.message : String(r.reason) });
   });
 
   if (results.length > 0) {
