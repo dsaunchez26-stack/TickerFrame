@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Loader2, Shield, TrendingUp, Gem } from 'lucide-react';
+import { Loader2, Shield, TrendingUp, Gem, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Disclaimer } from '@/components/Disclaimer';
 import { ValueRadarDetail } from '@/components/ValueRadarDetail';
 import { ValueRadarPageHeader } from '@/components/ValueRadarPageHeader';
@@ -33,6 +35,17 @@ const ValueRadarSmallCap = () => {
   const [minCap, setMinCap] = useState(300); // $M
   const [minBalance, setMinBalance] = useState(40);
   const [minGrowth, setMinGrowth] = useState(30);
+  // Hard, non-negotiable gates on top of the blended score below: P/S, D/E,
+  // and net margin normally only feed into a sector-relative average, which
+  // means a stock can still rank well despite failing any one of them on an
+  // absolute basis (e.g. unprofitable, or 5x sales) as long as its other
+  // factors compensate. This is the difference between "ranks well" and
+  // "is actually a cheap, sound, profitable business" -- on by default since
+  // that's this screen's whole point, but toggleable back to the pure
+  // ranked view.
+  const [strictValue, setStrictValue] = useState(true);
+  const STRICT_MAX_PS = 2;
+  const STRICT_MAX_DEBT_TO_EQUITY = 0.5;
   const [selected, setSelected] = useState<FundamentalsRow | null>(null);
 
   // Benchmarked against the FULL tracked universe (not just other small
@@ -55,6 +68,11 @@ const ValueRadarSmallCap = () => {
     () => rows
       .filter(r => r.market_cap !== null && r.market_cap >= minCap && r.market_cap <= maxCap
         && r.balance_sheet_score >= minBalance && r.growth_score >= minGrowth)
+      .filter(r => !strictValue || (
+        r.ps_ratio !== null && r.ps_ratio > 0 && r.ps_ratio <= STRICT_MAX_PS
+        && r.debt_to_equity !== null && r.debt_to_equity >= 0 && r.debt_to_equity <= STRICT_MAX_DEBT_TO_EQUITY
+        && r.net_margin !== null && r.net_margin > 0
+      ))
       .map(r => {
         const sector = broadSector(r.symbol, r.sector);
         const benchmark = sectorBenchmarks.get(sector);
@@ -69,7 +87,7 @@ const ValueRadarSmallCap = () => {
       })
       .filter((v): v is { row: FundamentalsRow; sector: string; benchmark: SectorBenchmark | undefined; composite: number } => v !== null)
       .sort((a, b) => b.composite - a.composite),
-    [rows, minCap, maxCap, minBalance, minGrowth, sectorBenchmarks],
+    [rows, minCap, maxCap, minBalance, minGrowth, strictValue, sectorBenchmarks],
   );
 
   return (
@@ -124,6 +142,21 @@ const ValueRadarSmallCap = () => {
               <Slider value={[minGrowth]} onValueChange={([v]) => setMinGrowth(v)} max={100} step={5} />
             </div>
           </CardContent>
+          <CardContent className="border-t border-border pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-signal-buy" />
+                <div>
+                  <Label htmlFor="strict-value" className="text-xs font-semibold">Strict value filters</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Hard requirements, not blended into the score: P/S ≤ {STRICT_MAX_PS}x, debt-to-equity ≤ {STRICT_MAX_DEBT_TO_EQUITY}, and a positive net profit margin.
+                    A stock missing any one of these is excluded outright, even if it ranks well otherwise.
+                  </p>
+                </div>
+              </div>
+              <Switch id="strict-value" checked={strictValue} onCheckedChange={setStrictValue} />
+            </div>
+          </CardContent>
         </Card>
 
         <Card>
@@ -134,7 +167,11 @@ const ValueRadarSmallCap = () => {
             {loading ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
             ) : candidates.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Nothing currently clears these thresholds. Try widening the market-cap range or lowering the quality filters.</p>
+              <p className="text-xs text-muted-foreground">
+                Nothing currently clears these thresholds. Try widening the market-cap range, lowering the quality filters
+                {strictValue ? ', or turning off strict value filters' : ''} — deeply undervalued, debt-free, already-profitable
+                small-caps are a genuinely narrow slice of the tracked universe.
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
@@ -176,6 +213,9 @@ const ValueRadarSmallCap = () => {
               </div>
             )}
             <p className="mt-3 text-[10px] italic text-muted-foreground/70">
+              {strictValue && (
+                <>Strict value filters are applied first, as hard pass/fail cutoffs, before any scoring happens. <br /></>
+              )}
               Each multiple (P/E, P/B, P/S) is scored against its own sector's median among tracked peers — including
               large-caps, not just other small-caps — so a stock isn't penalized just for being in a structurally
               higher-multiple industry. Sectors with fewer than 4 tracked peers reporting a metric fall back to a flat

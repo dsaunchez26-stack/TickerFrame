@@ -130,7 +130,34 @@ Deno.serve(async (req) => {
     const rows: Record<string, unknown>[] = [];
 
     // 2. Per-ticker: find recent Form 4 filings, then fetch + parse each one's raw XML.
-    const perTicker = SYMBOLS.map((ticker) => ({ ticker, cik: cikByTicker.get(ticker) })).filter((t) => t.cik);
+    //
+    // The tracked universe has grown past what one run can process here and
+    // still finish inside Supabase's ~150s edge function ceiling -- a live
+    // measurement at ~293 resolved tickers already took ~82s (55% of the
+    // budget), and this list has since grown well beyond that. Same
+    // stalest-first partial-batching fix as fetch-stock-data: process the
+    // least-recently-scanned tickers first (never-scanned ones highest
+    // priority), capped to a batch that reliably finishes with real margin.
+    // insider-scanner runs twice daily, so a multi-run rotation to cover
+    // the full universe is a fine tradeoff -- insider filings themselves
+    // already lag the actual trade by up to 2 SEC business days.
+    const allResolved = SYMBOLS.map((ticker) => ({ ticker, cik: cikByTicker.get(ticker) })).filter((t) => t.cik);
+    const { data: scanState } = await supabase
+      .from("insider_scan_state")
+      .select("ticker, last_scanned_at")
+      .in("ticker", allResolved.map((t) => t.ticker));
+    const lastScannedByTicker = new Map((scanState ?? []).map((r) => [r.ticker, r.last_scanned_at]));
+    const BATCH_LIMIT = 300;
+    const perTicker = [...allResolved]
+      .sort((a, b) => {
+        const aTime = lastScannedByTicker.get(a.ticker);
+        const bTime = lastScannedByTicker.get(b.ticker);
+        if (!aTime && !bTime) return 0;
+        if (!aTime) return -1; // never scanned -- highest priority
+        if (!bTime) return 1;
+        return new Date(aTime).getTime() - new Date(bTime).getTime(); // oldest first
+      })
+      .slice(0, BATCH_LIMIT);
     await withConcurrency(perTicker, 8, 1000, async ({ ticker, cik }) => {
       const cik10 = cik!;
       const subRes = await fetch(`https://data.sec.gov/submissions/CIK${cik10}.json`, { headers: secHeaders });
@@ -183,9 +210,11 @@ Deno.serve(async (req) => {
     });
 
     // 3. Schedule 13D/13G (5%+ holders): one full-text-search call covers every
-    // tracked ticker at once (comma-separated CIKs), since there's no per-share
-    // price to extract we don't need the per-filing document fetch Form 4 needs.
-    const trackedCiks = new Set(cikByTicker.values());
+    // ticker in THIS RUN'S batch at once (comma-separated CIKs), since there's
+    // no per-share price to extract we don't need the per-filing document
+    // fetch Form 4 needs. Scoped to the batch (not the full tracked universe)
+    // to stay consistent with what's actually being refreshed this run.
+    const trackedCiks = new Set(perTicker.map((t) => t.cik!));
     const cikList = Array.from(trackedCiks).join(",");
     const scheduleCutoff = new Date(Date.now() - SCHEDULE_LOOKBACK_DAYS * 86400_000).toISOString().slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);
@@ -234,9 +263,18 @@ Deno.serve(async (req) => {
       if (upsertError) throw upsertError;
     }
 
+    // Mark every ticker in this run's batch as scanned regardless of
+    // whether it produced any rows -- otherwise a ticker with no recent
+    // insider activity would look "never scanned" forever and starve the
+    // rest of the universe by always sorting to the front of the next run.
+    await supabase.from("insider_scan_state").upsert(
+      perTicker.map((t) => ({ ticker: t.ticker, last_scanned_at: new Date().toISOString() })),
+      { onConflict: "ticker" },
+    );
+
     await logCronRun(supabase, "insider-scanner", true, dedupedRows.length, errors.length ? `${errors.length} ticker errors` : null);
 
-    return new Response(JSON.stringify({ scanned: perTicker.length, found: dedupedRows.length, errors }), {
+    return new Response(JSON.stringify({ scanned: perTicker.length, tracked: allResolved.length, found: dedupedRows.length, errors }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
