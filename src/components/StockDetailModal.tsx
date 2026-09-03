@@ -5,7 +5,8 @@ import { PatternBadge } from '@/components/PatternBadge';
 import { CandlestickChart } from '@/components/CandlestickChart';
 import { useStockCandles, TIMEFRAMES, type Timeframe } from '@/hooks/useStockCandles';
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import type { Database } from '@/integrations/supabase/types';
 
 interface Props {
   symbol: string | null;
@@ -13,6 +14,18 @@ interface Props {
 }
 
 interface LiveQuote { price: number; prevClose: number; changePercent: number }
+type FundamentalsRow = Database['public']['Tables']['stock_fundamentals']['Row'];
+type InsiderRow = Database['public']['Tables']['insider_activity']['Row'];
+
+const fmtMarketCap = (v: number | null) => {
+  if (v === null) return 'not reported';
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}T`;
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}B`;
+  return `$${v.toFixed(0)}M`;
+};
+const fmtPct = (v: number | null, digits = 1) => (v === null ? 'not reported' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`);
+const fmtNum = (v: number | null, digits = 2) => (v === null ? 'not reported' : v.toFixed(digits));
+const scoreColor = (score: number) => (score >= 65 ? 'text-signal-buy' : score >= 40 ? 'text-signal-hold' : 'text-signal-sell');
 
 export const StockDetailModal = ({ symbol, onClose }: Props) => {
   const { data } = useStockData();
@@ -44,9 +57,38 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
     return () => { cancelled = true; };
   }, [symbol, stock]);
 
+  // Fundamentals and insider activity are queried directly by symbol
+  // instead of through the same context/hook every Research page uses --
+  // those load the FULL tracked universe (500+ rows) for peer-percentile
+  // ranking, which is unnecessary weight for a quick search lookup. This
+  // works for any symbol that's been through fundamentals-scanner /
+  // insider-scanner at least once, tracked or not -- independent of
+  // whether stock_cache (the chart/RSI/MACD source above) has it.
+  const [fundamentals, setFundamentals] = useState<FundamentalsRow | null>(null);
+  const [loadingFundamentals, setLoadingFundamentals] = useState(false);
+  const [insiderRows, setInsiderRows] = useState<InsiderRow[]>([]);
+
+  useEffect(() => {
+    setFundamentals(null);
+    setInsiderRows([]);
+    if (!symbol) return;
+    let cancelled = false;
+    setLoadingFundamentals(true);
+    Promise.all([
+      supabase.from('stock_fundamentals').select('*').eq('symbol', symbol).maybeSingle(),
+      supabase.from('insider_activity').select('*').eq('ticker', symbol).order('filing_date', { ascending: false }).limit(5),
+    ]).then(([fundRes, insiderRes]) => {
+      if (cancelled) return;
+      setLoadingFundamentals(false);
+      if (fundRes.data) setFundamentals(fundRes.data);
+      if (insiderRes.data) setInsiderRows(insiderRes.data);
+    });
+    return () => { cancelled = true; };
+  }, [symbol]);
+
   return (
     <Dialog open={!!symbol} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {symbol}
@@ -119,6 +161,104 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
               {symbol} isn't part of this site's actively-tracked list, so there's no chart, RSI/MACD, or pattern detection for it here — just a live price.
             </p>
           </div>
+        )}
+
+        {loadingFundamentals && (
+          <div className="flex h-16 items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+        )}
+
+        {!loadingFundamentals && fundamentals && (
+          <div className="space-y-4 border-t border-border pt-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-border p-3 text-center">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Balance Sheet Strength</div>
+                <div className={`font-heading text-2xl font-bold ${scoreColor(fundamentals.balance_sheet_score)}`}>
+                  {fundamentals.balance_sheet_score}<span className="text-xs text-muted-foreground">/100</span>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border p-3 text-center">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Growth & Momentum</div>
+                <div className={`font-heading text-2xl font-bold ${scoreColor(fundamentals.growth_score)}`}>
+                  {fundamentals.growth_score}<span className="text-xs text-muted-foreground">/100</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Valuation</div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div><div className="text-muted-foreground">P/E</div><div className="font-semibold">{fmtNum(fundamentals.pe_ratio, 1)}</div></div>
+                <div><div className="text-muted-foreground">P/B</div><div className="font-semibold">{fmtNum(fundamentals.pb_ratio)}</div></div>
+                <div><div className="text-muted-foreground">P/S</div><div className="font-semibold">{fundamentals.ps_ratio !== null ? `${fundamentals.ps_ratio.toFixed(2)}x` : 'not reported'}</div></div>
+                <div><div className="text-muted-foreground">Market Cap</div><div className="font-semibold">{fmtMarketCap(fundamentals.market_cap)}</div></div>
+                <div><div className="text-muted-foreground">Dividend Yield</div><div className="font-semibold">{fundamentals.dividend_yield !== null ? `${fundamentals.dividend_yield.toFixed(2)}%` : 'none'}</div></div>
+                <div><div className="text-muted-foreground">52-Week Range</div><div className="font-semibold">{fundamentals.week52_low !== null && fundamentals.week52_high !== null ? `$${fundamentals.week52_low.toFixed(2)}–$${fundamentals.week52_high.toFixed(2)}` : 'not reported'}</div></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Balance Sheet</div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div><div className="text-muted-foreground">Debt / Equity</div><div className="font-semibold">{fmtNum(fundamentals.debt_to_equity)}</div></div>
+                <div><div className="text-muted-foreground">Current Ratio</div><div className="font-semibold">{fmtNum(fundamentals.current_ratio)}</div></div>
+                <div><div className="text-muted-foreground">Net Margin</div><div className="font-semibold">{fmtPct(fundamentals.net_margin)}</div></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Growth</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div><div className="text-muted-foreground">Revenue Growth YoY</div><div className="font-semibold">{fmtPct(fundamentals.revenue_growth_yoy)}</div></div>
+                <div><div className="text-muted-foreground">EPS Growth YoY</div><div className="font-semibold">{fmtPct(fundamentals.eps_growth_yoy)}</div></div>
+              </div>
+            </div>
+
+            {insiderRows.length > 0 && (
+              <div>
+                <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Recent Insider Activity</div>
+                <div className="space-y-1.5">
+                  {insiderRows.map(r => {
+                    const isBuy = r.transaction_code === 'P';
+                    const isHolder = r.filer_title === '5%+ Holder';
+                    return (
+                      <div key={r.id} className="flex items-center justify-between rounded-md border border-border/40 px-3 py-1.5 text-xs">
+                        <div>
+                          <div className="font-semibold">{r.filer_name}</div>
+                          <div className="text-muted-foreground">{r.filer_title ?? 'Filer'} · {r.filing_date}</div>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-right">
+                          {isBuy ? <TrendingUp className="h-3 w-3 text-signal-buy" /> : isHolder ? <Minus className="h-3 w-3 text-muted-foreground" /> : <TrendingDown className="h-3 w-3 text-signal-sell" />}
+                          <div>
+                            {r.shares !== null && r.price_per_share !== null ? (
+                              <>
+                                <div className={`font-semibold ${isBuy ? 'text-signal-buy' : 'text-foreground'}`}>
+                                  {r.shares.toLocaleString()} sh @ ${r.price_per_share.toFixed(2)}
+                                </div>
+                                {r.total_value !== null && <div className="text-muted-foreground">${(r.total_value / 1000).toFixed(0)}K</div>}
+                              </>
+                            ) : (
+                              <div className="text-muted-foreground">{r.form_type} filing</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <p className="text-[10px] italic text-muted-foreground/70">
+              Fundamentals reflect {fundamentals.name}'s most recently reported financials — not a projection, and not a
+              recommendation to buy or sell. A missing figure means it wasn't reported, not zero.
+            </p>
+          </div>
+        )}
+
+        {!loadingFundamentals && !fundamentals && (stock || liveQuote) && (
+          <p className="border-t border-border pt-4 text-center text-[11px] text-muted-foreground">
+            No fundamentals or insider activity on file yet for {symbol}.
+          </p>
         )}
       </DialogContent>
     </Dialog>
