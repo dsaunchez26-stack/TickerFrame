@@ -628,6 +628,9 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   // Space / deep tech (round 2)
   { symbol: "RKLB", name: "Rocket Lab USA Inc" },
   { symbol: "IONQ", name: "IonQ Inc" },
+  // Added on user request (Sep 2026)
+  { symbol: "TTMI", name: "TTM Technologies Inc" },
+  { symbol: "BIAF", name: "BioAffinity Technologies Inc" },
 ];
 
 export const TRACKED_TICKERS: string[] = TRACKED_SYMBOLS.map((s) => s.symbol);
