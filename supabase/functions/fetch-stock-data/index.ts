@@ -237,7 +237,14 @@ Deno.serve(async (req) => {
     );
     const quote = await quoteRes.json();
     if (!quote || typeof quote.c !== "number" || quote.c === 0) {
-      throw new Error("No quote data returned");
+      // "No quote data returned" used to swallow the actual cause -- a
+      // rate-limited request (429, body like {"error":"API limit reached"})
+      // looks identical to a genuinely-missing quote once reduced to that
+      // one message, making the two indistinguishable from the errors array
+      // alone. Surfacing the real HTTP status and response body here is
+      // what actually lets a persistent failure be diagnosed instead of
+      // guessed at.
+      throw new Error(`No quote data returned (HTTP ${quoteRes.status}): ${JSON.stringify(quote).slice(0, 200)}`);
     }
 
     const price = quote.c;
