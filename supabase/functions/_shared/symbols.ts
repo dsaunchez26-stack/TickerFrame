@@ -620,6 +620,74 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   // Added on user request (Sep 2026)
   { symbol: "TTMI", name: "TTM Technologies Inc" },
   { symbol: "BIAF", name: "BioAffinity Technologies Inc" },
+  // Round 3 expansion (Sep 2026) -- every addition here was checked against
+  // recent M&A/delisting activity before being added, the lesson learned
+  // from round 2 turning up 15 already-dead tickers (see the "Fix 15
+  // dead/renamed tickers" commit). Biased toward larger, long-independent
+  // companies specifically because they're less likely to be an active
+  // acquisition target than a mid-cap.
+  // Technology / software
+  { symbol: "MCHP", name: "Microchip Technology Inc" },
+  { symbol: "GRMN", name: "Garmin Ltd" },
+  { symbol: "CDW", name: "CDW Corp" },
+  { symbol: "JBL", name: "Jabil Inc" },
+  { symbol: "FLEX", name: "Flex Ltd" },
+  { symbol: "TYL", name: "Tyler Technologies Inc" },
+  { symbol: "ROP", name: "Roper Technologies Inc" },
+  { symbol: "IT", name: "Gartner Inc" },
+  { symbol: "EPAM", name: "EPAM Systems Inc" },
+  { symbol: "PTC", name: "PTC Inc" },
+  { symbol: "SSNC", name: "SS&C Technologies Holdings" },
+  { symbol: "MANH", name: "Manhattan Associates Inc" },
+  // Healthcare
+  { symbol: "RVTY", name: "Revvity Inc" },
+  { symbol: "DGX", name: "Quest Diagnostics Inc" },
+  { symbol: "LH", name: "Labcorp Holdings Inc" },
+  // Financials / insurance
+  { symbol: "SYF", name: "Synchrony Financial" },
+  { symbol: "AJG", name: "Arthur J Gallagher & Co" },
+  { symbol: "BRO", name: "Brown & Brown Inc" },
+  { symbol: "ERIE", name: "Erie Indemnity Co" },
+  { symbol: "WRB", name: "W.R. Berkley Corp" },
+  { symbol: "RE", name: "Everest Group Ltd" },
+  { symbol: "MKL", name: "Markel Group Inc" },
+  // Industrials
+  { symbol: "WAB", name: "Westinghouse Air Brake Technologies" },
+  { symbol: "SNA", name: "Snap-on Inc" },
+  { symbol: "ALLE", name: "Allegion plc" },
+  { symbol: "IEX", name: "IDEX Corp" },
+  { symbol: "NDSN", name: "Nordson Corp" },
+  { symbol: "FTV", name: "Fortive Corp" },
+  { symbol: "OTIS", name: "Otis Worldwide Corp" },
+  { symbol: "CARR", name: "Carrier Global Corp" },
+  { symbol: "JCI", name: "Johnson Controls International" },
+  { symbol: "LII", name: "Lennox International Inc" },
+  // Energy
+  { symbol: "WES", name: "Western Midstream Partners LP" },
+  { symbol: "LNG", name: "Cheniere Energy Inc" },
+  // Materials
+  { symbol: "CTVA", name: "Corteva Inc" },
+  { symbol: "FMC", name: "FMC Corp" },
+  { symbol: "RPM", name: "RPM International Inc" },
+  { symbol: "AXTA", name: "Axalta Coating Systems" },
+  // Utilities
+  { symbol: "WTRG", name: "Essential Utilities Inc" },
+  { symbol: "AWK", name: "American Water Works Co" },
+  // REITs
+  { symbol: "REXR", name: "Rexford Industrial Realty" },
+  { symbol: "FR", name: "First Industrial Realty Trust" },
+  { symbol: "CUBE", name: "CubeSmart" },
+  { symbol: "NNN", name: "NNN REIT Inc" },
+  { symbol: "ADC", name: "Agree Realty Corp" },
+  { symbol: "STAG", name: "Stag Industrial Inc" },
+  { symbol: "GLPI", name: "Gaming and Leisure Properties" },
+  // Automotive
+  { symbol: "MGA", name: "Magna International Inc" },
+  { symbol: "LEA", name: "Lear Corp" },
+  // Fintech / payments
+  { symbol: "FOUR", name: "Shift4 Payments Inc" },
+  { symbol: "WEX", name: "WEX Inc" },
+  { symbol: "JKHY", name: "Jack Henry & Associates" },
 ];
 
 export const TRACKED_TICKERS: string[] = TRACKED_SYMBOLS.map((s) => s.symbol);
