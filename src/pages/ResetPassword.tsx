@@ -60,7 +60,7 @@ export default function ResetPassword() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10">
             <Activity className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Set a new password</h1>
+          <h1 className="font-heading text-2xl font-bold">Set a new password</h1>
         </div>
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Choose a new password</CardTitle></CardHeader>

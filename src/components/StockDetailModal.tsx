@@ -137,7 +137,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
               )}
             </div>
             <div className="grid grid-cols-3 gap-3 text-xs">
-              <div><div className="text-muted-foreground">RSI</div><div className="font-semibold">{stock.rsi}</div></div>
+              <div><div className="text-muted-foreground">RSI</div><div className="font-semibold">{stock.rsi.toFixed(1)}</div></div>
               <div><div className="text-muted-foreground">MACD</div><div className="font-semibold">{stock.macd.toFixed(3)}</div></div>
               <div><div className="text-muted-foreground">Volume</div><div className="font-semibold">{stock.volume > 0 ? `${(stock.volume / 1e6).toFixed(1)}M` : 'N/A'}</div></div>
             </div>

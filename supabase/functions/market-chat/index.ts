@@ -20,9 +20,28 @@ function sseChunk(text: string): string {
   return `data: ${payload}\n\ndata: [DONE]\n\n`;
 }
 
+// The tracked universe has grown to include enough short, real tickers
+// that plenty of them are also ordinary English words a question would
+// naturally contain -- ALL (Allstate), NOW (ServiceNow), LOW (Lowe's),
+// IT (Gartner), SO (Southern Co), ON (ON Semiconductor), HAS (Hasbro),
+// WELL (Welltower), KEY (KeyCorp), COST (Costco), GAP (Gap Inc, and "gap
+// up/down" is itself real trading vocabulary), A (Agilent), and more.
+// Without this, "how is it doing now" would extract tickers IT and NOW
+// and answer with a Gartner/ServiceNow snapshot instead of recognizing
+// this as a question with no ticker in it at all. Covers common function
+// words plus the specific content words above known to collide.
+const COMMON_WORD_STOPLIST = new Set([
+  "A", "I", "AM", "AN", "AS", "AT", "BE", "BUT", "BY", "DO", "GO", "HE", "HI", "IF", "IN", "IS", "IT", "ITS",
+  "ME", "MY", "NO", "OF", "OK", "ON", "OR", "OUR", "OUT", "RE", "SO", "TO", "UP", "US", "WE",
+  "ALL", "AND", "ANY", "ARE", "CAN", "COST", "DID", "DOES", "DOING", "DOWN", "FIVE", "FOR", "FROM", "GAP",
+  "HAS", "HAVE", "HER", "HERE", "HIGH", "HIM", "HIS", "HOW", "INTO", "JUST", "KEY", "LOW", "NOT", "NOW",
+  "OUT", "OVER", "OWN", "SOME", "TAP", "THAN", "THAT", "THE", "THEIR", "THEM", "THEN", "THERE", "THEY",
+  "THIS", "WAS", "WELL", "WERE", "WHAT", "WHEN", "WHERE", "WHICH", "WHO", "WHY", "WILL", "WITH", "WOULD", "YOU", "YOUR",
+]);
+
 function extractTickers(text: string): string[] {
   const words = Array.from(new Set(text.toUpperCase().match(/\b[A-Z]{1,5}\b/g) ?? []));
-  return words.filter((w) => TRACKED_TICKERS.includes(w));
+  return words.filter((w) => !COMMON_WORD_STOPLIST.has(w) && TRACKED_TICKERS.includes(w));
 }
 
 function fmtPct(v: number | null): string {
@@ -123,7 +142,7 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
       reply: "RSI measures how overbought or oversold a stock is, 0-100. Below 35 with price still above its 20-day average can flag a bounce setup here; above 68 flags overbought. It's one of two conditions (with MACD momentum) behind this site's buy/sell signal." },
     { test: t.indexOf("macd") !== -1,
       reply: "MACD compares a fast and slow moving average to gauge momentum. This site checks MACD's own signal line before firing a buy or sell — RSI alone can stay 'oversold' through a real downtrend, so requiring MACD agreement cuts down on that false-positive pattern." },
-    { test: t.indexOf("moving average") !== -1 || t.indexOf(" sma") !== -1 || t.indexOf(" ema") !== -1,
+    { test: t.indexOf("moving average") !== -1 || /\bsma\b/.test(t) || /\bema\b/.test(t),
       reply: "The moving average on each chart adapts its period to how much history is available, so it's meaningful even on a short intraday series instead of a fixed period that'd be blank at the start." },
     { test: t.indexOf("bollinger") !== -1,
       reply: "Bollinger Bands plot two lines two standard deviations above and below a moving average — price pressing the upper band means it's stretched to the upside relative to its own recent range, the lower band the opposite. Toggle them on from any Price Chart." },
@@ -140,7 +159,7 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
     { test: t.indexOf("growth score") !== -1 || t.indexOf("growth & momentum") !== -1,
       reply: "Growth & Momentum scores revenue growth, EPS growth, and recent earnings-surprise history against sector peers, so a mature staples company and a hypergrowth software name aren't held to the same bar." },
     { test: t.indexOf("small cap") !== -1 || t.indexOf("small-cap") !== -1,
-      reply: "The Small-Cap Value screen filters to roughly $300M-$2B market cap and blends sector-relative valuation with Balance Sheet and Growth scores, so it's not just 'cheap and small' but 'cheap, small, and still sound.'" },
+      reply: "The Small-Cap Value screen filters to roughly $300M-$2B market cap and blends sector-relative valuation with Balance Sheet and Growth scores. Its Strict Value Filters toggle (on by default) goes further, requiring P/S under 2x, debt-to-equity under 0.5, and a positive net margin as hard cutoffs -- not just 'cheap and small' but 'cheap, small, profitable, and low-debt.'" },
     { test: t.indexOf("short") !== -1 && (t.indexOf("candidate") !== -1 || t.indexOf("squeeze") !== -1),
       reply: "Short Candidates pairs a weak Balance Sheet score with an overbought technical reading. It flags the real risk up front: weak-fundamentals stocks that are heavily shorted are exactly the setups most prone to squeezes." },
     { test: t.indexOf("iv rank") !== -1 || t.indexOf("iv/rv") !== -1 || t.indexOf("implied vol") !== -1,
@@ -160,15 +179,15 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
     { test: t.indexOf("penny stock") !== -1,
       reply: "Penny Stocks is a dedicated screen for the lower-priced names in the tracked universe, using the same signal and pattern detection as everywhere else." },
     { test: t.indexOf("futures") !== -1,
-      reply: "Futures shows front-month contracts across major products. There's no historical price chart for futures yet — quotes only for now." },
+      reply: "Futures shows front-month contracts across major products, and you can track positions in your Portfolio the same as stocks and options -- target/stop alerts and big-move alerts cover them too. There's no historical price chart for futures yet — quotes only for now." },
     { test: t.indexOf("risk calculator") !== -1 || t.indexOf("position siz") !== -1,
-      reply: "The Risk Calculator (under Tools) sizes a position from your account size, risk-per-trade, and stop distance." },
+      reply: "The Risk Calculator (under Tools) has three modes -- stock, option, and futures -- each sizing a position and its dollar risk/reward from your entry, stop, and target. The futures mode uses the contract's real exchange-defined multiplier, not a naive quantity times price." },
     { test: t.indexOf("alert") !== -1 || t.indexOf("notif") !== -1 || t.indexOf("slack") !== -1,
       reply: "Settings lets you wire up Slack alerts for insider buys, target/stop-loss hits, big price moves, new chart patterns, upcoming earnings, and new small-cap value ideas." },
     { test: t.indexOf("performance") !== -1 || t.indexOf("track record") !== -1,
       reply: "The Performance page auto-tracks every pick you've added against its target and stop, so you can see real outcomes over time." },
     { test: t.indexOf("what can you do") !== -1 || t.indexOf("what can this") !== -1 || t.indexOf("features") !== -1,
-      reply: "Quite a bit: live stock signals with RSI/MACD/patterns, an options scanner and income-strategy screens, fundamentals-based value screens (Sector Rotation, Dividend Income), insider-activity tracking, a portfolio tracker with auto-tracked performance, a risk calculator, and Slack alerts. Ask about any of those, or a specific ticker." },
+      reply: "Quite a bit: live stock signals with RSI/MACD/patterns, an options scanner and income-strategy screens, futures quotes and portfolio tracking, fundamentals-based value screens (Sector Rotation, Dividend Income), insider-activity tracking, a portfolio tracker with auto-tracked performance, a stock/option/futures risk calculator, and Slack alerts. Ask about any of those, or a specific ticker." },
     { test: (t.indexOf("should i buy") !== -1 || t.indexOf("should i sell") !== -1 || t.indexOf("guarantee") !== -1),
       reply: "I can show you what the data says — score, signal, valuation versus sector — but I can't tell you whether to actually buy or sell. This site is research and education only, not financial advice." },
   ];
@@ -188,10 +207,10 @@ async function tickerSnapshot(supabase: ReturnType<typeof createClient>, ticker:
 
   const parts = [
     `${ticker} is at $${Number(cache.price).toFixed(2)} (${fmtPct(cache.change_percent !== null ? Number(cache.change_percent) : null)} today).`,
-    `RSI ${cache.rsi ?? "n/a"}, MACD ${cache.macd !== null ? Number(cache.macd).toFixed(3) : "n/a"}, signal: ${cache.signal ?? "hold"}.`,
+    `RSI ${cache.rsi !== null ? Number(cache.rsi).toFixed(1) : "n/a"}, MACD ${cache.macd !== null ? Number(cache.macd).toFixed(3) : "n/a"}, signal: ${cache.signal ?? "hold"}.`,
   ];
   if (cache.pattern && cache.pattern !== "consolidation") parts.push(`Pattern detected: ${cache.pattern}.`);
-  if (fund) parts.push(`Sector: ${fund.sector ?? "unclassified"}. Balance Sheet ${fund.balance_sheet_score}, Growth ${fund.growth_score}.`);
+  if (fund) parts.push(`Sector: ${broadSector(ticker, fund.sector)}. Balance Sheet ${fund.balance_sheet_score}, Growth ${fund.growth_score}.`);
   return parts.join(" ");
 }
 
@@ -210,7 +229,7 @@ async function compareTickers(supabase: ReturnType<typeof createClient>, a: stri
 async function topSignals(supabase: ReturnType<typeof createClient>): Promise<string> {
   const { data: buys } = await supabase.from("stock_cache").select("symbol, rsi, macd, pattern").eq("signal", "buy").order("rsi", { ascending: true }).limit(3);
   if (!buys || buys.length === 0) return "Nothing is clearing a full buy signal (RSI oversold + MACD confirmation) right now — that's normal outside of real pullbacks. Stock Signals always has the live, ranked list.";
-  const lines = buys.map((r) => `${r.symbol} (RSI ${r.rsi}${r.pattern && r.pattern !== "consolidation" ? `, ${r.pattern}` : ""})`);
+  const lines = buys.map((r) => `${r.symbol} (RSI ${r.rsi !== null ? Number(r.rsi).toFixed(1) : "n/a"}${r.pattern && r.pattern !== "consolidation" ? `, ${r.pattern}` : ""})`);
   return `Live buy signals right now: ${lines.join(", ")}. Full ranked list is on Stock Signals.`;
 }
 

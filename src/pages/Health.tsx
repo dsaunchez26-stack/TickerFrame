@@ -157,7 +157,7 @@ export default function Health() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <header>
-        <h1 className="text-3xl font-bold">System Health</h1>
+        <h1 className="font-heading text-3xl font-bold">System Health</h1>
         <p className="text-muted-foreground text-sm mt-1">Cron jobs, data freshness, and pipeline integrity at a glance.</p>
       </header>
 
