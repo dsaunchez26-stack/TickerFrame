@@ -7,14 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 5) return 'Still up';
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
 type ConversationRow = Database['public']['Tables']['chat_conversations']['Row'];
 interface Msg { role: 'user' | 'assistant'; content: string }
 
@@ -249,7 +241,7 @@ const ChatPage = () => {
             <div className="w-full max-w-2xl">
               <div className="mb-8 text-center">
                 <div className="font-heading text-3xl font-bold sm:text-4xl">
-                  {greeting()}{user?.email ? `, ${user.email.split('@')[0]}` : ''}
+                  Welcome to Tickerframe{user?.email ? `, ${user.email.split('@')[0]}` : ''}
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">What do you want to know about the market today?</p>
               </div>
