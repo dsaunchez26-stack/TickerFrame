@@ -40,13 +40,16 @@ const TRACKED_JOBS = [
   'portfolio-alerts',
 ];
 
+// Every target here must be a table something actually writes to -- this
+// used to include signal_log (removed along with the dead EntryExit widget
+// that was its only reader; nothing ever wrote to it) and news_events/
+// macro_cache/options_flow_snapshots, none of which exist anywhere in this
+// project's migrations. Those four always rendered as permanently stale/
+// broken, exactly the "Cron jobs always reads never" bug cron_runs itself
+// was built to fix -- same problem, just never caught here too.
 const FRESHNESS_TARGETS: Array<{ table: string; column: string; staleAfterMin: number; label: string }> = [
   { table: 'stock_cache', column: 'fetched_at', staleAfterMin: 15, label: 'Stock quotes' },
-  { table: 'signal_log', column: 'fired_at', staleAfterMin: 90, label: 'Signal snapshots' },
-  { table: 'news_events', column: 'published_at', staleAfterMin: 360, label: 'News feed' },
-  { table: 'iv_history', column: 'captured_at', staleAfterMin: 60 * 26, label: 'IV history' },
-  { table: 'macro_cache', column: 'fetched_at', staleAfterMin: 60 * 26, label: 'Macro data' },
-  { table: 'options_flow_snapshots', column: 'captured_at', staleAfterMin: 60, label: 'Options flow' },
+  { table: 'option_iv_history', column: 'recorded_at', staleAfterMin: 60 * 24, label: 'Options IV history' },
 ];
 
 interface SignedUpUser {

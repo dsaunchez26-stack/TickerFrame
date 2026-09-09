@@ -16,7 +16,11 @@ const Legal = () => (
       </div>
       <div>
         <h1 className="font-heading text-2xl font-bold">Disclaimers & Terms</h1>
-        <p className="text-xs text-muted-foreground mt-1">Last updated {new Date().toLocaleDateString()}</p>
+        {/* Fixed to the date this content was actually last edited -- new
+            Date() here would silently relabel it "updated today" on every
+            single page load regardless of whether anything changed,
+            which is exactly backwards for a disclaimers page. */}
+        <p className="text-xs text-muted-foreground mt-1">Last updated 7/31/2026</p>
       </div>
     </div>
 
