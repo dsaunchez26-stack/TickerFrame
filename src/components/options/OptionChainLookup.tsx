@@ -59,7 +59,7 @@ export const OptionChainLookup = () => {
       <CardHeader><CardTitle className="text-sm font-semibold">Option Chain Lookup</CardTitle></CardHeader>
       <CardContent className="space-y-3">
         <p className="text-[11px] text-muted-foreground">
-          Look up any optionable ticker directly — not limited to the tracked list the scanner ranks against, so a
+          Look up any optionable ticker directly - not limited to the tracked list the scanner ranks against, so a
           low-scoring or thinly-traded name (like a cheap stock the scanner didn't surface today) still shows up here.
         </p>
         <div className="flex gap-2">
@@ -122,7 +122,7 @@ export const OptionChainLookup = () => {
                           <td className="py-1.5 pr-2">${r.breakeven.toFixed(2)}</td>
                           <td className="py-1.5 pr-2">
                             {r.withinExpectedMove === null ? (
-                              <span className="text-muted-foreground">—</span>
+                              <span className="text-muted-foreground">-</span>
                             ) : r.withinExpectedMove ? (
                               <span className="text-signal-hold">Within</span>
                             ) : (
@@ -160,7 +160,7 @@ export const OptionChainLookup = () => {
                           <td className="py-1.5 pr-2">${r.breakeven.toFixed(2)}</td>
                           <td className="py-1.5 pr-2">
                             {r.withinExpectedMove === null ? (
-                              <span className="text-muted-foreground">—</span>
+                              <span className="text-muted-foreground">-</span>
                             ) : r.withinExpectedMove ? (
                               <span className="text-signal-hold">Within</span>
                             ) : (
@@ -177,7 +177,7 @@ export const OptionChainLookup = () => {
             </div>
             <p className="text-[10px] italic text-muted-foreground/70">
               Shaded rows are in-the-money. "Breakeven" is the stock price this specific contract needs to reach by
-              expiration just to break even if bought at its current price — not a target or a prediction.
+              expiration just to break even if bought at its current price - not a target or a prediction.
             </p>
           </div>
         )}

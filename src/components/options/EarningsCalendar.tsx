@@ -20,12 +20,12 @@ export const EarningsCalendar = () => {
       <CardHeader><CardTitle className="text-sm font-semibold">Upcoming Earnings</CardTitle></CardHeader>
       <CardContent>
         <p className="mb-2 text-[10px] text-muted-foreground">
-          Real dates from SEC/Finnhub's earnings calendar, tracked universe only — not a full-market calendar.
+          Real dates from SEC/Finnhub's earnings calendar, tracked universe only - not a full-market calendar.
         </p>
         {loading ? (
           <p className="text-xs text-muted-foreground">Loading…</p>
         ) : upcoming.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No upcoming earnings dates on file yet — try again after the next scan.</p>
+          <p className="text-xs text-muted-foreground">No upcoming earnings dates on file yet - try again after the next scan.</p>
         ) : (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {upcoming.map(e => (

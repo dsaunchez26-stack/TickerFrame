@@ -38,7 +38,7 @@ const Legal = () => (
       </Section>
 
       <Section title="Risk of Loss">
-        <p>Trading stocks, options, and other securities involves substantial risk. You can lose all or more than the capital you commit. Options in particular can expire worthless and may carry unlimited theoretical loss on certain strategies. Past performance — including any track record, win rate, expectancy, or backtest shown on this site — is not indicative of future results.</p>
+        <p>Trading stocks, options, and other securities involves substantial risk. You can lose all or more than the capital you commit. Options in particular can expire worthless and may carry unlimited theoretical loss on certain strategies. Past performance - including any track record, win rate, expectancy, or backtest shown on this site - is not indicative of future results.</p>
       </Section>
 
       <Section title="Data Sources & Accuracy">
@@ -63,7 +63,7 @@ const Legal = () => (
       </Section>
 
       <Section title="Limitation of Liability">
-        <p>To the maximum extent permitted by law, Tickerframe and its operators shall not be liable for any direct, indirect, incidental, consequential, special, or punitive damages — including loss of profits, data, or trading capital — arising out of or in connection with your use of, or inability to use, this service, even if advised of the possibility of such damages.</p>
+        <p>To the maximum extent permitted by law, Tickerframe and its operators shall not be liable for any direct, indirect, incidental, consequential, special, or punitive damages - including loss of profits, data, or trading capital - arising out of or in connection with your use of, or inability to use, this service, even if advised of the possibility of such damages.</p>
       </Section>
 
       <Section title="Changes">

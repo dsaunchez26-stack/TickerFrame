@@ -124,7 +124,7 @@ export const ValueRadarDetail = ({ row, allRows, onClose }: Props) => {
             </div>
 
             <div>
-              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Balance sheet — what's behind the score</div>
+              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Balance sheet - what's behind the score</div>
               <div className="space-y-1.5">
                 {factorRow('Debt / Equity (lower is safer)', row.debt_to_equity === null ? 'not reported' : row.debt_to_equity.toFixed(2), stats.debtPct, stats.peerCount)}
                 {factorRow('Current Ratio (higher is safer)', row.current_ratio === null ? 'not reported' : row.current_ratio.toFixed(2), stats.currentPct, stats.peerCount)}
@@ -133,7 +133,7 @@ export const ValueRadarDetail = ({ row, allRows, onClose }: Props) => {
             </div>
 
             <div>
-              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Growth — what's behind the score</div>
+              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Growth - what's behind the score</div>
               <div className="space-y-1.5">
                 {factorRow('Revenue Growth YoY', row.revenue_growth_yoy === null ? 'not reported' : `${row.revenue_growth_yoy.toFixed(1)}%`, stats.revGrowthPct, stats.peerCount)}
                 {factorRow('EPS Growth YoY', row.eps_growth_yoy === null ? 'not reported' : `${row.eps_growth_yoy.toFixed(1)}%`, stats.epsGrowthPct, stats.peerCount)}
@@ -165,8 +165,7 @@ export const ValueRadarDetail = ({ row, allRows, onClose }: Props) => {
 
             <p className="text-[10px] italic text-muted-foreground/70">
               52-week range: {row.week52_low && row.week52_high ? `$${row.week52_low.toFixed(2)} – $${row.week52_high.toFixed(2)}` : 'not reported'}.
-              Balance Sheet and Growth scores are each an average of only the factors above that this company actually reports —
-              a missing figure is left out, not guessed at. Data updates a few times a day.
+              Balance Sheet and Growth scores are each an average of only the factors above that this company actually reports - a missing figure is left out, not guessed at. Data updates a few times a day.
             </p>
           </>
         )}

@@ -55,7 +55,7 @@ const Row = ({ r }: { r: CreditSpreadRow }) => {
     </td>
     <td className="py-2 pr-3">
       {r.withinExpectedMove === null || r.withinExpectedMove === undefined ? (
-        <span className="text-muted-foreground">—</span>
+        <span className="text-muted-foreground">-</span>
       ) : r.withinExpectedMove ? (
         <span className="text-signal-hold">Within ±{r.expectedMovePct?.toFixed(1)}%</span>
       ) : (
@@ -95,7 +95,7 @@ export const CreditSpreads = ({ spreads }: Props) => {
         <CardTitle className="text-sm font-semibold">Credit Spreads (Defined Risk)</CardTitle>
         <p className="text-[10px] text-muted-foreground">
           The capped-risk version of selling a naked option: sell one strike and buy a further-out strike in the same expiration as
-          protection. Max loss is fixed at the strike width minus the credit collected — no matter how far the stock moves, this can
+          protection. Max loss is fixed at the strike width minus the credit collected - no matter how far the stock moves, this can
           never lose more than "Max Loss" shows. A bear call spread profits if the stock stays below the short strike; a bull put
           spread profits if it stays above. "vs Expected Move" and the Beyond/Within logic work exactly like the single-leg screeners:
           "Beyond" means the short strike sits outside the stock's own 1-standard-deviation expected move.

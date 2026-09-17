@@ -11,7 +11,6 @@ import Auth from "./pages/Auth.tsx";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OptionsScanProvider } from "@/context/OptionsScanContext";
 import { ValueRadarProvider } from "@/context/ValueRadarContext";
-import { MarketChat } from "@/components/MarketChat";
 // Heavy / less-frequently-hit pages are code-split to shrink first paint.
 const Stocks = lazy(() => import("./pages/Stocks.tsx"));
 const StocksChart = lazy(() => import("./pages/StocksChart.tsx"));
@@ -40,6 +39,7 @@ const Legal = lazy(() => import("./pages/Legal.tsx"));
 const Methodology = lazy(() => import("./pages/Methodology.tsx"));
 const Health = lazy(() => import("./pages/Health.tsx"));
 const SettingsPage = lazy(() => import("./pages/Settings.tsx"));
+const Handbook = lazy(() => import("./pages/Handbook.tsx"));
 const SectorRotation = lazy(() => import("./pages/SectorRotation.tsx"));
 const ChatPage = lazy(() => import("./pages/Chat.tsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
@@ -71,16 +71,6 @@ const OptionsScanLayout = () => (
   <OptionsScanProvider>
     <Outlet />
   </OptionsScanProvider>
-);
-
-// MarketChat renders as a floating widget (bottom-right), not inline page
-// content -- mounting it once here instead of on every stocks sub-page keeps
-// its conversation alive while navigating between them.
-const StocksLayout = () => (
-  <>
-    <Outlet />
-    <MarketChat />
-  </>
 );
 
 // Every Value Radar sub-page (Quality Screen, Price-to-Sales, Short
@@ -116,12 +106,10 @@ const App = () => (
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<ChatPage />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route element={<StocksLayout />}>
-                <Route path="/stocks" element={<Stocks />} />
-                <Route path="/stocks/chart" element={<StocksChart />} />
-                <Route path="/stocks/penny" element={<StocksPenny />} />
-                <Route path="/stocks/signals" element={<StocksSignals />} />
-              </Route>
+              <Route path="/stocks" element={<Stocks />} />
+              <Route path="/stocks/chart" element={<StocksChart />} />
+              <Route path="/stocks/penny" element={<StocksPenny />} />
+              <Route path="/stocks/signals" element={<StocksSignals />} />
               <Route element={<OptionsScanLayout />}>
                 <Route path="/calls" element={<Calls />} />
                 <Route path="/puts" element={<Puts />} />
@@ -147,6 +135,7 @@ const App = () => (
               <Route path="/performance" element={<Performance />} />
               <Route path="/news" element={<News />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/handbook" element={<Handbook />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/health" element={<ProtectedRoute requireAdmin><Health /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />

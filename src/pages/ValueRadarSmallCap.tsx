@@ -14,10 +14,10 @@ import type { Database } from '@/integrations/supabase/types';
 
 type FundamentalsRow = Database['public']['Tables']['stock_fundamentals']['Row'];
 
-const fmtPct = (v: number | null, digits = 1) => (v === null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`);
+const fmtPct = (v: number | null, digits = 1) => (v === null ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`);
 const scoreColor = (score: number) => (score >= 65 ? 'text-signal-buy' : score >= 40 ? 'text-signal-hold' : 'text-signal-sell');
 const fmtMarketCap = (v: number | null) => {
-  if (v === null) return '—';
+  if (v === null) return '-';
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}T`;
   if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}B`;
   return `$${v.toFixed(0)}M`;
@@ -101,10 +101,10 @@ const ValueRadarSmallCap = () => {
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
         <Disclaimer />
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
-          <strong className="text-amber-300">Small-cap stocks carry real risks large-caps mostly don't</strong> — thinner
+          <strong className="text-amber-300">Small-cap stocks carry real risks large-caps mostly don't</strong> - thinner
           trading volume, wider bid/ask spreads, less analyst coverage, and often more volatile earnings. A low
           valuation multiple here means the market is pricing the stock cheaply relative to its own earnings, book
-          value, or sales — not that it's automatically a good investment. This ranks by objective reported financials;
+          value, or sales - not that it's automatically a good investment. This ranks by objective reported financials;
           it is not a forecast or a recommendation.
         </div>
 
@@ -169,7 +169,7 @@ const ValueRadarSmallCap = () => {
             ) : candidates.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 Nothing currently clears these thresholds. Try widening the market-cap range, lowering the quality filters
-                {strictValue ? ', or turning off strict value filters' : ''} — deeply undervalued, debt-free, already-profitable
+                {strictValue ? ', or turning off strict value filters' : ''} - deeply undervalued, debt-free, already-profitable
                 small-caps are a genuinely narrow slice of the tracked universe.
               </p>
             ) : (
@@ -198,9 +198,9 @@ const ValueRadarSmallCap = () => {
                         <td className="py-2 pr-3 text-muted-foreground">{sector}</td>
                         <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                         <td className="py-2 pr-3 text-muted-foreground">{fmtMarketCap(r.market_cap)}</td>
-                        <td className="py-2 pr-3">{r.pe_ratio !== null ? r.pe_ratio.toFixed(1) : '—'}</td>
-                        <td className="py-2 pr-3">{r.pb_ratio !== null ? r.pb_ratio.toFixed(2) : '—'}</td>
-                        <td className="py-2 pr-3">{r.ps_ratio !== null ? `${r.ps_ratio.toFixed(2)}x` : '—'}</td>
+                        <td className="py-2 pr-3">{r.pe_ratio !== null ? r.pe_ratio.toFixed(1) : '-'}</td>
+                        <td className="py-2 pr-3">{r.pb_ratio !== null ? r.pb_ratio.toFixed(2) : '-'}</td>
+                        <td className="py-2 pr-3">{r.ps_ratio !== null ? `${r.ps_ratio.toFixed(2)}x` : '-'}</td>
                         <td className="py-2 pr-3 text-muted-foreground">{benchmark?.peerCount ?? 0}</td>
                         <td className="py-2 pr-3">{fmtPct(r.revenue_growth_yoy)}</td>
                         <td className={`py-2 pr-3 font-bold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
@@ -216,8 +216,8 @@ const ValueRadarSmallCap = () => {
               {strictValue && (
                 <>Strict value filters are applied first, as hard pass/fail cutoffs, before any scoring happens. <br /></>
               )}
-              Each multiple (P/E, P/B, P/S) is scored against its own sector's median among tracked peers — including
-              large-caps, not just other small-caps — so a stock isn't penalized just for being in a structurally
+              Each multiple (P/E, P/B, P/S) is scored against its own sector's median among tracked peers - including
+              large-caps, not just other small-caps - so a stock isn't penalized just for being in a structurally
               higher-multiple industry. Sectors with fewer than 4 tracked peers reporting a metric fall back to a flat
               benchmark instead of an unreliable median. <strong className="text-foreground/80">Combined Score</strong> averages
               that sector-relative valuation score (from whichever of P/E, P/B, and P/S are actually reported), Balance Sheet, and

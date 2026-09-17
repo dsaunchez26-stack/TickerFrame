@@ -51,7 +51,7 @@ const Row = ({ r }: { r: DiagonalRow }) => {
     <td className="py-2 pr-3">{((r.maxGainApprox / r.netDebit) * 100).toFixed(0)}%</td>
     <td className="py-2 pr-3">
       {r.withinExpectedMove === null || r.withinExpectedMove === undefined ? (
-        <span className="text-muted-foreground">—</span>
+        <span className="text-muted-foreground">-</span>
       ) : r.withinExpectedMove ? (
         <span className="text-signal-hold">Within ±{r.expectedMovePct?.toFixed(1)}%</span>
       ) : (
@@ -86,12 +86,12 @@ export const StockReplacement = ({ diagonals }: Props) => {
       <CardHeader>
         <CardTitle className="text-sm font-semibold">Stock Replacement (Poor Man's Covered Call / Put)</CardTitle>
         <p className="text-[10px] text-muted-foreground">
-          A deep-in-the-money LEAPS option (the "Long Leg") stands in for owning 100 shares — it moves almost dollar-for-dollar with
+          A deep-in-the-money LEAPS option (the "Long Leg") stands in for owning 100 shares - it moves almost dollar-for-dollar with
           the stock but costs a fraction of the capital. A near-term, out-of-the-money option (the "Short Leg") is sold against it for
           income, same idea as a covered call or cash-secured put. Unlike a naked position, the max loss here is capped at the "Net
-          Debit" — what you paid to enter — because the long leg can only ever lose what you paid for it, and there's no naked side.
+          Debit" - what you paid to enter - because the long leg can only ever lose what you paid for it, and there's no naked side.
           "Max Gain" is an approximation (roughly the value if the stock sits at the short strike when it expires), not a full pricing
-          model — the long leg still carries real time value that isn't modeled precisely here.
+          model - the long leg still carries real time value that isn't modeled precisely here.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">

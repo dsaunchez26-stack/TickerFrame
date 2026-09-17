@@ -12,10 +12,10 @@ import type { Database } from '@/integrations/supabase/types';
 
 type FundamentalsRow = Database['public']['Tables']['stock_fundamentals']['Row'];
 
-const fmtPct = (v: number | null, digits = 1) => (v === null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`);
+const fmtPct = (v: number | null, digits = 1) => (v === null ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`);
 const scoreColor = (score: number) => (score >= 65 ? 'text-signal-buy' : score >= 40 ? 'text-signal-hold' : 'text-signal-sell');
 const fmtMarketCap = (v: number | null) => {
-  if (v === null) return '—';
+  if (v === null) return '-';
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}T`;
   if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}B`;
   return `$${v.toFixed(0)}M`;
@@ -77,11 +77,10 @@ const ValueRadarPriceToSales = () => {
         <Disclaimer />
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
           <strong className="text-amber-300">A low Price/Sales ratio is not automatically "undervalued."</strong>{' '}
-          Revenue multiples compress for real reasons — shrinking sales, collapsing margins, a dying business model. This
+          Revenue multiples compress for real reasons - shrinking sales, collapsing margins, a dying business model. This
           screen requires the same balance-sheet and growth quality gates as the main Quality Screen specifically to
           exclude those cases, but it can't catch everything: a business can look statistically fine here and still be
-          walking into a real problem the numbers haven't shown up in yet. This ranks by objective, reported financials —
-          it is not a forecast or a recommendation.
+          walking into a real problem the numbers haven't shown up in yet. This ranks by objective, reported financials - it is not a forecast or a recommendation.
         </div>
 
         <Card>
@@ -166,10 +165,9 @@ const ValueRadarPriceToSales = () => {
             )}
             <p className="mt-3 text-[10px] italic text-muted-foreground/70">
               P/S Ratio = market cap ÷ trailing-twelve-months revenue. <strong className="text-foreground/80">vs Sector Median</strong> compares
-              that ratio against the median P/S of this stock's own sector among tracked peers (shown when at least 4 peers report the metric —
-              below that, it falls back to a flat benchmark instead of a median that thin). <strong className="text-foreground/80">Combined Score</strong> averages
+              that ratio against the median P/S of this stock's own sector among tracked peers (shown when at least 4 peers report the metric - below that, it falls back to a flat benchmark instead of a median that thin). <strong className="text-foreground/80">Combined Score</strong> averages
               that sector-relative cheapness score, Balance Sheet, and Growth into one 0–100 ranking, so the stock at the top is the best
-              overall mix of "cheap for its own industry," "financially sound," and "growing" — not just whichever sector happens to trade cheaper
+              overall mix of "cheap for its own industry," "financially sound," and "growing" - not just whichever sector happens to trade cheaper
               across the board. Click any row for the full breakdown.
             </p>
           </CardContent>
@@ -178,9 +176,9 @@ const ValueRadarPriceToSales = () => {
         <Card>
           <CardHeader><CardTitle className="text-sm font-semibold">How this is calculated</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-xs text-muted-foreground">
-            <p><strong className="text-foreground">Price/Sales Ratio:</strong> market cap divided by trailing-twelve-months revenue. Says nothing about profitability on its own — a company can have a low P/S and still be losing money, or a high P/S and be highly profitable.</p>
-            <p><strong className="text-foreground">Combined Score:</strong> the average of a sector-relative cheapness score (this stock's P/S vs. the median P/S of its own sector among tracked peers), Balance Sheet Strength, and Growth & Momentum (each 0–100) — candidates are ranked by this, not by raw P/S alone, so a software company isn't penalized just for its industry structurally trading at a higher multiple than a grocery retailer.</p>
-            <p>Data comes from each company's own reported financials (via Finnhub) — not a scrape of any single site, and not analyst price targets or projections.</p>
+            <p><strong className="text-foreground">Price/Sales Ratio:</strong> market cap divided by trailing-twelve-months revenue. Says nothing about profitability on its own - a company can have a low P/S and still be losing money, or a high P/S and be highly profitable.</p>
+            <p><strong className="text-foreground">Combined Score:</strong> the average of a sector-relative cheapness score (this stock's P/S vs. the median P/S of its own sector among tracked peers), Balance Sheet Strength, and Growth & Momentum (each 0–100) - candidates are ranked by this, not by raw P/S alone, so a software company isn't penalized just for its industry structurally trading at a higher multiple than a grocery retailer.</p>
+            <p>Data comes from each company's own reported financials (via Finnhub) - not a scrape of any single site, and not analyst price targets or projections.</p>
           </CardContent>
         </Card>
 

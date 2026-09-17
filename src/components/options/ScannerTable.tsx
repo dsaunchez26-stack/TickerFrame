@@ -114,8 +114,8 @@ export const ScannerTable = ({ rows, trackedIds, onTrack }: Props) => {
                     <td className="py-2 pr-3">{r.delta.toFixed(2)}</td>
                     <td className="py-2 pr-3">{r.ivRank}</td>
                     <td className="py-2 pr-3">{r.voi.toFixed(2)}</td>
-                    <td className="py-2 pr-3">{r.expectedMovePct != null ? `±${r.expectedMovePct.toFixed(1)}%` : '—'}</td>
-                    <td className="py-2 pr-3">{r.oneDayExpectedMovePct != null ? `±${r.oneDayExpectedMovePct.toFixed(2)}%` : '—'}</td>
+                    <td className="py-2 pr-3">{r.expectedMovePct != null ? `±${r.expectedMovePct.toFixed(1)}%` : '-'}</td>
+                    <td className="py-2 pr-3">{r.oneDayExpectedMovePct != null ? `±${r.oneDayExpectedMovePct.toFixed(2)}%` : '-'}</td>
                     <td className="py-2 pr-3">
                       <div className="flex items-center gap-1">
                         <OptionRiskDialogButton

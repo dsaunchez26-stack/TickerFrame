@@ -10,7 +10,7 @@ import type { Database } from '@/integrations/supabase/types';
 type InsiderRow = Database['public']['Tables']['insider_activity']['Row'];
 
 const fmtUsd = (v: number) => v.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-const fmtDate = (d: string | null) => (d ? new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
+const fmtDate = (d: string | null) => (d ? new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '-');
 
 const InsiderActivity = () => {
   const [rows, setRows] = useState<InsiderRow[]>([]);
@@ -87,7 +87,7 @@ const InsiderActivity = () => {
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
         <Disclaimer />
         <p className="text-[11px] text-muted-foreground">
-          Insider buying is not a signal, a recommendation, or a guarantee that a stock will rise — it's one public data
+          Insider buying is not a signal, a recommendation, or a guarantee that a stock will rise - it's one public data
           point among many. Form 4 filings are due within 2 business days of a trade, so this can lag the actual purchase
           by that much. Schedule 13D/13G filings don't require the filer to disclose a per-share price, so those rows
           show ownership stake changes only, not what was paid.
@@ -141,14 +141,14 @@ const InsiderActivity = () => {
                         <tr key={r.id} className="border-b last:border-0">
                           <td className="py-2 pr-3 font-semibold">{r.ticker}</td>
                           <td className="py-2 pr-3">{r.filer_name}</td>
-                          <td className="py-2 pr-3 text-muted-foreground">{r.filer_title ?? '—'}</td>
+                          <td className="py-2 pr-3 text-muted-foreground">{r.filer_title ?? '-'}</td>
                           <td className="py-2 pr-3">{fmtDate(r.transaction_date)}</td>
-                          <td className="py-2 pr-3">{r.shares?.toLocaleString() ?? '—'}</td>
-                          <td className="py-2 pr-3">${r.price_per_share?.toFixed(2) ?? '—'}</td>
-                          <td className="py-2 pr-3 font-semibold">{r.total_value ? fmtUsd(r.total_value) : '—'}</td>
-                          <td className="py-2 pr-3">{current ? `$${current.toFixed(2)}` : '—'}</td>
+                          <td className="py-2 pr-3">{r.shares?.toLocaleString() ?? '-'}</td>
+                          <td className="py-2 pr-3">${r.price_per_share?.toFixed(2) ?? '-'}</td>
+                          <td className="py-2 pr-3 font-semibold">{r.total_value ? fmtUsd(r.total_value) : '-'}</td>
+                          <td className="py-2 pr-3">{current ? `$${current.toFixed(2)}` : '-'}</td>
                           <td className={`py-2 pr-3 font-semibold ${pctSince === null ? '' : pctSince >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
-                            {pctSince === null ? '—' : `${pctSince >= 0 ? '+' : ''}${pctSince.toFixed(1)}%`}
+                            {pctSince === null ? '-' : `${pctSince >= 0 ? '+' : ''}${pctSince.toFixed(1)}%`}
                           </td>
                           <td className="py-2 pr-3">
                             <a href={r.filing_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary">
@@ -206,7 +206,7 @@ const InsiderActivity = () => {
             )}
             <p className="mt-3 text-[10px] italic text-muted-foreground/70">
               "/A" forms are amendments to a previously filed stake (usually a routine annual update, not necessarily new buying).
-              Open the filing to see the full detail — SEC doesn't publish a structured per-share price for these forms.
+              Open the filing to see the full detail - SEC doesn't publish a structured per-share price for these forms.
             </p>
           </CardContent>
         </Card>

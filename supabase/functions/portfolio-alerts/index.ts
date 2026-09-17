@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
           const key = `insider:${user.user_id}:${f.id}`;
           if (await alreadySent(key)) continue;
           const value = f.total_value ? `$${Number(f.total_value).toLocaleString()}` : "undisclosed value";
-          lines.push(`🟢 *${f.ticker}* — ${f.filer_name}${f.filer_title ? ` (${f.filer_title})` : ""} bought ${value} in stock on ${f.filing_date}`);
+          lines.push(`🟢 *${f.ticker}* - ${f.filer_name}${f.filer_title ? ` (${f.filer_title})` : ""} bought ${value} in stock on ${f.filing_date}`);
           newKeys.push(key);
         }
       }
@@ -206,10 +206,10 @@ Deno.serve(async (req) => {
 
           const gainPct = ((price - Number(p.buy_price)) / Number(p.buy_price)) * 100;
           if (p.target_gain_pct !== null && gainPct >= Number(p.target_gain_pct)) {
-            lines.push(`🎯 *${p.symbol}* hit your +${Number(p.target_gain_pct)}% target — currently +${gainPct.toFixed(1)}% ($${price.toFixed(2)})`);
+            lines.push(`🎯 *${p.symbol}* hit your +${Number(p.target_gain_pct)}% target - currently +${gainPct.toFixed(1)}% ($${price.toFixed(2)})`);
             newKeys.push(key);
           } else if (p.stop_loss_pct !== null && gainPct <= -Number(p.stop_loss_pct)) {
-            lines.push(`🔻 *${p.symbol}* hit your -${Number(p.stop_loss_pct)}% stop-loss — currently ${gainPct.toFixed(1)}% ($${price.toFixed(2)})`);
+            lines.push(`🔻 *${p.symbol}* hit your -${Number(p.stop_loss_pct)}% stop-loss - currently ${gainPct.toFixed(1)}% ($${price.toFixed(2)})`);
             newKeys.push(key);
           }
         }
@@ -224,7 +224,7 @@ Deno.serve(async (req) => {
           if (await alreadySent(key)) continue;
           const dir = md.changePercent >= 0 ? "up" : "down";
           const emoji = md.changePercent >= 0 ? "🚀" : "⚠️";
-          lines.push(`${emoji} *${symbol}* is ${dir} ${Math.abs(md.changePercent).toFixed(1)}% today ($${md.price.toFixed(2)}) — worth deciding whether to act`);
+          lines.push(`${emoji} *${symbol}* is ${dir} ${Math.abs(md.changePercent).toFixed(1)}% today ($${md.price.toFixed(2)}) - worth deciding whether to act`);
           newKeys.push(key);
         }
       }
@@ -245,10 +245,10 @@ Deno.serve(async (req) => {
             const key = `targetstop:${user.user_id}:futures:${f.product_code}:${today}`;
             if (!(await alreadySent(key))) {
               if (f.target_gain_pct !== null && gainPct >= Number(f.target_gain_pct)) {
-                lines.push(`🎯 *${f.product_code}* (${f.product_name}) hit your +${Number(f.target_gain_pct)}% target — currently +${gainPct.toFixed(1)}% ($${live.last.toFixed(2)})`);
+                lines.push(`🎯 *${f.product_code}* (${f.product_name}) hit your +${Number(f.target_gain_pct)}% target - currently +${gainPct.toFixed(1)}% ($${live.last.toFixed(2)})`);
                 newKeys.push(key);
               } else if (f.stop_loss_pct !== null && gainPct <= -Number(f.stop_loss_pct)) {
-                lines.push(`🔻 *${f.product_code}* (${f.product_name}) hit your -${Number(f.stop_loss_pct)}% stop-loss — currently ${gainPct.toFixed(1)}% ($${live.last.toFixed(2)})`);
+                lines.push(`🔻 *${f.product_code}* (${f.product_name}) hit your -${Number(f.stop_loss_pct)}% stop-loss - currently ${gainPct.toFixed(1)}% ($${live.last.toFixed(2)})`);
                 newKeys.push(key);
               }
             }
@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
             if (!(await alreadySent(key))) {
               const dir = live.changePercent >= 0 ? "up" : "down";
               const emoji = live.changePercent >= 0 ? "🚀" : "⚠️";
-              lines.push(`${emoji} *${f.product_code}* (${f.product_name}) is ${dir} ${Math.abs(live.changePercent).toFixed(1)}% today ($${live.last.toFixed(2)}) — worth deciding whether to act`);
+              lines.push(`${emoji} *${f.product_code}* (${f.product_name}) is ${dir} ${Math.abs(live.changePercent).toFixed(1)}% today ($${live.last.toFixed(2)}) - worth deciding whether to act`);
               newKeys.push(key);
             }
           }
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
           if (await alreadySent(key)) continue;
           const emoji = meta.bias === "bullish" ? "📈" : "📉";
           const conf = r.pattern_confidence !== null ? ` (${r.pattern_confidence}% confidence)` : "";
-          lines.push(`${emoji} *${r.symbol}* — ${meta.label} pattern detected${conf}`);
+          lines.push(`${emoji} *${r.symbol}* - ${meta.label} pattern detected${conf}`);
           newKeys.push(key);
         }
       }

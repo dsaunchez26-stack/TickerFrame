@@ -303,7 +303,7 @@ const ChatPage = () => {
             </Button>
           </form>
           <p className="mt-2 text-center text-[10px] text-muted-foreground">
-            Research & education only — not investment advice. Data may be delayed or inaccurate.
+            Research & education only - not investment advice. Data may be delayed or inaccurate.
           </p>
         </div>
       </div>

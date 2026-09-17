@@ -51,7 +51,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
       if (cancelled) return;
       setLoadingQuote(false);
       const q = data?.quotes?.[symbol];
-      if (error || !q) { setLiveQuoteError(`No data found for ${symbol} — check the ticker and try again.`); return; }
+      if (error || !q) { setLiveQuoteError(`No data found for ${symbol} - check the ticker and try again.`); return; }
       setLiveQuote(q as LiveQuote);
     });
     return () => { cancelled = true; };
@@ -129,7 +129,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
                 <div className="flex h-full flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
                   <span>Not enough price history yet for this range.</span>
                   {(timeframe === '1M' || timeframe === '3M' || timeframe === '1Y') && (
-                    <span className="text-[10px] text-muted-foreground/70">Longer views fill in as more days of data are collected — try 1D/3D/1W for now.</span>
+                    <span className="text-[10px] text-muted-foreground/70">Longer views fill in as more days of data are collected - try 1D/3D/1W for now.</span>
                   )}
                 </div>
               ) : (
@@ -158,7 +158,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              {symbol} isn't part of this site's actively-tracked list, so there's no chart, RSI/MACD, or pattern detection for it here — just a live price.
+              {symbol} isn't part of this site's actively-tracked list, so there's no chart, RSI/MACD, or pattern detection for it here - just a live price.
             </p>
           </div>
         )}
@@ -249,7 +249,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
             )}
 
             <p className="text-[10px] italic text-muted-foreground/70">
-              Fundamentals reflect {fundamentals.name}'s most recently reported financials — not a projection, and not a
+              Fundamentals reflect {fundamentals.name}'s most recently reported financials - not a projection, and not a
               recommendation to buy or sell. A missing figure means it wasn't reported, not zero.
             </p>
           </div>

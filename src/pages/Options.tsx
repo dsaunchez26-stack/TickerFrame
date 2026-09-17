@@ -42,7 +42,7 @@ const Options = () => {
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <span className="text-[11px] text-muted-foreground">
               {cachedAt
-                ? `🟠 Live scan unavailable — showing cache from ${cachedAt.toLocaleTimeString()}`
+                ? `🟠 Live scan unavailable - showing cache from ${cachedAt.toLocaleTimeString()}`
                 : source === 'tradier-sandbox'
                   ? '🟢 Tradier (sandbox, current-day data)'
                   : '🟡 MarketData.app (~24h delayed)'}

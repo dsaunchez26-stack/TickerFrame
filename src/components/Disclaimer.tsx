@@ -7,7 +7,7 @@ export const Disclaimer = ({ compact = false }: { compact?: boolean }) => (
       <strong className="text-amber-300">Research & education only.</strong>{' '}
       This is not financial advice, a recommendation, or a solicitation to buy or sell any security or derivative.
       Options trading involves substantial risk of loss and is not suitable for every investor.
-      Past performance — including any track record shown on this site — does not guarantee future results.
+      Past performance - including any track record shown on this site - does not guarantee future results.
       Do your own research and consult a licensed advisor before trading.
     </div>
   </div>

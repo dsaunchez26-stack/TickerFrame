@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Save } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Loader2, Save, BookOpen, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,12 +94,26 @@ const SettingsPage = () => {
           <p className="text-xs text-muted-foreground">Configure Slack alerts for your portfolio.</p>
         </div>
 
+        <Link to="/handbook">
+          <Card className="transition-colors hover:border-primary/40">
+            <CardContent className="flex items-center gap-3 py-4">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <BookOpen className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-semibold">Handbook</div>
+                <div className="text-xs text-muted-foreground">What every signal, score, and term on the site means</div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        </Link>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-semibold">Slack Alerts</CardTitle>
             <CardDescription className="text-xs">
-              Checked every 30 minutes during market hours. Requires a Slack Incoming Webhook URL —
-              in Slack, go to your workspace's <strong>Apps → Incoming Webhooks → Add to Slack</strong>,
+              Checked every 30 minutes during market hours. Requires a Slack Incoming Webhook URL - in Slack, go to your workspace's <strong>Apps → Incoming Webhooks → Add to Slack</strong>,
               pick a channel (or DM to yourself), and paste the generated URL below.
             </CardDescription>
           </CardHeader>
@@ -142,7 +157,7 @@ const SettingsPage = () => {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <Label htmlFor="bigmove" className="text-xs">Big price moves</Label>
-                <p className="text-[11px] text-muted-foreground">Notify when a stock or future you hold moves ±6% or more in a day — so a big swing doesn't go unnoticed.</p>
+                <p className="text-[11px] text-muted-foreground">Notify when a stock or future you hold moves ±6% or more in a day - so a big swing doesn't go unnoticed.</p>
               </div>
               <Switch id="bigmove" checked={settings.alerts_big_move} onCheckedChange={v => setSettings(s => ({ ...s, alerts_big_move: v }))} />
             </div>

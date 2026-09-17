@@ -269,7 +269,7 @@ const PortfolioPage = () => {
           </div>
           <div>
             <h1 className="font-heading text-2xl font-bold">Portfolio Hub</h1>
-            <p className="text-xs text-muted-foreground mt-1">Compare two portfolios side by side — track different strategies in real time.</p>
+            <p className="text-xs text-muted-foreground mt-1">Compare two portfolios side by side - track different strategies in real time.</p>
           </div>
         </div>
         <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>

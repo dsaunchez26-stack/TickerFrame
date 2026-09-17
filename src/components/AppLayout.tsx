@@ -1,4 +1,4 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { AppTopNav } from '@/components/AppTopNav';
 import { Activity, Zap } from 'lucide-react';
 import { StockDetailProvider } from '@/context/StockDetailContext';
@@ -7,8 +7,14 @@ import { UserMenu } from '@/components/auth/UserMenu';
 import { useEffect, useState } from 'react';
 import { getMarketStatus, marketStatusLabel, type MarketStatus } from '@/lib/marketHours';
 import { OnboardingTour } from '@/components/OnboardingTour';
+import { MarketChat } from '@/components/MarketChat';
 
 export default function AppLayout() {
+  const location = useLocation();
+  // The Assistant IS a full chat interface already (/ and /chat both render
+  // it) -- showing the floating chat bubble on top of it would just be a
+  // second, redundant chat surface on the same page.
+  const onChatPage = location.pathname === '/' || location.pathname === '/chat';
   const [status, setStatus] = useState<MarketStatus>(() => getMarketStatus());
   useEffect(() => {
     const id = setInterval(() => setStatus(getMarketStatus()), 30_000);
@@ -22,6 +28,7 @@ export default function AppLayout() {
   return (
     <StockDetailProvider>
       <OnboardingTour />
+      {!onChatPage && <MarketChat />}
       <div className="min-h-screen flex w-full flex-col bg-background">
         <header className="border-b border-border bg-card/40 backdrop-blur-sm">
           <div className="flex h-12 items-center justify-between px-3">
@@ -61,6 +68,8 @@ export default function AppLayout() {
               <Link to="/legal" className="underline hover:text-foreground">Disclaimers & Terms</Link>
               {' · '}
               <Link to="/methodology" className="underline hover:text-foreground">How signals are generated</Link>
+              {' · '}
+              <Link to="/handbook" className="underline hover:text-foreground">Handbook</Link>
               {' · '}
               Data may be delayed or inaccurate. Trade at your own risk.
             </p>

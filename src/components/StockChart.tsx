@@ -65,7 +65,7 @@ export const StockChart = ({ symbol: controlledSymbol, onSymbolChange }: Props =
             <div className="flex h-full flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
               <span>Not enough price history yet for this range.</span>
               {(timeframe === '1M' || timeframe === '3M' || timeframe === '1Y') && (
-                <span className="text-[10px] text-muted-foreground/70">Longer views fill in as more days of data are collected — try 1D/3D/1W for now.</span>
+                <span className="text-[10px] text-muted-foreground/70">Longer views fill in as more days of data are collected - try 1D/3D/1W for now.</span>
               )}
             </div>
           ) : (

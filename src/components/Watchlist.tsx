@@ -90,7 +90,7 @@ export const Watchlist = () => {
                         {isOwned && <span className="rounded-full bg-signal-buy/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-signal-buy">✓</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <p className="truncate text-[10px] text-muted-foreground">{isBigMover ? '🔥 Big mover — trade opportunity' : s.name}</p>
+                        <p className="truncate text-[10px] text-muted-foreground">{isBigMover ? '🔥 Big mover - trade opportunity' : s.name}</p>
                         {s.holdDuration && <span className="flex items-center gap-0.5 text-[9px] text-primary/80 whitespace-nowrap"><Clock className="h-2.5 w-2.5" />{s.holdDuration}</span>}
                       </div>
                     </div>

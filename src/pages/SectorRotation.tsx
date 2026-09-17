@@ -139,7 +139,7 @@ const SectorRotation = () => {
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
           <strong className="text-amber-300">A sector being out of favor doesn't mean it's cheap for a reason.</strong> Sometimes
           the market is right and the businesses in it really are deteriorating. This screen only tells you where price action
-          and fundamentals currently disagree — it's a starting point for research, not a signal to buy.
+          and fundamentals currently disagree - it's a starting point for research, not a signal to buy.
         </div>
 
         {loading ? (
@@ -155,7 +155,7 @@ const SectorRotation = () => {
               <CardContent>
                 {contrarianSectors.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    Nothing currently qualifies — no sector is both lagging the tracked-universe average and clearing a {MIN_QUALITY_FOR_CONTRARIAN}+ average quality score.
+                    Nothing currently qualifies - no sector is both lagging the tracked-universe average and clearing a {MIN_QUALITY_FOR_CONTRARIAN}+ average quality score.
                   </p>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -202,7 +202,7 @@ const SectorRotation = () => {
                         >
                           <td className="py-2 pr-3 font-semibold">{s.sector}</td>
                           <td className={`py-2 pr-3 font-bold ${s.avgMomentum !== null ? momentumColor(s.avgMomentum) : 'text-muted-foreground'}`}>
-                            {s.avgMomentum !== null ? fmtPct(s.avgMomentum) : '—'}
+                            {s.avgMomentum !== null ? fmtPct(s.avgMomentum) : '-'}
                           </td>
                           <td className={`py-2 pr-3 font-bold ${scoreColor(s.avgQuality)}`}>{s.avgQuality.toFixed(0)}</td>
                           <td className="py-2 pr-3 text-muted-foreground">{s.peerCount}</td>
@@ -215,7 +215,7 @@ const SectorRotation = () => {
                   <strong className="text-foreground/80">Momentum</strong> is each sector's average price change over the
                   scanner's recent lookback window (real trading behavior). <strong className="text-foreground/80">Avg
                   Quality</strong> averages Balance Sheet Strength and Growth &amp; Momentum across the sector's tracked
-                  stocks. Market-wide average momentum right now: {marketAvgMomentum !== null ? fmtPct(marketAvgMomentum) : '—'}.
+                  stocks. Market-wide average momentum right now: {marketAvgMomentum !== null ? fmtPct(marketAvgMomentum) : '-'}.
                   Click any sector for its individual stocks.
                 </p>
               </CardContent>
@@ -225,7 +225,7 @@ const SectorRotation = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-                    <Gem className="h-4 w-4" /> {selected.sector} — Best Individual Stocks
+                    <Gem className="h-4 w-4" /> {selected.sector} - Best Individual Stocks
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -247,7 +247,7 @@ const SectorRotation = () => {
                             <td className="py-2 pr-3 font-semibold">{r.symbol}</td>
                             <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                             <td className={`py-2 pr-3 ${momentum !== null ? momentumColor(momentum) : 'text-muted-foreground'}`}>
-                              {momentum !== null ? fmtPct(momentum) : '—'}
+                              {momentum !== null ? fmtPct(momentum) : '-'}
                             </td>
                             <td className={`py-2 pr-3 font-bold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
                             <td className={`py-2 pr-3 font-bold ${scoreColor(r.growth_score)}`}>{r.growth_score}</td>

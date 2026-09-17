@@ -107,7 +107,7 @@ const Row = ({ r, tracked, onTrack }: { r: OptionRow; tracked: boolean; onTrack:
     <td className="py-2 pr-3">{((1 - Math.abs(r.delta)) * 100).toFixed(0)}%</td>
     <td className="py-2 pr-3">
       {r.withinExpectedMove === null || r.withinExpectedMove === undefined ? (
-        <span className="text-muted-foreground">—</span>
+        <span className="text-muted-foreground">-</span>
       ) : r.withinExpectedMove ? (
         <span className="text-signal-hold">Within ±{r.expectedMovePct?.toFixed(1)}%</span>
       ) : (
@@ -157,9 +157,9 @@ export const CashSecuredPuts = ({ rows, leapsRows, onTrack, trackedIds }: Props)
         <CardTitle className="text-sm font-semibold">Cash-Secured Put Candidates</CardTitle>
         <p className="text-[10px] text-muted-foreground">
           Sell a put below spot, collect the premium. If the stock stays above your strike, it expires worthless and you keep it all;
-          if it breaks below, you're obligated to buy at the strike. "Est. OTM" is delta-based, not a guarantee — real crashes and
+          if it breaks below, you're obligated to buy at the strike. "Est. OTM" is delta-based, not a guarantee - real crashes and
           gaps happen even on stocks that "never" move. "vs Expected Move" compares this strike to the stock's own 1-standard-deviation
-          move priced into the options chain (roughly a 68% chance of finishing inside that range by expiration) — "Beyond" means the
+          move priced into the options chain (roughly a 68% chance of finishing inside that range by expiration) - "Beyond" means the
           stock would need a bigger-than-typical move to reach your strike, not that it can't happen. Both lists below prioritize
           "Beyond" candidates first, then rank by annualized yield so a short-dated and a LEAPS contract can be compared fairly.
         </p>

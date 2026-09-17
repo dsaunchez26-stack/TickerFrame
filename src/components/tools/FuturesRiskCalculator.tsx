@@ -85,7 +85,7 @@ export const FuturesRiskCalculator = () => {
           {lookupError && <p className="text-xs text-signal-sell">{lookupError}</p>}
           {matched && (
             <p className="text-xs text-muted-foreground">
-              {matched.code} — {matched.name}. {matched.last !== null ? <>Last price: <span className="font-semibold text-foreground">${matched.last.toFixed(2)}</span>.</> : 'Live price unavailable right now — enter one manually below.'}
+              {matched.code} - {matched.name}. {matched.last !== null ? <>Last price: <span className="font-semibold text-foreground">${matched.last.toFixed(2)}</span>.</> : 'Live price unavailable right now - enter one manually below.'}
               {multiplier !== null && <> Contract multiplier: <span className="font-semibold text-foreground">${multiplier}</span>/point.</>}
             </p>
           )}
@@ -115,7 +115,7 @@ export const FuturesRiskCalculator = () => {
       </Card>
 
       {!valid && matched && multiplier === null && (
-        <p className="text-xs text-signal-sell">This product didn't report a contract multiplier — the math below needs it to convert a price move into a real dollar amount, so it can't be shown for this contract.</p>
+        <p className="text-xs text-signal-sell">This product didn't report a contract multiplier - the math below needs it to convert a price move into a real dollar amount, so it can't be shown for this contract.</p>
       )}
 
       {valid && (
@@ -125,31 +125,30 @@ export const FuturesRiskCalculator = () => {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-border p-3">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Total notional exposure</div>
-                <div className="mt-1 text-lg font-bold">{notional !== null ? fmtUsd(notional) : '—'}</div>
+                <div className="mt-1 text-lg font-bold">{notional !== null ? fmtUsd(notional) : '-'}</div>
                 <div className="text-[10px] text-muted-foreground">{qty} contract{qty === 1 ? '' : 's'} × ${multiplier}/pt × ${entry.toFixed(2)}</div>
               </div>
               <div className="rounded-lg border border-signal-sell/30 bg-signal-sell/5 p-3">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Dollar risk to stop</div>
-                <div className="mt-1 text-lg font-bold text-signal-sell">{dollarRisk !== null ? fmtUsd(dollarRisk) : '—'}</div>
+                <div className="mt-1 text-lg font-bold text-signal-sell">{dollarRisk !== null ? fmtUsd(dollarRisk) : '-'}</div>
                 <div className="text-[10px] text-muted-foreground">
-                  {stopPrice !== null ? `if it hits $${stopPrice.toFixed(2)} (${stopLossPct}% down)${riskInTicks !== null ? ` — ${riskInTicks.toFixed(0)} ticks` : ''}` : 'set a stop-loss %'}
+                  {stopPrice !== null ? `if it hits $${stopPrice.toFixed(2)} (${stopLossPct}% down)${riskInTicks !== null ? ` - ${riskInTicks.toFixed(0)} ticks` : ''}` : 'set a stop-loss %'}
                 </div>
               </div>
               <div className="rounded-lg border border-signal-buy/30 bg-signal-buy/5 p-3">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Dollar gain to target</div>
-                <div className="mt-1 text-lg font-bold text-signal-buy">{dollarGain !== null ? fmtUsd(dollarGain) : '—'}</div>
+                <div className="mt-1 text-lg font-bold text-signal-buy">{dollarGain !== null ? fmtUsd(dollarGain) : '-'}</div>
                 <div className="text-[10px] text-muted-foreground">
                   {targetPrice !== null ? `if it hits $${targetPrice.toFixed(2)} (${targetPct}% up)` : 'set a target %'}
                 </div>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-              <span>Risk/reward ratio: <span className="font-semibold text-foreground">{riskRewardRatio !== null ? `1 : ${riskRewardRatio.toFixed(2)}` : '—'}</span></span>
+              <span>Risk/reward ratio: <span className="font-semibold text-foreground">{riskRewardRatio !== null ? `1 : ${riskRewardRatio.toFixed(2)}` : '-'}</span></span>
               {tickSize !== null && multiplier !== null && <span>Tick value: <span className="font-semibold text-foreground">{fmtUsd(tickSize * multiplier)}</span> per contract</span>}
             </div>
             <p className="text-[10px] italic text-muted-foreground/70">
-              This is arithmetic based on the numbers you entered and this contract's real exchange-defined multiplier —
-              not a prediction the stop or target will be hit. Futures are leveraged: a relatively small price move can
+              This is arithmetic based on the numbers you entered and this contract's real exchange-defined multiplier - not a prediction the stop or target will be hit. Futures are leveraged: a relatively small price move can
               produce a large dollar gain or loss versus the margin actually posted, and this doesn't account for margin
               requirements, overnight/maintenance margin calls, or slippage in a fast market.
             </p>

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,18 +9,48 @@ import { MessageSquare, Send, Loader2, Sparkles, Maximize2 } from 'lucide-react'
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
-const SUGGESTIONS = [
+const DEFAULT_SUGGESTIONS = [
   'Top 3 buy signals right now',
   'How is AAPL performing?',
   'Any unusual insider activity?',
   'Compare TSLA vs NVDA fundamentals',
 ];
 
+// Suggestions swap based on which page the chat was opened from, so
+// "the little chat on the Options page" actually leads with options
+// education instead of generic stock questions -- the assistant already
+// answers all of these (see market-chat's docs array), this just surfaces
+// the right starting points for where someone actually is.
+const ROUTE_SUGGESTIONS: Array<{ test: (path: string) => boolean; suggestions: string[] }> = [
+  {
+    test: (p) => p.startsWith('/options') || p === '/calls' || p === '/puts',
+    suggestions: ['What is a call option?', 'What is a covered call?', 'What does delta mean?', 'Explain a credit spread'],
+  },
+  {
+    test: (p) => p.startsWith('/futures'),
+    suggestions: ['What is a futures contract?', 'What does contract multiplier mean?', 'What is tick size?'],
+  },
+  {
+    test: (p) => p.startsWith('/portfolio') || p.startsWith('/performance'),
+    suggestions: ['What stocks would round out my portfolio?', 'Show me the news on my portfolio', 'Any unusual insider activity in my holdings?'],
+  },
+  {
+    test: (p) => p.startsWith('/value-radar') || p.startsWith('/sector-rotation') || p.startsWith('/dividend-income'),
+    suggestions: ['What does Sector Rotation show?', 'What is a Balance Sheet Score?', 'How is P/E scored here?'],
+  },
+];
+
+function suggestionsForPath(path: string): string[] {
+  return ROUTE_SUGGESTIONS.find(r => r.test(path))?.suggestions ?? DEFAULT_SUGGESTIONS;
+}
+
 export const MarketChat = () => {
+  const location = useLocation();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const suggestions = suggestionsForPath(location.pathname);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -130,7 +160,7 @@ export const MarketChat = () => {
                 Ask anything about your watchlist, insider activity, fundamentals, or signals. Answers use cached market data only.
               </p>
               <div className="flex flex-col gap-1.5">
-                {SUGGESTIONS.map(s => (
+                {suggestions.map(s => (
                   <button
                     key={s}
                     onClick={() => send(s)}

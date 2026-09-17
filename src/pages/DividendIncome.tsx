@@ -12,7 +12,7 @@ type FundamentalsRow = Database['public']['Tables']['stock_fundamentals']['Row']
 
 const scoreColor = (score: number) => (score >= 65 ? 'text-signal-buy' : score >= 40 ? 'text-signal-hold' : 'text-signal-sell');
 const fmtMarketCap = (v: number | null) => {
-  if (v === null) return '—';
+  if (v === null) return '-';
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}T`;
   if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}B`;
   return `$${v.toFixed(0)}M`;
@@ -98,7 +98,7 @@ const DividendIncome = () => {
           <div>
             <h1 className="font-heading text-lg font-bold">Dividend Income</h1>
             <p className="text-xs text-muted-foreground">
-              Steady, cash-generative payers — the counterweight to the growth/momentum screens elsewhere on this site.
+              Steady, cash-generative payers - the counterweight to the growth/momentum screens elsewhere on this site.
             </p>
           </div>
           <Button size="sm" variant="outline" onClick={runScan} disabled={scanning}>
@@ -113,7 +113,7 @@ const DividendIncome = () => {
           <strong className="text-amber-300">A high yield is not automatically good.</strong> Yield rises when a stock
           price falls, so an unusually high number can mean the market expects a dividend cut, not that you found a
           bargain. This screen weighs payout-ratio coverage and balance-sheet strength alongside yield specifically to
-          surface sustainable payers over whichever number is simply highest — it is not a forecast or a recommendation.
+          surface sustainable payers over whichever number is simply highest - it is not a forecast or a recommendation.
         </div>
 
         <Card>
@@ -173,7 +173,7 @@ const DividendIncome = () => {
                         <td className="py-2 pr-3 text-muted-foreground">{fmtMarketCap(r.market_cap)}</td>
                         <td className="py-2 pr-3 font-bold text-signal-buy">{r.dividend_yield!.toFixed(2)}%</td>
                         <td className="py-2 pr-3">{r.payout_ratio !== null ? `${r.payout_ratio.toFixed(0)}%` : 'not reported'}</td>
-                        <td className="py-2 pr-3">{r.pe_ratio !== null ? r.pe_ratio.toFixed(1) : '—'}</td>
+                        <td className="py-2 pr-3">{r.pe_ratio !== null ? r.pe_ratio.toFixed(1) : '-'}</td>
                         <td className={`py-2 pr-3 font-bold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
                         <td className={`py-2 pr-3 font-bold ${scoreColor(composite)}`}>{composite.toFixed(0)}</td>
                       </tr>
@@ -186,7 +186,7 @@ const DividendIncome = () => {
               <strong className="text-foreground/80">Combined Score</strong> blends yield (capped, not a straight
               multiplier, so an extreme number can't dominate on size alone), payout-ratio safety (how comfortably the
               dividend is covered by earnings), 52-week price stability (a wide trading range is a proxy for the price
-              volatility/distress risk behind a yield spike), and Balance Sheet Strength into one ranking — a stock with
+              volatility/distress risk behind a yield spike), and Balance Sheet Strength into one ranking - a stock with
               the single highest yield can still rank below one with a smaller but safer, steadier, better-covered
               payout. Click any row for the full breakdown.
             </p>

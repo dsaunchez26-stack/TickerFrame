@@ -52,22 +52,22 @@ export const PortfolioRating = ({ enriched, totalValue, pnlPct, winRate }: Props
 
     const notes: Array<{ tone: 'warn' | 'info'; text: string; suggestion?: string }> = [];
     if (pnlPct > 10) {
-      notes.push({ tone: 'info', text: `Up ${pnlPct.toFixed(1)}% all-time with a ${winRate.toFixed(0)}% win rate — the strongest single factor in this score, and it's carrying it.` });
+      notes.push({ tone: 'info', text: `Up ${pnlPct.toFixed(1)}% all-time with a ${winRate.toFixed(0)}% win rate - the strongest single factor in this score, and it's carrying it.` });
     }
     if (largestPct > 25) {
       notes.push({
         tone: 'warn',
-        text: `${largest.symbol} makes up ${largestPct.toFixed(0)}% of this portfolio's value — a position this concentrated means its moves dominate the whole portfolio's swings.`,
+        text: `${largest.symbol} makes up ${largestPct.toFixed(0)}% of this portfolio's value - a position this concentrated means its moves dominate the whole portfolio's swings.`,
         suggestion: `Consider whether that position size still matches your risk tolerance, or whether trimming it would reduce how much a single stock can move your total return.`,
       });
     }
     if (positions.length < 5) {
-      notes.push({ tone: 'info', text: `Only ${positions.length} position${positions.length === 1 ? '' : 's'} tracked here — with this few holdings, any single stock's move has an outsized effect on total performance.` });
+      notes.push({ tone: 'info', text: `Only ${positions.length} position${positions.length === 1 ? '' : 's'} tracked here - with this few holdings, any single stock's move has an outsized effect on total performance.` });
     }
     if (sellCount > positions.length / 2) {
       notes.push({
         tone: 'warn',
-        text: `${sellCount} of ${positions.length} holdings currently carry a "sell" signal (RSI-based) — worth a closer look before adding to these.`,
+        text: `${sellCount} of ${positions.length} holdings currently carry a "sell" signal (RSI-based) - worth a closer look before adding to these.`,
         suggestion: `Remember this reflects short-term RSI momentum, not your original thesis for the position -- worth checking whether anything's actually changed before acting on it.`,
       });
     }
@@ -114,7 +114,7 @@ export const PortfolioRating = ({ enriched, totalValue, pnlPct, winRate }: Props
           </div>
         ))}
         <p className="pt-1 text-[10px] italic text-muted-foreground/70">
-          Based on realized performance plus position sizing and the same signals/patterns shown per stock below — not a recommendation to buy, hold, or sell. Research & education only.
+          Based on realized performance plus position sizing and the same signals/patterns shown per stock below - not a recommendation to buy, hold, or sell. Research & education only.
         </p>
       </CardContent>
     </Card>

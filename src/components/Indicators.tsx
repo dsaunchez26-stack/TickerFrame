@@ -22,7 +22,7 @@ export const Indicators = ({ symbol }: Props = {}) => {
       {
         label: 'RSI (14)',
         value: featured.rsi.toFixed(1),
-        sub: featured.rsi > 70 ? 'Overbought — caution' : featured.rsi < 30 ? 'Oversold — opportunity' : 'Neutral range',
+        sub: featured.rsi > 70 ? 'Overbought - caution' : featured.rsi < 30 ? 'Oversold - opportunity' : 'Neutral range',
         icon: <TrendingUp className="h-4 w-4" />,
         status: featured.rsi > 50 ? 'buy' : featured.rsi < 30 ? 'sell' : 'neutral' as const,
       },

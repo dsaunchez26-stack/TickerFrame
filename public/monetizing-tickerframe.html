@@ -1,0 +1,587 @@
+<title>Monetizing Tickerframe</title>
+<style>
+  :root {
+    --paper: #eff1ec;
+    --paper-raised: #e6e9e2;
+    --ink: #1b2420;
+    --ink-muted: #5c6b62;
+    --ink-faint: #8b978f;
+    --accent: #9c6b2e;
+    --accent-ink: #6f4c1f;
+    --flag: #8b4a3d;
+    --flag-bg: #f4e6e2;
+    --flag-border: #d8b3a8;
+    --good-bg: #e7ecdf;
+    --good-border: #c3d0b0;
+    --good-ink: #4c6134;
+    --rule: #d5d9d0;
+    --rule-strong: #b7bdb1;
+    --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+    --font-body: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #141815;
+      --paper-raised: #1b201c;
+      --ink: #e7eae3;
+      --ink-muted: #93a092;
+      --ink-faint: #5f6b62;
+      --accent: #d3a35f;
+      --accent-ink: #e8c690;
+      --flag: #d99686;
+      --flag-bg: #2b1e1b;
+      --flag-border: #4a332c;
+      --good-bg: #202718;
+      --good-border: #3c4a2c;
+      --good-ink: #a9c088;
+      --rule: #2a3129;
+      --rule-strong: #3a4238;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #141815;
+    --paper-raised: #1b201c;
+    --ink: #e7eae3;
+    --ink-muted: #93a092;
+    --ink-faint: #5f6b62;
+    --accent: #d3a35f;
+    --accent-ink: #e8c690;
+    --flag: #d99686;
+    --flag-bg: #2b1e1b;
+    --flag-border: #4a332c;
+    --good-bg: #202718;
+    --good-border: #3c4a2c;
+    --good-ink: #a9c088;
+    --rule: #2a3129;
+    --rule-strong: #3a4238;
+  }
+
+  * { box-sizing: border-box; }
+  html { text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent); color: var(--paper); }
+
+  a { color: var(--accent-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  .sheet {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 4rem 1.75rem 6rem;
+  }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+  .masthead strong { color: var(--ink); font-weight: 600; }
+
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.1rem, 5vw, 2.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 1.1rem 0 0.6rem;
+  }
+  p.dek {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.2rem;
+    color: var(--ink-muted);
+    max-width: 36rem;
+    margin: 0 0 2rem;
+    text-wrap: balance;
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tab-btn {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    padding: 0.75rem 0.2rem;
+    margin-right: 1.6rem;
+    cursor: pointer;
+    position: relative;
+    top: 1px;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease;
+  }
+  .tab-btn .num { color: var(--ink-faint); margin-right: 0.5rem; }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn[aria-selected="true"] {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+  }
+  .tab-btn[aria-selected="true"] .num { color: var(--accent-ink); }
+  .tab-panel { display: none; }
+  .tab-panel.is-active { display: block; }
+
+  /* ---------- Section rhythm ---------- */
+  section { margin-top: 3.4rem; }
+  section:first-child { margin-top: 0; }
+  .sec-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+  .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.7rem;
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+    margin: 0 0 0.9rem;
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 1.02rem;
+    margin: 1.7rem 0 0.5rem;
+    color: var(--ink);
+  }
+  p { max-width: 65ch; }
+  p.lede { font-size: 1.07rem; }
+  ul, ol { padding-left: 1.3rem; max-width: 62ch; }
+  li { margin-bottom: 0.4rem; }
+  strong { font-weight: 700; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--paper-raised);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+  }
+
+  /* ---------- Segment cards ---------- */
+  .segments {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin: 1.5rem 0;
+  }
+  .segment {
+    background: var(--paper);
+    padding: 1.4rem 1.5rem;
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);
+    gap: 1.5rem;
+  }
+  .segment .who { font-family: var(--font-display); font-weight: 600; font-size: 1.15rem; }
+  .segment .fit-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    margin-top: 0.4rem;
+  }
+  .fit-now { background: var(--good-bg); color: var(--good-ink); border: 1px solid var(--good-border); }
+  .fit-next { background: var(--paper-raised); color: var(--accent-ink); border: 1px solid var(--rule-strong); }
+  .fit-later { background: var(--flag-bg); color: var(--flag); border: 1px solid var(--flag-border); }
+  .segment .col-label { font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); margin-bottom: 0.3rem; }
+  .segment .col-body { font-size: 0.92rem; color: var(--ink-muted); line-height: 1.5; }
+
+  @media (max-width: 640px) {
+    .segment { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Callouts ---------- */
+  .callout {
+    border-left: 3px solid var(--flag-border);
+    background: var(--flag-bg);
+    padding: 0.9rem 1.1rem;
+    margin: 1.3rem 0;
+    border-radius: 0 3px 3px 0;
+  }
+  .callout .label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--flag);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .callout p { margin: 0; font-size: 0.93rem; color: var(--ink); max-width: 60ch; }
+
+  .callout.good { border-left-color: var(--good-border); background: var(--good-bg); }
+  .callout.good .label { color: var(--good-ink); }
+
+  /* ---------- Pull stat ---------- */
+  .pull {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--accent-ink);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 1.1rem 0;
+    margin: 1.6rem 0;
+    text-wrap: balance;
+  }
+
+  /* ---------- Roadmap ---------- */
+  .roadmap-phase {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 1.2rem;
+    padding: 1.4rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  .roadmap-phase:last-child { border-bottom: 1px solid var(--rule); }
+  .roadmap-phase .when {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.03em;
+    padding-top: 0.2rem;
+  }
+  .roadmap-phase .when .n { display: block; font-size: 1.6rem; color: var(--accent-ink); font-weight: 600; line-height: 1; margin-bottom: 0.25rem; }
+  .roadmap-phase h3 { margin-top: 0; }
+  .roadmap-phase .unlocks {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent-ink);
+    margin-bottom: 0.5rem;
+  }
+
+  /* ---------- Table ---------- */
+  .tbl-wrap { overflow-x: auto; margin: 1.3rem 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 0.88rem; }
+  th, td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); font-weight: 500; }
+  td.num, th.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+
+  hr.div { border: none; border-top: 1px solid var(--rule); margin: 3rem 0; }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,500;0,600;1,500&family=Public+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<div class="sheet">
+
+  <div class="masthead">
+    <span>Strategy Note · <strong>Tickerframe</strong></span>
+    <span>Prepared 9 Sep 2026</span>
+  </div>
+
+  <h1 class="title">Monetizing Tickerframe</h1>
+  <p class="dek">Two horizons: what to do right now, and what a genuine multi-year push toward full-market, institutional-grade infrastructure actually requires — read against what's really built today, not the pitch-deck version.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-now" id="tab-now"><span class="num">01</span>Right now — go to market</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-later" id="tab-later"><span class="num">02</span>Three years out — full infrastructure</button>
+  </div>
+
+  <div class="tab-panel is-active" id="panel-now" role="tabpanel" aria-labelledby="tab-now">
+
+    <p class="lede">You asked for the Cal AI playbook applied here, plus B2B and hedge funds. Short version: Cal AI's growth model transfers to the B2C layer almost directly. It does not transfer to the other two — an RIA and a hedge fund evaluate you on different axes entirely, and pretending otherwise wastes the first pitch you get with either. Below is the honest version of all three, plus the one build phase that's actually relevant right now. The longer infrastructure build is its own tab, because it's a different decision made on a different timeline.</p>
+
+    <section>
+      <div class="sec-label">Where each buyer stands today</div>
+      <h2>Three buyers, three different products</h2>
+      <p>Same signals underneath, but a retail trader, a financial advisor, and a portfolio manager at a fund are buying three different things — a habit, a credibility tool, and an edge. Only one of those is close to shippable right now.</p>
+
+      <div class="segments">
+        <div class="segment">
+          <div>
+            <div class="who">B2C — retail</div>
+            <span class="fit-badge fit-now">Fit: now</span>
+          </div>
+          <div>
+            <div class="col-label">Buys</div>
+            <div class="col-body">A habit: check signals, get a Slack ping on insider buys, feel ahead of the market for $15–30/mo.</div>
+          </div>
+          <div>
+            <div class="col-label">Evaluates on</div>
+            <div class="col-body">Does it feel alive and does it call things right often enough to keep opening the app. Data provenance barely matters to this buyer.</div>
+          </div>
+        </div>
+        <div class="segment">
+          <div>
+            <div class="who">B2B — advisors &amp; publishers</div>
+            <span class="fit-badge fit-next">Fit: 2–3 quarters out</span>
+          </div>
+          <div>
+            <div class="col-label">Buys</div>
+            <div class="col-body">A credibility tool: something to screen-share on a client call, or a data feed to embed in a newsletter/site under their own brand.</div>
+          </div>
+          <div>
+            <div class="col-label">Evaluates on</div>
+            <div class="col-body">Whether the methodology holds up if a client googles it, uptime, and whether it can wear their logo instead of yours.</div>
+          </div>
+        </div>
+        <div class="segment">
+          <div>
+            <div class="who">Hedge funds — institutional</div>
+            <span class="fit-badge fit-later">Fit: years, narrow niche only</span>
+          </div>
+          <div>
+            <div class="col-label">Buys</div>
+            <div class="col-body">An edge, or nothing. A screen that surfaces ideas a human still underwrites — never execution infrastructure.</div>
+          </div>
+          <div>
+            <div class="col-label">Evaluates on</div>
+            <div class="col-body">Data lineage, backtest evidence, and whether you can survive a compliance questionnaire. Sandbox data and a 615-ticker universe both fail this on contact — that gap is the whole second tab.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">01 — B2C</div>
+      <h2>The Cal AI playbook, honestly mapped</h2>
+      <p class="lede">This is the one segment where the comparison actually works, because the mechanics are the same: a single-screen hook, proof clips instead of feature lists, and a paywall behind the second use, not the fifteenth.</p>
+
+      <h3>What transfers directly</h3>
+      <ul>
+        <li><strong>One-screen hook.</strong> Cal AI's hook is "point camera, get calories." Yours is a ticker search that returns a full read in one screenshot: live price, RSI/MACD, sector-relative balance-sheet and growth scores, and — when there's one — a real insider buy with a name and a dollar amount attached. That last part is the actual hook: "the CEO bought $1.1M of this two weeks before it moved" is a native short-form clip, and it's true, not staged.</li>
+        <li><strong>Proof over claims.</strong> Cal AI doesn't explain the model, it shows a before/after. Your equivalent: pull a real call the site made — a flagged insider buy, a strict-value-filter small-cap, a Sector Rotation contrarian call — and show what actually happened after, good or bad. One honest miss shown alongside the hits will out-convert a highlight reel, because retail traders have been burned by finfluencer accounts that only post winners.</li>
+        <li><strong>Freemium wall placed late.</strong> Free: search any ticker, see the dashboard, ask the assistant. Paid: Slack alerts, portfolio tracking with auto-scored concentration risk, the strict-filter screens. The wall sits after the "oh, this is real" moment, not before it.</li>
+      </ul>
+
+      <h3>What does <em>not</em> transfer</h3>
+      <div class="callout">
+        <span class="label">Regulatory gap Cal AI doesn't have</span>
+        <p>A calorie count that's wrong annoys someone. A "signal" that's marketed too aggressively edges into personalized investment advice, which requires RIA registration you don't have. The disclaimer work already done across the app — "not investment advice," honest methodology, real-data-only chat — is a compliance asset, not boilerplate. Any growth-marketing case study built off a specific past call needs the same disclaimer directly on the clip, not just linked. Get one real compliance read before the first paid ad runs, not after.</p>
+      </div>
+
+      <div class="pull">"We show our work" is a real, defensible content angle here — most retail tools are black boxes, and this one just spent a session getting its own methodology page corrected until every claim on it was literally true.</div>
+
+      <h3>A pricing shape that fits what's built</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Tier</th><th>Price</th><th>Unlocks</th></tr></thead>
+          <tbody>
+            <tr><td>Free</td><td class="num">$0</td><td>Search, dashboard, assistant, all screens read-only</td></tr>
+            <tr><td>Trader</td><td class="num">$19/mo</td><td>Slack alerts, portfolio tracking, strict-filter screens, risk calculator</td></tr>
+            <tr><td>Trader+</td><td class="num">$39/mo</td><td>Multiple portfolios compared side by side, options income screens, futures tracking</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">02 — B2B</div>
+      <h2>Advisors, newsletters, and the embed play</h2>
+      <p class="lede">This buyer already trusts a brand — theirs, not yours. The product to sell is the scoring engine wearing someone else's logo.</p>
+
+      <h3>Two real buyers here</h3>
+      <ul>
+        <li><strong>Independent RIAs and wealth advisors.</strong> They need something to pull up on a client screen-share that looks rigorous without being a compliance liability. The sector-relative scoring — a leveraged utility and a leveraged software company aren't judged on the same scale — is a genuinely differentiated thing to point at, because most retail tools use one flat cutoff for the whole market.</li>
+        <li><strong>Finance newsletters and fintech content sites.</strong> They want a data feed or an embeddable widget (an insider-activity ticker, a sector rotation chart) under their own branding, licensed per-seat or per-pageview, so they don't have to build or license Bloomberg-tier infrastructure themselves.</li>
+      </ul>
+
+      <div class="callout good">
+        <span class="label">What's already an asset</span>
+        <p>The insider-activity tracker pulls Form 4 and Schedule 13D/13G directly from SEC EDGAR — real filings, real dollar amounts, real filing dates. That's the kind of primary-source data an advisor can defend to a client or a compliance officer without hedging.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">03 — Hedge funds</div>
+      <h2>Say the honest thing here, not the exciting one</h2>
+      <p class="lede">A fund's screening desk already has a Bloomberg terminal. They are not evaluating whether your RSI/MACD rule is clever — they're evaluating whether your data has a paper trail. Right now it mostly doesn't, and that's disqualifying before anyone looks at the signal quality. What it would actually take is the second tab, not a quick fix.</p>
+
+      <p>The realistic near-term niche isn't "sell to a hedge fund" — it's <strong>idea-generation for a portfolio manager at a small fund or family office</strong> who screens ideas by hand and would pay for a sector-relative fundamentals screen as one more input, never as an execution signal. That's a much smaller, later, and more skeptical buyer than B2C, and the pitch has to lead with data lineage, not the interface.</p>
+    </section>
+
+    <hr class="div">
+
+    <section>
+      <div class="sec-label">Build sequence — this phase only</div>
+      <h2>What to actually build right now</h2>
+      <p class="lede">This is the one phase that's near-term. The multi-year infrastructure build lives in the other tab on purpose — it's a different kind of decision, made later, funded by what this phase produces.</p>
+
+      <div class="roadmap-phase">
+        <div class="when"><span class="n">1</span>Now</div>
+        <div>
+          <div class="unlocks">Unlocks: paid B2C</div>
+          <h3>Get off sandbox data, add billing</h3>
+          <ul>
+            <li>Move Tradier and tastytrade from sandbox to production access — the single highest-leverage fix, since every "delayed" and "sandbox" disclosure currently on the site disappears with it.</li>
+            <li>Stripe subscriptions with the tiering above; today there's real user accounts (email/password via Supabase) but no billing layer at all.</li>
+            <li>A real news integration — the Flow &amp; News page currently says outright that this isn't connected, and news-driven catalysts are a natural short-form hook.</li>
+            <li>Push notifications (mobile web push or a lightweight wrapper) alongside the existing Slack alerts, since most retail traders don't have Slack open.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">Where I'd start</div>
+      <h2>My actual recommendation</h2>
+      <p class="lede">Start here. It's the only segment where "what's built" and "what's needed to sell" are already close together, and traction produces the two things a bigger build later will need anyway — a track record to point at, and revenue to fund it instead of raising for it. Don't let the hedge fund tab pull engineering time away from this one in the meantime; the work it needs doesn't help B2C or B2B at all, so it's worth deliberately ignoring until this phase is paying the bills.</p>
+    </section>
+
+  </div>
+
+  <div class="tab-panel" id="panel-later" role="tabpanel" aria-labelledby="tab-later">
+
+    <p class="lede">This is the path to the product a hedge fund would actually evaluate: real historical backfill, paid production-grade data instead of sandboxes, and something close to the full ~8,000-stock US market instead of a curated 615. None of it is urgent. All of it is a genuine multi-year infrastructure build, not an extension of what exists — the architecture that got 615 tickers working safely this year hits real, hard ceilings well before 8,000.</p>
+
+    <section>
+      <div class="sec-label">Why this isn't "just add more tickers"</div>
+      <h2>The ceiling the current architecture actually has</h2>
+      <p>Every scanner today runs as a Supabase edge function on a cron schedule, batched to fit inside a roughly 150-second execution window and Finnhub's free-tier rate limit. Getting the tracked universe from 116 to 615 this year required real batching work — stalest-first partial scans, pacing tuned to the rate limit, one function already caught sitting at 90% of its time budget. That architecture doesn't stretch to 8,000; it breaks. A universe 13x larger under the same polling model means either full-universe rotation measured in days, or abandoning cron-triggered edge functions for something that runs continuously. This is the real starting fact for everything below.</p>
+    </section>
+
+    <section>
+      <div class="sec-label">Infrastructure — 01</div>
+      <h2>Real historical backfill</h2>
+      <p class="lede">Today, price history only accumulates forward from whenever a symbol was added — Finnhub's free tier doesn't include historical candles at all, so there is nothing to backfill <em>with</em> yet.</p>
+      <ul>
+        <li><strong>A dedicated historical data vendor</strong> — Polygon.io, Tiingo, EOD Historical Data, or Norgate for equities specifically built for backtesting. This is a new vendor relationship and a new line item, not a Finnhub tier upgrade.</li>
+        <li><strong>A one-time bulk backfill job</strong> populating a proper historical OHLCV table, separate from today's 7-day rolling intraday window, which is deliberately bounded and wrong for this purpose.</li>
+        <li><strong>Daily bars are enough</strong> for the swing-style signal this app runs today. Full intraday history at market-wide scale is a different, much larger project — likely a real time-series database (TimescaleDB or equivalent) rather than plain Postgres rows — and isn't worth taking on until there's a specific strategy that needs intraday backtesting.</li>
+      </ul>
+      <div class="callout">
+        <span class="label">The part most plans miss</span>
+        <p>A backtest that only includes stocks still trading today is quietly cheating — it drops every stock that got delisted or went bankrupt, which is exactly the failure mode a real quant wants to see excluded. Survivorship-bias-free history is a specialty data category (Norgate is the name that comes up most), not something the mainstream retail-tier vendors above include by default. This is the specific detail that separates a backtest a fund will actually trust from one that looks fine until someone asks the right question.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">Infrastructure — 02</div>
+      <h2>Paid, production-grade data tiers</h2>
+      <p class="lede">Every live data source in the app today is either free-tier or a sandbox environment, disclosed honestly in the UI. Getting to a sellable data-tier product means replacing all of it.</p>
+      <ul>
+        <li><strong>Tradier and tastytrade</strong> move from sandbox/certification to real production agreements — likely tied to an actual funded account relationship, not just an API key upgrade.</li>
+        <li><strong>A full-market real-time provider</strong> to replace or sit alongside Finnhub for equities — Polygon.io or IEX Cloud both cover the full US market with WebSocket streaming; an enterprise feed (Refinitiv/LSEG, ICE Data) is the eventual tier institutional buyers will actually recognize.</li>
+        <li><strong>An ingestion rebuild</strong>: streaming/WebSocket ingestion into a real queue, replacing cron-triggered batch polling, because polling doesn't produce anything a customer would call "real-time" at this scale.</li>
+      </ul>
+      <div class="callout">
+        <span class="label">Check before selling a data tier, not after</span>
+        <p>Most market-data vendor agreements restrict resale or redistribution to your own paying customers without a separate license, and exchanges frequently charge per-end-user fees for real-time data specifically when it's redisplayed to a third party. This is a contract-and-cost question to resolve with each vendor before "we sell data access" becomes a product line, not a technical detail to discover afterward.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-label">Infrastructure — 03</div>
+      <h2>Most of the US market, not a curated list</h2>
+      <p class="lede">The 615-ticker universe today is hand-curated, and hand-curation is already close to its limit — building it out this year meant manually catching 15 tickers that had been quietly delisted or renamed. That doesn't scale to 8,000.</p>
+      <ul>
+        <li><strong>An automated reference-data feed</strong> for listings, delistings, and ticker changes — most full-market providers (Polygon included) offer this specifically because every serious user of their data needs it.</li>
+        <li><strong>Scanning jobs re-architected off edge functions</strong> onto dedicated long-running workers or a real job queue — fundamentals, insider activity, and earnings scanning all need to scale roughly 13x, and the same stalest-first batching trick just produces much longer staleness windows unless the compute budget grows with it.</li>
+        <li><strong>SEC EDGAR has its own rate limits</strong>, unrelated to budget. Insider-activity scanning at market-wide scale realistically means mirroring EDGAR's daily full-text index locally rather than querying per-ticker 8,000 times.</li>
+      </ul>
+    </section>
+
+    <section>
+      <div class="sec-label">Infrastructure — 04</div>
+      <h2>What comes along for the ride</h2>
+      <p>None of this is optional once the above exists — it's what makes it trustworthy and sellable.</p>
+      <ul>
+        <li><strong>Per-score audit logging</strong> — exactly what inputs produced a given score at a given time, retained and queryable. This is what a real backtest and a fund's diligence process both actually need.</li>
+        <li><strong>A real backtesting engine</strong>, built on top of the historical data — a separate deliverable from just having the data sitting in a table.</li>
+        <li><strong>A SOC 2 track and compliance documentation</strong> — table stakes for any institutional vendor questionnaire, not a differentiator.</li>
+        <li><strong>Metered, usage-based billing</strong> for a data-access tier as its own product line, priced by symbol count or call volume — a different pricing model from the flat consumer subscription tiers in the other tab.</li>
+      </ul>
+    </section>
+
+    <hr class="div">
+
+    <section>
+      <div class="sec-label">Marketing this version</div>
+      <h2>The pitch changes once the infrastructure is real</h2>
+      <p class="lede">Everything in the first tab is self-serve, content-driven growth. None of that is how this version gets sold.</p>
+
+      <h3>The pitch upgrades</h3>
+      <p>Once there's verified historical backtesting, real-time production data, and an audit trail, the honest positioning moves from "idea generation" to a legitimate lower-cost alternative to Bloomberg/Refinitiv-adjacent tooling — aimed at smaller asset managers, independent RIAs running real AUM, and quant researchers at small funds who currently can't justify an enterprise terminal seat.</p>
+
+      <h3>The sales motion changes too</h3>
+      <ul>
+        <li>Self-serve signup stops being how this sells. Institutional buyers expect security reviews, custom contracts, and a real point of contact — which means an actual enterprise sales function, not a pricing page.</li>
+        <li><strong>Credibility assets that don't exist yet</strong> become possible for the first time: published backtest performance reported honestly (drawdowns and misses included, not just the wins), data-lineage documentation a compliance team can actually review, and case studies with real numbers instead of screenshots.</li>
+        <li>Industry presence shifts from FinTok to trade-specific channels: quant/fintech conferences, analyst relationships, and a public "signals we called, verified against real history" track record — the same transparency instinct behind the honest methodology page today, just backed by years of real data instead of weeks.</li>
+      </ul>
+
+      <div class="pull">The through-line from tab one to tab two: the same "we show our work" positioning that wins a retail trader's trust today is exactly what a compliance officer is going to ask for in three years. Nothing about the honesty changes — only how much infrastructure stands behind it.</div>
+    </section>
+
+  </div>
+
+  <footer>
+    <span>Tickerframe · internal strategy note</span>
+    <span>Not for distribution</span>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var tabs = document.querySelectorAll('.tab-btn');
+    var panels = { 'tab-now': document.getElementById('panel-now'), 'tab-later': document.getElementById('panel-later') };
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) { t.setAttribute('aria-selected', 'false'); });
+        Object.keys(panels).forEach(function (id) { panels[id].classList.remove('is-active'); });
+        tab.setAttribute('aria-selected', 'true');
+        panels[tab.id].classList.add('is-active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+  })();
+</script>

@@ -43,7 +43,7 @@ const OptionsIncome = () => {
         )}
         <AdvancedFilters filters={filters} setFilters={setFilters} sectors={sectors} />
         <p className="-mt-3 text-[10px] text-muted-foreground">
-          Note: the |Δ| filter above doesn't apply on this page — these strategies deliberately target low delta (10–35%) as
+          Note: the |Δ| filter above doesn't apply on this page - these strategies deliberately target low delta (10–35%) as
           part of the premium-selling thesis, so each section below applies its own delta band instead.
         </p>
         <div className="grid gap-6 lg:grid-cols-2">

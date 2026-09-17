@@ -35,7 +35,7 @@ export const PositionAlertBadge = ({ pnlPct, targetGainPct, stopLossPct, size = 
           <TooltipContent>
             <div className="max-w-xs text-xs">
               You set a target of +{targetGainPct}% on this position, and it's currently at {pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(1)}%.
-              This is just flagging that your own threshold was crossed — not a suggestion to sell.
+              This is just flagging that your own threshold was crossed - not a suggestion to sell.
             </div>
           </TooltipContent>
         </Tooltip>
@@ -51,7 +51,7 @@ export const PositionAlertBadge = ({ pnlPct, targetGainPct, stopLossPct, size = 
           <TooltipContent>
             <div className="max-w-xs text-xs">
               You set a stop level of -{stopLossPct}% on this position, and it's currently at {pnlPct.toFixed(1)}%.
-              This is just flagging that your own threshold was crossed — not a suggestion to sell.
+              This is just flagging that your own threshold was crossed - not a suggestion to sell.
             </div>
           </TooltipContent>
         </Tooltip>

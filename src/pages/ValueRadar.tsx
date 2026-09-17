@@ -10,8 +10,8 @@ import type { Database } from '@/integrations/supabase/types';
 
 type FundamentalsRow = Database['public']['Tables']['stock_fundamentals']['Row'];
 
-const fmtPct = (v: number | null, digits = 1) => (v === null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`);
-const fmtRatio = (v: number | null) => (v === null ? '—' : v.toFixed(2));
+const fmtPct = (v: number | null, digits = 1) => (v === null ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`);
+const fmtRatio = (v: number | null) => (v === null ? '-' : v.toFixed(2));
 const scoreColor = (score: number) => (score >= 65 ? 'text-signal-buy' : score >= 40 ? 'text-signal-hold' : 'text-signal-sell');
 
 const ValueRadar = () => {
@@ -35,7 +35,7 @@ const ValueRadar = () => {
     <div className="min-h-screen bg-background">
       <ValueRadarPageHeader
         title="Value Radar"
-        subtitle="Screens for a strong balance sheet (limited downside) paired with real revenue/earnings growth (upside potential) — the same objective criteria applied to every stock, shown to every user."
+        subtitle="Screens for a strong balance sheet (limited downside) paired with real revenue/earnings growth (upside potential) - the same objective criteria applied to every stock, shown to every user."
         scanning={scanning}
         onRefresh={runScan}
       />
@@ -45,7 +45,7 @@ const ValueRadar = () => {
           <strong className="text-amber-300">"Little downside, big upside" is a framing, not a guarantee.</strong>{' '}
           A strong balance sheet reduces (it doesn't eliminate) the odds of permanent capital loss, and past growth/earnings
           beats don't guarantee future ones. Every stock here can still go down. This ranks companies by objective, publicly
-          reported fundamentals — it is not a forecast of where any price is headed.
+          reported fundamentals - it is not a forecast of where any price is headed.
         </div>
 
         <Card>
@@ -81,7 +81,7 @@ const ValueRadar = () => {
             {loading ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
             ) : rows.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No fundamentals data yet — click "Refresh scan" to pull it (takes about a minute).</p>
+              <p className="text-xs text-muted-foreground">No fundamentals data yet - click "Refresh scan" to pull it (takes about a minute).</p>
             ) : candidates.length === 0 ? (
               <p className="text-xs text-muted-foreground">No stocks currently clear both thresholds. Try lowering the filters.</p>
             ) : (
@@ -108,7 +108,7 @@ const ValueRadar = () => {
                         <td className="py-2 pr-3 font-semibold">{r.symbol}</td>
                         <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                         <td className="py-2 pr-3 text-muted-foreground">
-                          {r.week52_low && r.week52_high ? `$${r.week52_low.toFixed(0)}–$${r.week52_high.toFixed(0)}` : '—'}
+                          {r.week52_low && r.week52_high ? `$${r.week52_low.toFixed(0)}–$${r.week52_high.toFixed(0)}` : '-'}
                         </td>
                         <td className="py-2 pr-3">{fmtRatio(r.debt_to_equity)}</td>
                         <td className="py-2 pr-3">{fmtRatio(r.current_ratio)}</td>
@@ -130,10 +130,10 @@ const ValueRadar = () => {
         <Card>
           <CardHeader><CardTitle className="text-sm font-semibold">How this is calculated</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-xs text-muted-foreground">
-            <p><strong className="text-foreground">Balance Sheet Strength (0–100):</strong> lower debt/equity, a healthier current ratio, and positive net margins score higher — these are the factors that limit how much a company can lose before its business itself is at risk, independent of where the stock price goes.</p>
+            <p><strong className="text-foreground">Balance Sheet Strength (0–100):</strong> lower debt/equity, a healthier current ratio, and positive net margins score higher - these are the factors that limit how much a company can lose before its business itself is at risk, independent of where the stock price goes.</p>
             <p><strong className="text-foreground">Growth & Momentum (0–100):</strong> real year-over-year revenue and EPS growth, plus a track record of beating (rather than missing) recent earnings estimates.</p>
-            <p><strong className="text-foreground">Ranking:</strong> candidates are sorted by the sum of both scores, so the stock with the best overall combination of balance-sheet strength and growth sits at the top — not just whichever wins on a single metric.</p>
-            <p>Data comes from each company's own reported financials (via Finnhub) — not a scrape of any single site, and not analyst price targets or projections. A missing data point is left out of that stock's score rather than guessed at.</p>
+            <p><strong className="text-foreground">Ranking:</strong> candidates are sorted by the sum of both scores, so the stock with the best overall combination of balance-sheet strength and growth sits at the top - not just whichever wins on a single metric.</p>
+            <p>Data comes from each company's own reported financials (via Finnhub) - not a scrape of any single site, and not analyst price targets or projections. A missing data point is left out of that stock's score rather than guessed at.</p>
             <p>Click any row for a breakdown of exactly what's behind its score, compared against the rest of this scanned list.</p>
           </CardContent>
         </Card>

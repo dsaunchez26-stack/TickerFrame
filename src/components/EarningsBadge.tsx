@@ -39,12 +39,12 @@ export const EarningsBadge = ({ earnings, referenceDate, size = 'sm', className 
     const beforeExpiration = earningsDate <= ref;
     if (beforeExpiration) {
       urgent = true;
-      label = daysUntil === 0 ? 'Earnings today — before exp.' : `Earnings in ${daysUntil}d — before exp.`;
-      tooltip = `${fmtDate(earnings.date)}${hourLabel(earnings.hour) ? ` (${hourLabel(earnings.hour)})` : ''} — this contract is still open when the company reports. Earnings moves can be large in either direction and often overwhelm whatever the chart or the Greeks suggested going in.`;
+      label = daysUntil === 0 ? 'Earnings today - before exp.' : `Earnings in ${daysUntil}d - before exp.`;
+      tooltip = `${fmtDate(earnings.date)}${hourLabel(earnings.hour) ? ` (${hourLabel(earnings.hour)})` : ''} - this contract is still open when the company reports. Earnings moves can be large in either direction and often overwhelm whatever the chart or the Greeks suggested going in.`;
     } else if (daysUntil <= 21) {
       urgent = false;
       label = `Earnings ${fmtDate(earnings.date)} (after exp.)`;
-      tooltip = `${fmtDate(earnings.date)}${hourLabel(earnings.hour) ? ` (${hourLabel(earnings.hour)})` : ''} — after this contract's expiration, so it won't be open for the earnings reaction itself.`;
+      tooltip = `${fmtDate(earnings.date)}${hourLabel(earnings.hour) ? ` (${hourLabel(earnings.hour)})` : ''} - after this contract's expiration, so it won't be open for the earnings reaction itself.`;
     } else {
       return null;
     }
@@ -52,7 +52,7 @@ export const EarningsBadge = ({ earnings, referenceDate, size = 'sm', className 
     if (daysUntil > 21) return null;
     urgent = daysUntil <= 7;
     label = daysUntil === 0 ? 'Earnings today' : `Earnings in ${daysUntil}d`;
-    tooltip = `${fmtDate(earnings.date)}${hourLabel(earnings.hour) ? ` (${hourLabel(earnings.hour)})` : ''} — earnings reactions can move a stock (and anything derived from it) sharply in either direction.`;
+    tooltip = `${fmtDate(earnings.date)}${hourLabel(earnings.hour) ? ` (${hourLabel(earnings.hour)})` : ''} - earnings reactions can move a stock (and anything derived from it) sharply in either direction.`;
   }
 
   const colorClass = urgent ? 'bg-signal-sell/15 text-signal-sell border-signal-sell/30' : 'bg-signal-hold/15 text-signal-hold border-signal-hold/30';

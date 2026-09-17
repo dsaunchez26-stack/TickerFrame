@@ -41,7 +41,7 @@ export const TopMovers = () => {
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3 flex items-center gap-2">
         <Flame className="h-4 w-4 text-orange-400" />
-        <h3 className="font-heading text-sm font-semibold text-foreground">Top Movers — Trade Setups</h3>
+        <h3 className="font-heading text-sm font-semibold text-foreground">Top Movers - Trade Setups</h3>
         <span className="ml-auto text-[10px] text-muted-foreground">Check ✓ to add to portfolio</span>
       </div>
       <div className="grid gap-0 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x">

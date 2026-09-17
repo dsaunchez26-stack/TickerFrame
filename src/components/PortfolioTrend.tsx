@@ -36,7 +36,7 @@ export const PortfolioTrend = ({ userId, portfolioName }: Props) => {
     return (
       <div className="mb-3 flex items-start gap-2 rounded-md border border-border/60 p-3 text-xs text-muted-foreground">
         <Info className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
-        <span>Started tracking daily value today — trend comparisons will show up here as history builds. We have no record of what this portfolio was worth before today, so there's nothing to compare against yet.</span>
+        <span>Started tracking daily value today - trend comparisons will show up here as history builds. We have no record of what this portfolio was worth before today, so there's nothing to compare against yet.</span>
       </div>
     );
   }
@@ -72,7 +72,7 @@ export const PortfolioTrend = ({ userId, portfolioName }: Props) => {
     <div className="mb-3 space-y-2 rounded-md border border-border/60 p-3">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Trend</div>
       {comparisons.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Not enough history yet for a 7-day comparison — check back soon.</p>
+        <p className="text-xs text-muted-foreground">Not enough history yet for a 7-day comparison - check back soon.</p>
       ) : (
         comparisons.map(c => (
           <div key={c.label} className="flex items-center gap-2 text-xs">

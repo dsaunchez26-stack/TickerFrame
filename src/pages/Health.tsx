@@ -150,7 +150,7 @@ export default function Health() {
   }, []);
 
   const fmtAgo = (iso: string) => {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const m = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
     if (m < 60) return `${m}m ago`;
     if (m < 60 * 24) return `${Math.round(m / 60)}h ago`;
@@ -193,7 +193,7 @@ export default function Health() {
                 <tbody>
                   {users.map(u => (
                     <tr key={u.id} className="border-b last:border-0">
-                      <td className="py-2 pr-3">{u.email ?? '—'}</td>
+                      <td className="py-2 pr-3">{u.email ?? '-'}</td>
                       <td className="py-2 pr-3 whitespace-nowrap text-xs text-muted-foreground">{fmtAgo(u.created_at)}</td>
                       <td className="py-2 pr-3 whitespace-nowrap text-xs text-muted-foreground">{u.last_sign_in_at ? fmtAgo(u.last_sign_in_at) : 'never'}</td>
                     </tr>
@@ -234,7 +234,7 @@ export default function Health() {
                         <td className="py-2 pr-3"><Badge className={color[status]}>{status}</Badge></td>
                         <td className="py-2 pr-3">{c.ok_24h}/{c.runs_24h}</td>
                         <td className="py-2 pr-3">{c.rows_24h}</td>
-                        <td className="py-2 pr-3 text-xs text-muted-foreground max-w-[280px] truncate" title={c.notes ?? ''}>{c.notes ?? '—'}</td>
+                        <td className="py-2 pr-3 text-xs text-muted-foreground max-w-[280px] truncate" title={c.notes ?? ''}>{c.notes ?? '-'}</td>
                       </tr>
                     );
                   })}
@@ -265,7 +265,7 @@ export default function Health() {
                     return (
                       <tr key={f.table} className="border-b last:border-0">
                         <td className="py-2 pr-3">{f.table}</td>
-                        <td className="py-2 pr-3">{f.latest ? fmtAgo(f.latest) : '—'}</td>
+                        <td className="py-2 pr-3">{f.latest ? fmtAgo(f.latest) : '-'}</td>
                         <td className="py-2 pr-3">
                           <Badge className={stale ? 'bg-red-500/15 text-red-500' : 'bg-green-500/15 text-green-500'}>
                             {stale ? 'stale' : 'fresh'}
@@ -309,7 +309,7 @@ export default function Health() {
                   {errors.map(e => (
                     <tr key={e.id} className="border-b last:border-0 align-top">
                       <td className="py-2 pr-3 whitespace-nowrap text-xs text-muted-foreground">{fmtAgo(e.created_at)}</td>
-                      <td className="py-2 pr-3 font-mono text-xs">{e.route ?? '—'}</td>
+                      <td className="py-2 pr-3 font-mono text-xs">{e.route ?? '-'}</td>
                       <td className="py-2 pr-3">
                         <details>
                           <summary className="cursor-pointer text-sm">{e.message}</summary>

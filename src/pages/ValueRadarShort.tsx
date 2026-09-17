@@ -11,8 +11,8 @@ import type { Database } from '@/integrations/supabase/types';
 type FundamentalsRow = Database['public']['Tables']['stock_fundamentals']['Row'];
 type TechnicalsRow = Pick<Database['public']['Tables']['stock_cache']['Row'], 'symbol' | 'price' | 'bollinger_pct_b' | 'rsi' | 'pattern' | 'pattern_confidence'>;
 
-const fmtPct = (v: number | null, digits = 1) => (v === null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`);
-const fmtRatio = (v: number | null) => (v === null ? '—' : v.toFixed(2));
+const fmtPct = (v: number | null, digits = 1) => (v === null ? '-' : `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`);
+const fmtRatio = (v: number | null) => (v === null ? '-' : v.toFixed(2));
 const weaknessColor = (score: number) => (score <= 35 ? 'text-signal-sell' : score <= 50 ? 'text-signal-hold' : 'text-signal-buy');
 
 const ValueRadarShort = () => {
@@ -44,25 +44,24 @@ const ValueRadarShort = () => {
     <div className="min-h-screen bg-background">
       <ValueRadarPageHeader
         title="Short Candidates"
-        subtitle="The inverse screen: a weak balance sheet paired with a price that's technically stretched above its own normal trading range (Bollinger %B) — same objective data, same criteria applied to every stock."
+        subtitle="The inverse screen: a weak balance sheet paired with a price that's technically stretched above its own normal trading range (Bollinger %B) - same objective data, same criteria applied to every stock."
         scanning={scanning}
         onRefresh={runScan}
       />
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
         <Disclaimer />
         <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-xs text-red-200/90 space-y-1.5">
-          <p><strong className="text-red-300">Shorting is not a mirror image of buying — read this before using this list for anything.</strong></p>
+          <p><strong className="text-red-300">Shorting is not a mirror image of buying - read this before using this list for anything.</strong></p>
           <p>
             A long position's max loss is what you paid. Shorting a stock (or buying puts) has no equivalent floor on the
             upside risk: if the stock keeps rising instead of falling, losses are not capped the way a long purchase's is.
-            Weak-fundamentals stocks that are heavily shorted are also exactly the names most prone to short squeezes —
-            sharp, fast rallies driven by short covering, not fundamentals — which can move against a short position
+            Weak-fundamentals stocks that are heavily shorted are also exactly the names most prone to short squeezes - sharp, fast rallies driven by short covering, not fundamentals - which can move against a short position
             violently and quickly.
           </p>
           <p>
             This list is a backward-looking data screen, not a signal to open a position, and it is not a recommendation
             to short anything. It reflects two objective numbers (a fundamentals score and a price-vs-its-own-range
-            statistic) as of the last scan — nothing here predicts what happens next.
+            statistic) as of the last scan - nothing here predicts what happens next.
           </p>
         </div>
 
@@ -126,8 +125,8 @@ const ValueRadarShort = () => {
                         <td className="py-2 pr-3">{fmtPct(r.net_margin)}</td>
                         <td className={`py-2 pr-3 font-bold ${weaknessColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
                         <td className="py-2 pr-3 font-bold text-signal-sell">{t.bollinger_pct_b!.toFixed(2)}</td>
-                        <td className="py-2 pr-3">{t.rsi != null ? t.rsi.toFixed(0) : '—'}</td>
-                        <td className="py-2 pr-3 text-muted-foreground">{t.pattern ?? '—'}</td>
+                        <td className="py-2 pr-3">{t.rsi != null ? t.rsi.toFixed(0) : '-'}</td>
+                        <td className="py-2 pr-3 text-muted-foreground">{t.pattern ?? '-'}</td>
                         <td className="py-2 pr-3">
                           {put ? (
                             <span>
@@ -137,7 +136,7 @@ const ValueRadarShort = () => {
                               <span className="text-muted-foreground">(score {put.score.toFixed(0)})</span>
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">—</span>
+                            <span className="text-muted-foreground">-</span>
                           )}
                         </td>
                       </tr>
@@ -150,8 +149,7 @@ const ValueRadarShort = () => {
             <p className="mt-3 text-[10px] italic text-muted-foreground/70">
               Bollinger %B measures where the current price sits relative to its own 20-period range: 1.00 = right at the
               upper band, 1.50 = 50% of a band-width above it. Ranked by most-stretched first, then weakest balance sheet.
-              "Best Put" is the highest-scoring put contract the options scanner currently has on file for that ticker —
-              buying a put has a capped max loss (what you pay for it), unlike shorting the stock itself.
+              "Best Put" is the highest-scoring put contract the options scanner currently has on file for that ticker - buying a put has a capped max loss (what you pay for it), unlike shorting the stock itself.
               {putsScannedAt && <span> Options data as of {new Date(putsScannedAt).toLocaleString()}.</span>}
               {' '}Click any ticker to see the chart this is based on.
             </p>

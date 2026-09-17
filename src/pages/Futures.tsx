@@ -36,7 +36,7 @@ interface ScanResponse {
   error?: string;
 }
 
-const fmt = (v: number | null, digits = 2) => (v === null ? '—' : v.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits }));
+const fmt = (v: number | null, digits = 2) => (v === null ? '-' : v.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits }));
 
 const Futures = () => {
   const { user } = useAuth();
@@ -56,7 +56,7 @@ const Futures = () => {
   const addToPortfolio = async (r: FutureRow, portfolioName: string | null) => {
     if (!user) return;
     if (r.last === null) {
-      toast.error('No live price available for this contract right now — try again once pricing is back.');
+      toast.error('No live price available for this contract right now - try again once pricing is back.');
       return;
     }
     const { error: insertError } = await supabase.from('futures_positions').insert({
@@ -70,7 +70,7 @@ const Futures = () => {
       portfolio_name: portfolioName,
     });
     if (insertError) { toast.error(insertError.message); return; }
-    toast.success(`${r.code} added${portfolioName ? ` to ${portfolioName}` : ''} at $${r.last.toFixed(2)} — adjust quantity or entry price from the Portfolio page.`);
+    toast.success(`${r.code} added${portfolioName ? ` to ${portfolioName}` : ''} at $${r.last.toFixed(2)} - adjust quantity or entry price from the Portfolio page.`);
     loadTracked();
   };
 
@@ -124,8 +124,7 @@ const Futures = () => {
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
           <strong className="text-amber-300">Sandbox data.</strong> This is running against tastytrade's sandbox/certification environment, not
           their production API. Contract specs (symbol, expiration, tick size, contract size) are real and current. Live pricing should also be
-          real when available, but the sandbox pricing service is a testing environment tastytrade can take down independent of this app —
-          if it's unavailable below, that's why.
+          real when available, but the sandbox pricing service is a testing environment tastytrade can take down independent of this app - if it's unavailable below, that's why.
         </div>
         {error && (
           <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">
@@ -140,7 +139,7 @@ const Futures = () => {
         )}
         {data?.missingProducts && data.missingProducts.length > 0 && (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
-            <strong>Couldn't load:</strong> {data.missingProducts.join(', ')} — no current contract found for {data.missingProducts.length === 1 ? 'this product' : 'these products'} on this scan. Everything else below loaded normally.
+            <strong>Couldn't load:</strong> {data.missingProducts.join(', ')} - no current contract found for {data.missingProducts.length === 1 ? 'this product' : 'these products'} on this scan. Everything else below loaded normally.
           </div>
         )}
         {loading && !data ? (
@@ -173,18 +172,18 @@ const Futures = () => {
                           <td className="py-2 pr-3 text-muted-foreground">{r.symbol}</td>
                           <td className="py-2 pr-3">{r.exchange}</td>
                           <td className="py-2 pr-3">{r.expiration}</td>
-                          <td className="py-2 pr-3">{r.tickSize != null ? `$${r.tickSize}` : '—'}</td>
-                          <td className="py-2 pr-3">{r.contractSize ?? '—'}</td>
-                          <td className="py-2 pr-3 font-semibold">{r.last != null ? `$${fmt(r.last)}` : '—'}</td>
+                          <td className="py-2 pr-3">{r.tickSize != null ? `$${r.tickSize}` : '-'}</td>
+                          <td className="py-2 pr-3">{r.contractSize ?? '-'}</td>
+                          <td className="py-2 pr-3 font-semibold">{r.last != null ? `$${fmt(r.last)}` : '-'}</td>
                           <td className="py-2 pr-3 text-muted-foreground">
-                            {r.bid != null && r.ask != null ? `$${fmt(r.bid)} / $${fmt(r.ask)}` : '—'}
+                            {r.bid != null && r.ask != null ? `$${fmt(r.bid)} / $${fmt(r.ask)}` : '-'}
                           </td>
                           <td className="py-2 pr-3">
                             {r.change != null && r.changePercent != null ? (
                               <span className={r.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}>
                                 {r.change >= 0 ? '+' : ''}{fmt(r.change)} ({r.changePercent >= 0 ? '+' : ''}{fmt(r.changePercent, 1)}%)
                               </span>
-                            ) : '—'}
+                            ) : '-'}
                           </td>
                           <td className="py-2 pr-3">
                             {user && (
@@ -206,9 +205,9 @@ const Futures = () => {
         <Card>
           <CardHeader><CardTitle className="text-sm font-semibold">How this works</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-xs text-muted-foreground">
-            <p>Each contract shown is the current front-month (nearest active) expiration for that product, pulled live from tastytrade's own instrument reference data — not hand-maintained or guessed.</p>
+            <p>Each contract shown is the current front-month (nearest active) expiration for that product, pulled live from tastytrade's own instrument reference data - not hand-maintained or guessed.</p>
             <p><strong className="text-foreground">Tick Size</strong> and <strong className="text-foreground">Contract Size</strong> are real exchange-defined contract specs: tick size is the minimum price increment, contract size is the multiplier applied to price to get the dollar value of one contract.</p>
-            <p>This is research/reference data only — not a recommendation to trade futures, which carry substantial risk of loss, often exceeding the amount initially invested.</p>
+            <p>This is research/reference data only - not a recommendation to trade futures, which carry substantial risk of loss, often exceeding the amount initially invested.</p>
           </CardContent>
         </Card>
       </main>

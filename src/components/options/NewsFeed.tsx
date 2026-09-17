@@ -7,7 +7,7 @@ export const NewsFeed = () => (
     <CardContent>
       <div className="flex flex-col items-center gap-2 py-8 text-center text-xs text-muted-foreground">
         <Newspaper className="h-6 w-6" />
-        <p>Live news feed isn't connected yet — this needs a news-fetching edge function wired to a real provider.</p>
+        <p>Live news feed isn't connected yet - this needs a news-fetching edge function wired to a real provider.</p>
       </div>
     </CardContent>
   </Card>

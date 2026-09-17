@@ -116,7 +116,7 @@ export const OptionRiskCalculator = () => {
                 <SelectContent>
                   {rowsForSide.map(r => (
                     <SelectItem key={r.id} value={r.id}>
-                      ${r.strike} {r.cp === 'C' ? 'call' : 'put'} — bid ${r.bid.toFixed(2)} / ask ${r.ask.toFixed(2)}
+                      ${r.strike} {r.cp === 'C' ? 'call' : 'put'} - bid ${r.bid.toFixed(2)} / ask ${r.ask.toFixed(2)}
                     </SelectItem>
                   ))}
                   {rowsForSide.length === 0 && <div className="px-2 py-1.5 text-xs text-muted-foreground">No contracts for this side.</div>}

@@ -136,7 +136,7 @@ export default function Auth() {
 
         <p className="text-[11px] text-center text-muted-foreground px-4">
           By creating an account you agree to our <Link to="/legal" className="underline">Terms & Disclaimers</Link>.
-          Tickerframe is research and education only — not investment advice.
+          Tickerframe is research and education only - not investment advice.
         </p>
       </div>
     </div>

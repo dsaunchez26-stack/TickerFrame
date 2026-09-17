@@ -92,7 +92,7 @@ export const OptionRiskMath = ({ ticker, cp, strike, spot, premium, expiration, 
                 <div className="rounded-lg border border-border p-3">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Breakeven</div>
                   <div className="mt-1 text-lg font-bold">${breakeven.toFixed(2)}</div>
-                  <div className="text-[10px] text-muted-foreground">{breakevenMovePct !== null ? `${breakevenMovePct >= 0 ? '+' : ''}${breakevenMovePct.toFixed(1)}% from spot` : '—'}</div>
+                  <div className="text-[10px] text-muted-foreground">{breakevenMovePct !== null ? `${breakevenMovePct >= 0 ? '+' : ''}${breakevenMovePct.toFixed(1)}% from spot` : '-'}</div>
                 </div>
                 <div className="rounded-lg border border-border p-3">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Days to expiration</div>
@@ -131,7 +131,7 @@ export const OptionRiskMath = ({ ticker, cp, strike, spot, premium, expiration, 
                 </div>
               </div>
               <p className="text-[10px] italic text-muted-foreground/70">
-                Assumes the contracts are held to expiration and the stock lands exactly at each scenario price — real
+                Assumes the contracts are held to expiration and the stock lands exactly at each scenario price - real
                 option prices before expiration also move with time decay and implied volatility, not just the stock
                 price. "Stock move" is relative to the current spot price, not a prediction of where it's headed.
               </p>
