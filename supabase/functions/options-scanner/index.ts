@@ -219,10 +219,14 @@ Deno.serve(async (req) => {
   return await runScanBatch(supabase, alpacaAuthHeaders, expWindowDays);
 });
 
+// The client-facing read path just returns this one pre-computed row --
+// see computeAndStoreAggregate below for where the actual work happens.
 async function serveAggregate(supabase: ReturnType<typeof createClient>): Promise<Response> {
-  const { data: cacheRows, error } = await supabase
-    .from("options_ticker_cache")
-    .select("ticker, payload, candidates, scanned_at");
+  const { data: aggRow, error } = await supabase
+    .from("options_aggregate_cache")
+    .select("payload")
+    .eq("id", true)
+    .maybeSingle();
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
@@ -230,6 +234,33 @@ async function serveAggregate(supabase: ReturnType<typeof createClient>): Promis
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  // Nothing computed yet (e.g. right after the migration, before the first
+  // scan batch has run) -- an empty-but-valid shape rather than an error,
+  // so the UI shows its normal "no results yet" state instead of a scanner
+  // error banner.
+  const payload = aggRow?.payload ?? {
+    rows: [], leapsRows: [], creditSpreads: [], diagonals: [], flowAggs: [], regime: null,
+    source, scanned: TICKERS.length, candidates: 0, count: 0, errors: [],
+    cached: true, cachedAt: null, tickersCached: 0,
+  };
+
+  return new Response(JSON.stringify(payload), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// Does the actual O(every cached ticker) aggregation -- called once at the
+// end of each scan batch (every 5 minutes, server-side) instead of on every
+// client page load. Confirmed live why this matters: with ~614 tickers
+// cached, re-aggregating on every read took ~8.9s and occasionally exceeded
+// the client's request timeout ("Edge Function returned a non-2xx status
+// code"). Doing it here instead makes the read path a single-row lookup no
+// matter how large the underlying cache grows.
+async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient>): Promise<void> {
+  const { data: cacheRows } = await supabase
+    .from("options_ticker_cache")
+    .select("ticker, payload, candidates, scanned_at");
 
   const rows: Record<string, unknown>[] = [];
   const leapsRows: Record<string, unknown>[] = [];
@@ -299,8 +330,10 @@ async function serveAggregate(supabase: ReturnType<typeof createClient>): Promis
     tickersCached: (cacheRows ?? []).length,
   };
 
-  return new Response(JSON.stringify(payload), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  await supabase.from("options_aggregate_cache").upsert({
+    id: true,
+    payload,
+    updated_at: new Date().toISOString(),
   });
 }
 
@@ -633,6 +666,10 @@ async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: 
   if (cacheUpserts.length > 0) {
     await supabase.from("options_ticker_cache").upsert(cacheUpserts, { onConflict: "ticker" });
   }
+  // Recompute the client-facing aggregate now, server-side, so every read
+  // for the next 5 minutes is a cheap single-row lookup instead of each
+  // client re-scanning the whole cache itself -- see computeAndStoreAggregate.
+  await computeAndStoreAggregate(supabase);
 
   return new Response(JSON.stringify({ scanned: batchTickers.length, updated: cacheUpserts.length, errors }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
