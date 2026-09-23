@@ -55,7 +55,7 @@ export const OptionsScanProvider = ({ children }: { children: ReactNode }) => {
   const [liveFlow, setLiveFlow] = useState<FlowPrint[]>([]);
   const [flowAggs, setFlowAggs] = useState<FlowAgg[]>([]);
   const [loading, setLoading] = useState(false);
-  const [source, setSource] = useState('marketdata.app-delayed');
+  const [source, setSource] = useState('alpaca');
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanMeta, setScanMeta] = useState<ScanMeta | null>(null);
