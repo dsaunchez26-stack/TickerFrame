@@ -338,6 +338,63 @@ export type Database = {
         }
         Relationships: []
       }
+      insider_scan_state: {
+        Row: {
+          last_scanned_at: string
+          ticker: string
+        }
+        Insert: {
+          last_scanned_at?: string
+          ticker: string
+        }
+        Update: {
+          last_scanned_at?: string
+          ticker?: string
+        }
+        Relationships: []
+      }
+      market_regime_cache: {
+        Row: {
+          description: string | null
+          id: boolean
+          label: string
+          qqq_change_pct: number | null
+          qqq_price: number | null
+          spy_change_pct: number | null
+          spy_price: number | null
+          trend: string
+          updated_at: string
+          vix: number | null
+          vix_as_of: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: boolean
+          label: string
+          qqq_change_pct?: number | null
+          qqq_price?: number | null
+          spy_change_pct?: number | null
+          spy_price?: number | null
+          trend: string
+          updated_at?: string
+          vix?: number | null
+          vix_as_of?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: boolean
+          label?: string
+          qqq_change_pct?: number | null
+          qqq_price?: number | null
+          spy_change_pct?: number | null
+          spy_price?: number | null
+          trend?: string
+          updated_at?: string
+          vix?: number | null
+          vix_as_of?: string | null
+        }
+        Relationships: []
+      }
       option_iv_history: {
         Row: {
           id: number
@@ -398,21 +455,27 @@ export type Database = {
         }
         Relationships: []
       }
-      options_scan_cache: {
+      options_ticker_cache: {
         Row: {
-          id: boolean
+          candidates: number
+          current_iv: number | null
           payload: Json
           scanned_at: string
+          ticker: string
         }
         Insert: {
-          id?: boolean
+          candidates?: number
+          current_iv?: number | null
           payload: Json
           scanned_at?: string
+          ticker: string
         }
         Update: {
-          id?: boolean
+          candidates?: number
+          current_iv?: number | null
           payload?: Json
           scanned_at?: string
+          ticker?: string
         }
         Relationships: []
       }
@@ -574,35 +637,6 @@ export type Database = {
           ticker?: string
         }
         Relationships: []
-      }
-      signal_outcomes: {
-        Row: {
-          closed_at: string | null
-          id: string
-          signal_id: string
-          status: string
-        }
-        Insert: {
-          closed_at?: string | null
-          id?: string
-          signal_id: string
-          status?: string
-        }
-        Update: {
-          closed_at?: string | null
-          id?: string
-          signal_id?: string
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "signal_outcomes_signal_id_fkey"
-            columns: ["signal_id"]
-            isOneToOne: false
-            referencedRelation: "signal_log"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       stock_cache: {
         Row: {
@@ -811,6 +845,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_onboarding_state: {
+        Row: {
+          completed_at: string | null
+          dismissed_forever: boolean
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          dismissed_forever?: boolean
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          dismissed_forever?: boolean
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           role: string
@@ -874,12 +929,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -903,11 +958,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -928,11 +983,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -953,11 +1008,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -970,11 +1025,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
