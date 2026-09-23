@@ -111,6 +111,23 @@ export async function fetchSnapshots(ticker: string, expirationDate: string, hea
   return out;
 }
 
+// Underlying stock price + real day-over-day change, for tickers not in
+// this app's main Finnhub-backed stock_cache (SPY/QQQ are added to the
+// options universe for liquidity but aren't tracked-stock symbols -- see
+// options-scanner.ts). One call gets both today's price and the actual
+// previous close, rather than needing a second lookup or a locally-tracked
+// history just to compute a real percent change.
+export async function fetchStockSnapshot(symbol: string, headers: Record<string, string>): Promise<{ price: number; prevClose: number | null; changePct: number | null } | null> {
+  const res = await fetch(`https://data.alpaca.markets/v2/stocks/${symbol}/snapshot`, { headers });
+  if (!res.ok) return null;
+  const json = await res.json();
+  const price: number | null = json?.latestTrade?.p ?? json?.dailyBar?.c ?? null;
+  const prevClose: number | null = json?.prevDailyBar?.c ?? null;
+  if (!price) return null;
+  const changePct = prevClose && prevClose > 0 ? ((price - prevClose) / prevClose) * 100 : null;
+  return { price, prevClose, changePct };
+}
+
 // A contract's current tradable price: last trade if genuinely recent
 // (same day), otherwise the quote midpoint -- mirrors how the Tradier
 // integration derived price (last || mid), since a stale trade from days

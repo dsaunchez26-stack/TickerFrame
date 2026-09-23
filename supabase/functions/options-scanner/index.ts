@@ -1,8 +1,9 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { TRACKED_TICKERS } from "../_shared/symbols.ts";
-import { alpacaHeaders, fetchFullChain, snapshotPrice, type AlpacaChainContract } from "../_shared/alpaca.ts";
+import { alpacaHeaders, fetchFullChain, fetchStockSnapshot, snapshotPrice, type AlpacaChainContract } from "../_shared/alpaca.ts";
 import { greeksFromPrice } from "../_shared/blackScholes.ts";
+import { fetchVix, classifyRegime } from "../_shared/marketRegime.ts";
 
 // This used to be its own hand-copied 76-symbol list that never got updated
 // when the shared tracked universe grew to 114 (the same ticker-list-drift
@@ -234,6 +235,10 @@ async function serveAggregate(supabase: ReturnType<typeof createClient>): Promis
   const leapsRows: Record<string, unknown>[] = [];
   const creditSpreads: Record<string, unknown>[] = [];
   const diagonals: Record<string, unknown>[] = [];
+  // Real call-vs-put dollar flow per ticker, straight from the same
+  // contract rows already computed during the scan -- no new data source,
+  // just an aggregation the old single-blob cache never bothered exposing.
+  const flowByTicker = new Map<string, { callDollarFlow: number; putDollarFlow: number }>();
   let candidates = 0;
   let oldestScan: string | null = null;
 
@@ -241,6 +246,11 @@ async function serveAggregate(supabase: ReturnType<typeof createClient>): Promis
     const payload = row.payload as { rows?: Record<string, unknown>[]; creditSpreads?: Record<string, unknown>[]; diagonals?: Record<string, unknown>[] };
     for (const r of payload.rows ?? []) {
       if (r.type === "LEAPS") leapsRows.push(r); else rows.push(r);
+      const ticker = r.ticker as string;
+      const agg = flowByTicker.get(ticker) ?? { callDollarFlow: 0, putDollarFlow: 0 };
+      const flow = Number(r.dollarFlow) || 0;
+      if (r.cp === "C") agg.callDollarFlow += flow; else agg.putDollarFlow += flow;
+      flowByTicker.set(ticker, agg);
     }
     creditSpreads.push(...(payload.creditSpreads ?? []));
     diagonals.push(...(payload.diagonals ?? []));
@@ -253,11 +263,32 @@ async function serveAggregate(supabase: ReturnType<typeof createClient>): Promis
   creditSpreads.sort((a, b) => (b.returnOnRisk as number) - (a.returnOnRisk as number));
   diagonals.sort((a, b) => (b.maxGainApprox as number) - (a.maxGainApprox as number));
 
+  const flowAggs = [...flowByTicker.entries()]
+    .filter(([, v]) => v.callDollarFlow + v.putDollarFlow > 0)
+    .map(([ticker, v]) => ({ ticker, callDollarFlow: v.callDollarFlow, putDollarFlow: v.putDollarFlow }));
+
+  const { data: regimeRow } = await supabase
+    .from("market_regime_cache")
+    .select("*")
+    .eq("id", true)
+    .maybeSingle();
+  const regime = regimeRow ? {
+    label: regimeRow.label as string,
+    trend: regimeRow.trend as "risk-on" | "risk-off" | "neutral",
+    vix: regimeRow.vix as number | null,
+    description: [
+      regimeRow.description,
+      regimeRow.vix_as_of ? `VIX as of ${regimeRow.vix_as_of} close (FRED)` : null,
+    ].filter(Boolean).join(" · "),
+  } : null;
+
   const payload = {
     rows: rows.slice(0, 80),
     leapsRows: leapsRows.slice(0, 150),
     creditSpreads: creditSpreads.slice(0, 200),
     diagonals: diagonals.slice(0, 100),
+    flowAggs,
+    regime,
     source, scanned: TICKERS.length, candidates, count: Math.min(rows.length, 80),
     errors: [],
     // Every response here is served from the rolling cache by design (see
@@ -324,6 +355,35 @@ async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: 
   const rvBySymbol = new Map<string, number | null>(
     (rvRows ?? []).map((r) => [r.symbol, r.rv_annualized !== null ? Number(r.rv_annualized) : null]),
   );
+
+  // SPY/QQQ are added to the options universe (see the TICKERS comment
+  // above) but were never part of TRACKED_TICKERS, so stock_cache has no
+  // row for them -- every batch was silently erroring "no spot price
+  // available" on both, every run, since the Alpaca migration. Fetching
+  // their real price/change directly from Alpaca here both fixes that gap
+  // and doubles as the input for the market regime classification below.
+  const [spySnap, qqqSnap, vixData] = await Promise.all([
+    fetchStockSnapshot("SPY", headers).catch(() => null),
+    fetchStockSnapshot("QQQ", headers).catch(() => null),
+    fetchVix().catch(() => null),
+  ]);
+  if (spySnap) stockBySymbol.set("SPY", { price: spySnap.price, pattern: null, confidence: null });
+  if (qqqSnap) stockBySymbol.set("QQQ", { price: qqqSnap.price, pattern: null, confidence: null });
+
+  const regime = classifyRegime(vixData?.vix ?? null, spySnap?.changePct ?? null, qqqSnap?.changePct ?? null);
+  await supabase.from("market_regime_cache").upsert({
+    id: true,
+    vix: regime.vix,
+    vix_as_of: vixData?.asOf ?? null,
+    spy_price: spySnap?.price ?? null,
+    spy_change_pct: regime.spyChangePct,
+    qqq_price: qqqSnap?.price ?? null,
+    qqq_change_pct: regime.qqqChangePct,
+    trend: regime.trend,
+    label: regime.label,
+    description: regime.description,
+    updated_at: new Date().toISOString(),
+  });
 
   // Only the stalest tickers this run -- see the migration's cron comment
   // for why a full-universe live scan doesn't fit in one invocation against
