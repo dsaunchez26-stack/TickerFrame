@@ -18,7 +18,7 @@ interface Props {
   onTrack: (row: OptionRow, portfolioName: string | null) => void;
 }
 
-type SortKey = 'score' | 'ticker' | 'stockPrice' | 'strike' | 'expiration' | 'price' | 'bid' | 'ask' | 'delta' | 'ivRank' | 'voi' | 'expectedMovePct' | 'oneDayExpectedMovePct';
+type SortKey = 'score' | 'ticker' | 'stockPrice' | 'strike' | 'expiration' | 'price' | 'bid' | 'ask' | 'delta' | 'ivRank' | 'volume' | 'expectedMovePct' | 'oneDayExpectedMovePct';
 
 const COLUMNS: Array<{ key: SortKey; label: string }> = [
   { key: 'score', label: 'Score' },
@@ -31,7 +31,7 @@ const COLUMNS: Array<{ key: SortKey; label: string }> = [
   { key: 'ask', label: 'Ask' },
   { key: 'delta', label: 'Δ' },
   { key: 'ivRank', label: 'IV Rank' },
-  { key: 'voi', label: 'V/OI' },
+  { key: 'volume', label: 'Volume' },
   { key: 'expectedMovePct', label: 'Exp. Move' },
   { key: 'oneDayExpectedMovePct', label: '1-Day Move' },
 ];
@@ -113,7 +113,7 @@ export const ScannerTable = ({ rows, trackedIds, onTrack }: Props) => {
                     <td className="py-2 pr-3">${r.ask.toFixed(2)}</td>
                     <td className="py-2 pr-3">{r.delta.toFixed(2)}</td>
                     <td className="py-2 pr-3">{r.ivRank}</td>
-                    <td className="py-2 pr-3">{r.voi.toFixed(2)}</td>
+                    <td className="py-2 pr-3">{r.volume.toLocaleString()}</td>
                     <td className="py-2 pr-3">{r.expectedMovePct != null ? `±${r.expectedMovePct.toFixed(1)}%` : '-'}</td>
                     <td className="py-2 pr-3">{r.oneDayExpectedMovePct != null ? `±${r.oneDayExpectedMovePct.toFixed(2)}%` : '-'}</td>
                     <td className="py-2 pr-3">

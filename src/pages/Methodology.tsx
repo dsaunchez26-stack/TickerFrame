@@ -20,7 +20,7 @@ const Methodology = () => (
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <p><strong className="text-foreground">Stock prices, RSI, MACD, SMA/EMA, patterns:</strong> Finnhub, refreshed on a rotating schedule across the tracked universe (roughly every 20-35 minutes per symbol as the universe has grown, not every symbol every 5 minutes).</p>
-        <p><strong className="text-foreground">Options chains & quotes:</strong> Tradier - production or 15-minute-delayed sandbox depending on account tier, the header pill shows which.</p>
+        <p><strong className="text-foreground">Options chains & quotes:</strong> Alpaca's free options feed - real bid/ask/last/volume per contract, refreshed on a rolling schedule across the tracked universe rather than all at once (see the Options Radar header for how current a given view is). Alpaca doesn't report Open Interest at all, so it isn't shown anywhere on this site rather than estimating it. Delta, gamma, and implied volatility also aren't supplied by this feed - they're computed here directly from the real bid/ask/last data using the standard Black-Scholes formula, the same math any provider's own "greeks" field is built from.</p>
         <p><strong className="text-foreground">Futures contract specs & quotes:</strong> tastytrade's sandbox/certification API. Specs are always real; live pricing depends on tastytrade's sandbox market-data service, which can go down independent of this app.</p>
         <p><strong className="text-foreground">Insider activity:</strong> SEC EDGAR directly - Form 4 open-market purchases and Schedule 13D/13G 5%+ holder filings. Not 8-K, not 13F, and no filer is specially tagged or prioritized.</p>
         <p><strong className="text-foreground">Fundamentals:</strong> Finnhub - debt/equity, current ratio, margins, revenue and EPS growth, valuation multiples, earnings-surprise history.</p>
@@ -74,7 +74,7 @@ const Methodology = () => (
         <CardTitle className="text-base">Known limits</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
-        <p>Sandbox Tradier quotes are 15 minutes delayed; the header pill tells you which feed is live.</p>
+        <p>Options data rotates through the tracked universe on a schedule rather than scanning everything live on every visit - the Options Radar header shows how current the data currently shown actually is. Open Interest isn't available from this data source and is never shown or estimated.</p>
         <p>News, government/congressional trade tracking, and SEC 8-K/13F filings are not wired up anywhere on this site - only Form 4 and Schedule 13D/13G insider filings are real.</p>
         <p>Volume isn't provided by the free-tier stock data source, so it always shows N/A rather than a fabricated number.</p>
         <p>Nothing on this site is a recommendation to buy or sell any security. See the <Link to="/legal" className="underline">full disclaimer</Link>.</p>

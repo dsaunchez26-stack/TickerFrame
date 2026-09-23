@@ -18,7 +18,7 @@ interface Props {
 const emptyRow = (): OptionRow => ({
   id: '', score: 0, ticker: '', cp: 'P', stockPrice: 0, sector: 'Other', type: 'Manual',
   strike: 0, expiration: '', price: 0, bid: 0, ask: 0, delta: 0, gamma: 0, gpRatio: 0,
-  ivRank: 0, volume: 0, oi: 0, voi: 0, dollarFlow: 0, printType: 'BLOCK', earningsInDays: null, squeeze: 0,
+  ivRank: 0, volume: 0, dollarFlow: 0, printType: 'BLOCK', earningsInDays: null, squeeze: 0,
 });
 
 export const PortfolioOptions = ({ portfolioName }: Props) => {

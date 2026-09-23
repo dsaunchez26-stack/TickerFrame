@@ -42,7 +42,7 @@ const Legal = () => (
       </Section>
 
       <Section title="Data Sources & Accuracy">
-        <p>Market data is aggregated from third-party providers (including but not limited to Alpha Vantage, Finnhub, Tradier, SEC EDGAR, FINRA, FRED, and CBOE). Data may be delayed, incomplete, inaccurate, or temporarily unavailable. We make no warranty as to the accuracy, timeliness, or completeness of any information presented.</p>
+        <p>Market data is aggregated from third-party providers (including but not limited to Alpha Vantage, Finnhub, Alpaca, SEC EDGAR, FINRA, FRED, and CBOE). Data may be delayed, incomplete, inaccurate, or temporarily unavailable. We make no warranty as to the accuracy, timeliness, or completeness of any information presented.</p>
         <p>Where a value is unknown, it is shown as "n/a" or marked "[STALE]". Backtested or simulated results are explicitly labeled and should not be interpreted as live trading results.</p>
       </Section>
 

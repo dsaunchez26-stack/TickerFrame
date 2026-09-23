@@ -1,4 +1,7 @@
-// Mock options data generator. Replace with Tradier API calls when token is ready.
+// Unused mock options data generator, kept only for its exported types
+// (OptionRow etc., shared with the real Alpaca-backed data in
+// OptionsScanContext) -- the live scanner has replaced these generators
+// everywhere they used to be called.
 export type CallPut = 'C' | 'P';
 export type PrintType = 'SWEEP' | 'BLOCK' | 'SPLIT';
 
@@ -28,8 +31,6 @@ export interface OptionRow {
   // Null when there isn't yet a realized-vol estimate for this ticker.
   ivRvRatio?: number | null;
   volume: number;
-  oi: number;
-  voi: number;
   dollarFlow: number;
   printType: PrintType;
   aggression?: 'ABOVE_ASK' | 'ASK_SIDE' | 'MID' | 'BID_SIDE' | 'BELOW_BID';
@@ -92,14 +93,12 @@ export function generateScannerRows(seed = 7): OptionRow[] {
     const gamma = 0.005 + rng() * 0.05;
     const price = Math.max(0.05, Math.abs(t.p - strike) * 0.05 + rng() * 4);
     const volume = Math.floor(50 + rng() * 18000);
-    const oi = Math.floor(50 + rng() * 25000);
-    const voi = +(volume / Math.max(oi, 1)).toFixed(2);
     const dollarFlow = Math.floor(volume * price * 100);
     const ivRank = Math.floor(rng() * 100);
     const squeeze = Math.floor(rng() * 100);
 
-    const liquidity = Math.min(25, Math.log10(volume + 1) * 6);
-    const flowScore = Math.min(30, voi * 8 + Math.log10(dollarFlow + 1) * 1.5);
+    const liquidity = Math.min(30, Math.log10(volume + 1) * 8);
+    const flowScore = Math.min(35, Math.log10(dollarFlow + 1) * 5);
     const gpd = (gamma * 1000) / Math.max(price, 0.5);
     const gammaScore = Math.min(25, gpd * 3);
     const ivScore = Math.max(0, 10 - ivRank / 10);
@@ -125,8 +124,6 @@ export function generateScannerRows(seed = 7): OptionRow[] {
       gpRatio: +(gamma / Math.max(price, 0.5) * 100).toFixed(2),
       ivRank,
       volume,
-      oi,
-      voi,
       dollarFlow,
       printType: PRINTS[Math.floor(rng() * PRINTS.length)],
       earningsInDays: earnings,

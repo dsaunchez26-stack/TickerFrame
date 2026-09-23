@@ -1,6 +1,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { TRACKED_TICKERS } from "../_shared/symbols.ts";
+import { alpacaHeaders, fetchFullChain, snapshotPrice, type AlpacaChainContract } from "../_shared/alpaca.ts";
+import { greeksFromPrice } from "../_shared/blackScholes.ts";
 
 // This used to be its own hand-copied 76-symbol list that never got updated
 // when the shared tracked universe grew to 114 (the same ticker-list-drift
@@ -11,15 +13,16 @@ import { TRACKED_TICKERS } from "../_shared/symbols.ts";
 // fundamentals universe, so they aren't in TRACKED_TICKERS itself.
 const TICKERS = [...TRACKED_TICKERS, "SPY", "QQQ"];
 
-interface TradierOption {
+interface NormalizedOption {
   strike: number;
-  bid: number | null;
-  ask: number | null;
-  last: number | null;
-  volume: number | null;
-  open_interest: number | null;
-  option_type: "call" | "put";
-  greeks?: { delta?: number; gamma?: number; mid_iv?: number; smv_vol?: number } | null;
+  bid: number;
+  ask: number;
+  price: number;
+  volume: number;
+  cp: "C" | "P";
+  delta: number;
+  gamma: number;
+  iv: number | null;
 }
 
 interface Leg {
@@ -44,14 +47,19 @@ function patternScore(cp: "C" | "P", pattern: string | null): number {
   return bearish ? 5 : bullish ? -5 : 0;
 }
 
-function scoreRow(volume: number, oi: number, dollarFlow: number, gamma: number, price: number, ivRank: number, patternBonus: number) {
-  const voi = oi > 0 ? volume / oi : 0;
-  const liquidity = Math.min(25, Math.log10(volume + 1) * 6);
-  const flowScore = Math.min(30, voi * 8 + Math.log10(dollarFlow + 1) * 1.5);
+// Open interest isn't available from Alpaca's free options feed at all (not
+// a tier restriction -- it's just not a field they report), so the old
+// volume/OI ("V/OI") flow signal has nothing to divide by. Rather than fake
+// a ratio, its weight is redistributed onto the two signals that are still
+// real: raw volume (liquidity) and dollar flow -- both actual traded amounts,
+// not estimates. Gamma and IV-rank weights are unchanged.
+function scoreRow(volume: number, dollarFlow: number, gamma: number, price: number, ivRank: number, patternBonus: number) {
+  const liquidity = Math.min(30, Math.log10(volume + 1) * 8);
+  const flowScore = Math.min(35, Math.log10(dollarFlow + 1) * 5);
   const gpd = (gamma * 1000) / Math.max(price, 0.5);
   const gammaScore = Math.min(25, gpd * 3);
   const ivScore = Math.max(0, 10 - ivRank / 10);
-  return { score: Math.max(0, Math.min(100, Math.round(liquidity + flowScore + gammaScore + ivScore + patternBonus))), voi };
+  return { score: Math.max(0, Math.min(100, Math.round(liquidity + flowScore + gammaScore + ivScore + patternBonus))) };
 }
 
 // Bear call credit spread (sell a call, buy the next strike up as protection)
@@ -75,10 +83,6 @@ function buildCallCreditSpreads(
     const netCredit = short.price - long.price;
     if (netCredit <= 0) continue;
     const maxLoss = width - netCredit;
-    // A protective leg only ~5 cents cheaper than the short leg it's meant
-    // to offset is almost always a stale/illiquid quote on a rarely-traded
-    // strike, not a genuine near-riskless credit -- require the "loss" side
-    // of the spread to be at least a meaningful fraction of the width.
     if (maxLoss < width * 0.10) continue;
     const withinExpectedMove = expectedMove !== null ? Math.abs(short.strike - spot) <= expectedMove : null;
     out.push({
@@ -109,10 +113,6 @@ function buildPutCreditSpreads(
     const netCredit = short.price - long.price;
     if (netCredit <= 0) continue;
     const maxLoss = width - netCredit;
-    // A protective leg only a few cents cheaper than the short leg it's meant
-    // to offset is almost always a stale/illiquid quote on a rarely-traded
-    // strike, not a genuine near-riskless credit -- require the "loss" side
-    // of the spread to be at least a meaningful fraction of the width.
     if (maxLoss < width * 0.10) continue;
     const withinExpectedMove = expectedMove !== null ? Math.abs(short.strike - spot) <= expectedMove : null;
     out.push({
@@ -140,12 +140,6 @@ function buildDiagonals(
   shortExpectedMove: number | null, shortExpectedMovePct: number | null,
 ): Record<string, unknown>[] {
   const out: Record<string, unknown>[] = [];
-  // Long leg: deep ITM, delta magnitude between 0.70 and 0.92 -- deep enough
-  // to move almost dollar-for-dollar with the stock, shallow enough to still
-  // cost meaningfully less than the shares themselves. Thin, far-dated ITM
-  // strikes are prone to stale/unreliable quotes -- a real option can never
-  // trade below its own intrinsic value, so any leg that does is a bad quote,
-  // not a bargain, and gets filtered out here.
   const longCandidates = longLegs.filter((l) => {
     if (Math.abs(l.delta) < 0.70 || Math.abs(l.delta) > 0.92) return false;
     const intrinsic = side === "call" ? Math.max(0, spot - l.strike) : Math.max(0, l.strike - spot);
@@ -163,12 +157,6 @@ function buildDiagonals(
   for (const short of shortCandidates) {
     const netDebit = long.price - short.price;
     if (netDebit <= 0) continue;
-    // Simplified approximation, not a full pricing model: the width between
-    // strikes minus what was paid, i.e. roughly what this is worth if the
-    // stock finishes right at the short strike at the short leg's
-    // expiration. The long leg still carries real time value at that point
-    // that this doesn't attempt to model -- treat this as a ballpark, not a
-    // guaranteed payout.
     const width = side === "call" ? short.strike - long.strike : long.strike - short.strike;
     const maxGainApprox = width - netDebit;
     const withinExpectedMove = shortExpectedMove !== null ? Math.abs(short.strike - spot) <= shortExpectedMove : null;
@@ -186,48 +174,113 @@ function buildDiagonals(
   return out;
 }
 
+const source = "alpaca";
+const LONG_TERM_TARGET_DAYS = 365;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const TRADIER_API_KEY = Deno.env.get("TRADIER_API_KEY");
-  if (!TRADIER_API_KEY) {
-    return new Response(JSON.stringify({ error: "TRADIER_API_KEY is not configured" }), {
+  let alpacaAuthHeaders: Record<string, string>;
+  try {
+    alpacaAuthHeaders = alpacaHeaders();
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-
-  // Sandbox market data is real (not simulated), just tied to a free
-  // developer account instead of a funded brokerage account -- current-day
-  // quotes, not delayed the way the previous provider's free tier was.
-  const base = "https://sandbox.tradier.com/v1";
-  const headers = { Authorization: `Bearer ${TRADIER_API_KEY}`, Accept: "application/json" };
-  const source = "tradier-sandbox";
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  let expWindowDays = 45;
+  let body: { expWindowDays?: number; mode?: string } = {};
   try {
-    const body = await req.json();
-    if (typeof body?.expWindowDays === "number") expWindowDays = body.expWindowDays;
+    body = await req.json();
   } catch {
-    // no body provided, use default
+    // no body provided
+  }
+  const expWindowDays = typeof body.expWindowDays === "number" ? body.expWindowDays : 45;
+
+  // Two very different jobs share this one function on purpose (same file,
+  // same TICKERS list, same scoring logic -- keeping them apart would mean
+  // keeping two copies of all of that in sync):
+  //   - {"mode":"scan"}, called only by the cron job below: does a real,
+  //     rate-limited batch fetch from Alpaca for a slice of tickers and
+  //     writes to options_ticker_cache.
+  //   - anything else (what the client's own invoke() sends): a fast,
+  //     read-only aggregation across whatever's currently cached -- no
+  //     external API calls, so it can't be slow or rate-limited.
+  if (body.mode !== "scan") {
+    return await serveAggregate(supabase);
+  }
+  return await runScanBatch(supabase, alpacaAuthHeaders, expWindowDays);
+});
+
+async function serveAggregate(supabase: ReturnType<typeof createClient>): Promise<Response> {
+  const { data: cacheRows, error } = await supabase
+    .from("options_ticker_cache")
+    .select("ticker, payload, candidates, scanned_at");
+
+  if (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
+  const rows: Record<string, unknown>[] = [];
+  const leapsRows: Record<string, unknown>[] = [];
+  const creditSpreads: Record<string, unknown>[] = [];
+  const diagonals: Record<string, unknown>[] = [];
+  let candidates = 0;
+  let oldestScan: string | null = null;
+
+  for (const row of cacheRows ?? []) {
+    const payload = row.payload as { rows?: Record<string, unknown>[]; creditSpreads?: Record<string, unknown>[]; diagonals?: Record<string, unknown>[] };
+    for (const r of payload.rows ?? []) {
+      if (r.type === "LEAPS") leapsRows.push(r); else rows.push(r);
+    }
+    creditSpreads.push(...(payload.creditSpreads ?? []));
+    diagonals.push(...(payload.diagonals ?? []));
+    candidates += Number(row.candidates) || 0;
+    if (!oldestScan || row.scanned_at < oldestScan) oldestScan = row.scanned_at as string;
+  }
+
+  rows.sort((a, b) => (b.score as number) - (a.score as number));
+  leapsRows.sort((a, b) => (b.score as number) - (a.score as number));
+  creditSpreads.sort((a, b) => (b.returnOnRisk as number) - (a.returnOnRisk as number));
+  diagonals.sort((a, b) => (b.maxGainApprox as number) - (a.maxGainApprox as number));
+
+  const payload = {
+    rows: rows.slice(0, 80),
+    leapsRows: leapsRows.slice(0, 150),
+    creditSpreads: creditSpreads.slice(0, 200),
+    diagonals: diagonals.slice(0, 100),
+    source, scanned: TICKERS.length, candidates, count: Math.min(rows.length, 80),
+    errors: [],
+    // Every response here is served from the rolling cache by design (see
+    // the cron comment above) -- cachedAt is always set so the UI can show
+    // "as of" freshness honestly instead of implying this second's data.
+    cached: true,
+    cachedAt: oldestScan ?? new Date().toISOString(),
+    tickersCached: (cacheRows ?? []).length,
+  };
+
+  return new Response(JSON.stringify(payload), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: Record<string, string>, expWindowDays: number): Promise<Response> {
   // A genuine IV Rank needs the underlying's own recent IV range, not just
   // its raw IV value rescaled -- fetch each ticker's history in one round trip.
   //
   // IMPORTANT: PostgREST caps every response at 1000 rows regardless of an
   // explicit .limit() beyond that (same issue found and fixed in
-  // fetch-stock-data's price-history query). TICKERS.length * 90 is well
-  // past 1000, so without pagination this silently returns only the newest
-  // ~1000 rows total -- at this scan's cadence that's roughly 13 samples per
-  // ticker instead of up to 90, narrowing the min/max range IV Rank is
-  // computed from. Paginating with .range() in 1000-row pages actually gets
-  // each ticker its full history window.
+  // fetch-stock-data's price-history query). Paginating with .range() in
+  // 1000-row pages actually gets each ticker its full history window.
   const IV_HISTORY_TARGET = TICKERS.length * 90;
   const IV_PAGE_SIZE = 1000;
   const allIvHistory: Array<{ ticker: string; iv: number }> = [];
@@ -242,7 +295,6 @@ Deno.serve(async (req) => {
     allIvHistory.push(...page);
     if (page.length < IV_PAGE_SIZE) break;
   }
-
   const ivHistoryByTicker = new Map<string, number[]>();
   for (const row of allIvHistory) {
     const list = ivHistoryByTicker.get(row.ticker) ?? [];
@@ -250,28 +302,21 @@ Deno.serve(async (req) => {
     ivHistoryByTicker.set(row.ticker, list);
   }
 
-  // The underlying's own chart pattern (already detected by fetch-stock-data
-  // from real price history) -- attached here purely as descriptive context
-  // on every contract, and used by the CSP/covered-call screeners as a real
-  // ranking factor (does the chart support the premium-seller's thesis).
-  const { data: patternRows } = await supabase
+  // Spot price, pattern, and realized volatility all come from this app's
+  // own already-fresh tables (Finnhub-backed stock_cache, and
+  // realized-volatility-scanner's own output) rather than a second call to
+  // Alpaca for the underlying quote -- one round trip covers every ticker.
+  const { data: stockRows } = await supabase
     .from("stock_cache")
-    .select("symbol, pattern, pattern_confidence")
+    .select("symbol, price, pattern, pattern_confidence")
     .in("symbol", TICKERS);
-  const patternBySymbol = new Map<string, { pattern: string | null; confidence: number | null }>();
-  for (const row of patternRows ?? []) {
-    patternBySymbol.set(row.symbol, { pattern: row.pattern, confidence: row.pattern_confidence });
+  const stockBySymbol = new Map<string, { price: number; pattern: string | null; confidence: number | null }>();
+  for (const row of stockRows ?? []) {
+    if (typeof row.price === "number" && row.price > 0) {
+      stockBySymbol.set(row.symbol, { price: row.price, pattern: row.pattern, confidence: row.pattern_confidence });
+    }
   }
 
-  // The underlying's actual realized volatility (computed separately by
-  // realized-volatility-scanner on its own schedule -- an expensive
-  // per-ticker history calc doesn't belong inline in a function this
-  // latency-sensitive). IV Rank alone only says "rich or cheap relative to
-  // this ticker's OWN past IV" -- it says nothing about whether the options
-  // market is currently pricing in more or less movement than the stock is
-  // actually making. That IV/RV ratio is what the income-strategy screens
-  // use to prefer shorter-dated contracts when premium is rich relative to
-  // realized movement, and longer-dated ones when it isn't.
   const { data: rvRows } = await supabase
     .from("realized_volatility")
     .select("symbol, rv_annualized")
@@ -280,23 +325,25 @@ Deno.serve(async (req) => {
     (rvRows ?? []).map((r) => [r.symbol, r.rv_annualized !== null ? Number(r.rv_annualized) : null]),
   );
 
-  // One batched call for every ticker's spot price, instead of one call per
-  // ticker -- Tradier's chain endpoint doesn't include the underlying price
-  // the way the previous provider's did.
-  const spotBySymbol = new Map<string, number>();
-  try {
-    const quoteRes = await fetch(`${base}/markets/quotes?symbols=${TICKERS.join(",")}`, { headers });
-    if (quoteRes.ok) {
-      const quoteJson = await quoteRes.json();
-      const raw = quoteJson?.quotes?.quote;
-      const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
-      for (const q of list) {
-        if (q?.symbol && typeof q.last === "number" && q.last > 0) spotBySymbol.set(q.symbol, q.last);
-      }
-    }
-  } catch {
-    // handled per-ticker below via the "no spot price" error
-  }
+  // Only the stalest tickers this run -- see the migration's cron comment
+  // for why a full-universe live scan doesn't fit in one invocation against
+  // Alpaca's 200 req/min cap. Never-scanned tickers sort first.
+  const BATCH_LIMIT = 30;
+  const { data: cacheAges } = await supabase
+    .from("options_ticker_cache")
+    .select("ticker, scanned_at")
+    .in("ticker", TICKERS);
+  const scannedAtByTicker = new Map((cacheAges ?? []).map((r) => [r.ticker, r.scanned_at as string]));
+  const batchTickers = [...TICKERS]
+    .sort((a, b) => {
+      const aTime = scannedAtByTicker.get(a);
+      const bTime = scannedAtByTicker.get(b);
+      if (!aTime && !bTime) return 0;
+      if (!aTime) return -1;
+      if (!bTime) return 1;
+      return new Date(aTime).getTime() - new Date(bTime).getTime();
+    })
+    .slice(0, BATCH_LIMIT);
 
   const nearestExpiration = (dates: string[], targetDays: number, now: number) => {
     const targetMs = now + targetDays * 86400_000;
@@ -307,39 +354,40 @@ Deno.serve(async (req) => {
     }, dates[0]);
   };
 
-  const scanExpiration = async (ticker: string, expiration: string, spot: number, now: number) => {
-    const localRows: Record<string, unknown>[] = [];
-    let localCandidates = 0;
+  const scanExpiration = (ticker: string, expiration: string, fullChain: AlpacaChainContract[], spot: number, now: number) => {
+    const inExp = fullChain.filter((c) => c.expirationDate === expiration);
+    if (!inExp.length) throw new Error("no option contracts for this expiration");
 
-    const chainRes = await fetch(
-      `${base}/markets/options/chains?symbol=${ticker}&expiration=${expiration}&greeks=true`,
-      { headers },
-    );
-    if (!chainRes.ok) {
-      throw new Error(`chain request failed: ${await chainRes.text()}`);
-    }
-    const chainJson = await chainRes.json();
-    const options: TradierOption[] = Array.isArray(chainJson?.options?.option) ? chainJson.options.option : [];
-    if (!options.length) {
-      throw new Error("no option contracts returned");
-    }
+    const dte = Math.round((new Date(expiration).getTime() - now) / 86400_000);
+    const timeYears = Math.max(dte, 0) / 365;
 
-    const n = options.length;
-
-    // A representative IV for this ticker right now: average IV across
-    // near-the-money contracts (within 5% of spot), which is what "IV Rank"
-    // is normally measured against rather than any single strike's IV.
-    const atmIvs: number[] = [];
-    for (const o of options) {
-      const iv = o.greeks?.mid_iv || o.greeks?.smv_vol;
-      if (!spot || !iv || iv <= 0) continue;
-      if (Math.abs(o.strike - spot) / spot < 0.05) atmIvs.push(iv);
+    const options: NormalizedOption[] = [];
+    for (const c of inExp) {
+      const price = snapshotPrice(c.snapshot);
+      if (price === null || !spot) continue;
+      const cp: "C" | "P" = c.type === "call" ? "C" : "P";
+      const { iv, delta, gamma } = greeksFromPrice(cp, price, spot, c.strike, timeYears);
+      options.push({
+        strike: c.strike,
+        bid: c.snapshot.latestQuote?.bp ?? 0,
+        ask: c.snapshot.latestQuote?.ap ?? 0,
+        price,
+        volume: c.snapshot.dailyBar?.v ?? 0,
+        cp,
+        delta,
+        gamma,
+        iv,
+      });
     }
+    if (!options.length) throw new Error("no priceable option contracts returned");
+
+    // A representative IV for this ticker right now: average solved IV
+    // across near-the-money contracts (within 5% of spot), which is what
+    // "IV Rank" is normally measured against rather than any single
+    // strike's IV.
+    const atmIvs = options.filter((o) => o.iv !== null && Math.abs(o.strike - spot) / spot < 0.05).map((o) => o.iv as number);
     const currentIv = atmIvs.length ? atmIvs.reduce((a, b) => a + b, 0) / atmIvs.length : null;
 
-    // > 1 means the market is pricing in more movement than the stock has
-    // actually been making (premium looks rich relative to real behavior);
-    // < 1 means the reverse (premium looks cheap relative to real behavior).
     const rv = rvBySymbol.get(ticker) ?? null;
     const ivRvRatio = currentIv !== null && rv !== null && rv > 0 ? +(currentIv / rv).toFixed(2) : null;
 
@@ -349,34 +397,11 @@ Deno.serve(async (req) => {
       const allIvs = [...priorIvs, currentIv];
       const minIv = Math.min(...allIvs);
       const maxIv = Math.max(...allIvs);
-      // Need a handful of real historical samples before the range is
-      // meaningful -- otherwise this is just "100% because it's the only
-      // point we've ever seen", which is a range-of-one, not a rank.
       ivRank = priorIvs.length >= 5 && maxIv > minIv
         ? Math.round(((currentIv - minIv) / (maxIv - minIv)) * 100)
         : Math.min(100, Math.round(currentIv * 100));
     }
 
-    const dte = Math.round((new Date(expiration).getTime() - now) / 86400_000);
-
-    // Expected move: how far the stock is priced to move by expiration, using
-    // two independent methods that should roughly agree when the chain is
-    // pricing things consistently.
-    //   1) Textbook formula: stock price x IV x sqrt(time in years). This is
-    //      a ONE STANDARD DEVIATION move under the lognormal-returns model
-    //      IV itself is quoted against -- statistically, about a 68% chance
-    //      the stock finishes within +/- this amount by expiration. A 2 SD
-    //      move (~95% confidence) would be roughly double this, not "twice
-    //      as likely" -- the width grows, the underlying odds don't scale
-    //      linearly.
-    //   2) ATM straddle: the combined price of the closest-to-money call and
-    //      put. A plain sum only captures ~80% of a true 1 SD move (a known
-    //      property of how straddle prices relate to the lognormal
-    //      distribution), so it's scaled by 1.25 to land on the same 1 SD
-    //      estimate as method 1 instead of understating it.
-    // Where both exist we average them into one robust number; where only
-    // one is available (e.g. no ATM IV sample this scan), we fall back to
-    // whichever exists.
     let atmCallPrice: number | null = null;
     let atmPutPrice: number | null = null;
     let atmCallDiff = Infinity;
@@ -384,41 +409,22 @@ Deno.serve(async (req) => {
     const calls: Leg[] = [];
     const puts: Leg[] = [];
     for (const o of options) {
-      const strikeI = o.strike;
-      if (!spot || !strikeI) continue;
-      const bidI = o.bid ?? 0;
-      const askI = o.ask ?? 0;
-      const priceI = o.last || (bidI + askI) / 2;
-      if (!priceI) continue;
-      const deltaI = o.greeks?.delta ?? 0;
-      // A real, currently-tradable market needs an actual nonzero bid --
-      // this is stricter than the ATM-straddle check below on purpose,
-      // since spreads/diagonals combine two legs' prices together and a
-      // single stale/zero-bid leg would corrupt both sides of the math.
-      if (bidI > 0) {
-        const leg: Leg = { strike: strikeI, price: priceI, bid: bidI, ask: askI, delta: deltaI };
-        if (o.option_type === "call") calls.push(leg); else puts.push(leg);
+      if (o.bid > 0) {
+        const leg: Leg = { strike: o.strike, price: o.price, bid: o.bid, ask: o.ask, delta: o.delta };
+        if (o.cp === "C") calls.push(leg); else puts.push(leg);
       }
-      const diff = Math.abs(strikeI - spot);
-      if (o.option_type === "call" && diff < atmCallDiff) { atmCallDiff = diff; atmCallPrice = priceI; }
-      if (o.option_type === "put" && diff < atmPutDiff) { atmPutDiff = diff; atmPutPrice = priceI; }
+      const diff = Math.abs(o.strike - spot);
+      if (o.cp === "C" && diff < atmCallDiff) { atmCallDiff = diff; atmCallPrice = o.price; }
+      if (o.cp === "P" && diff < atmPutDiff) { atmPutDiff = diff; atmPutPrice = o.price; }
     }
 
-    const timeYears = Math.max(dte, 0) / 365;
-    const expectedMoveFormula = currentIv !== null && spot > 0
-      ? spot * currentIv * Math.sqrt(timeYears)
-      : null;
-    const expectedMoveStraddle = atmCallPrice !== null && atmPutPrice !== null
-      ? (atmCallPrice + atmPutPrice) * 1.25
-      : null;
+    const expectedMoveFormula = currentIv !== null && spot > 0 ? spot * currentIv * Math.sqrt(timeYears) : null;
+    const expectedMoveStraddle = atmCallPrice !== null && atmPutPrice !== null ? (atmCallPrice + atmPutPrice) * 1.25 : null;
     const expectedMove = expectedMoveFormula !== null && expectedMoveStraddle !== null
       ? (expectedMoveFormula + expectedMoveStraddle) / 2
       : expectedMoveFormula ?? expectedMoveStraddle;
     const expectedMovePct = expectedMove !== null && spot > 0 ? (expectedMove / spot) * 100 : null;
 
-    // Same IV, just re-scaled to a single trading day instead of time-to-
-    // expiration -- useful for judging how much a stock could realistically
-    // gap overnight, independent of how far out this particular expiration is.
     const oneDayExpectedMove = currentIv !== null && spot > 0 ? spot * currentIv * Math.sqrt(1 / 365) : null;
     const oneDayExpectedMovePct = oneDayExpectedMove !== null && spot > 0 ? (oneDayExpectedMove / spot) * 100 : null;
 
@@ -429,46 +435,19 @@ Deno.serve(async (req) => {
       ...buildPutCreditSpreads(puts, spot, ticker, expiration, term, expectedMove, expectedMovePct !== null ? +expectedMovePct.toFixed(2) : null),
     ];
 
+    const localRows: Record<string, unknown>[] = [];
+    let localCandidates = 0;
+    const stockInfo = stockBySymbol.get(ticker);
     for (const o of options) {
       localCandidates++;
-      const volume = o.volume ?? 0;
-      const oi = o.open_interest ?? 0;
-      // A whole expiration series occasionally shows 0 open interest while
-      // volume is still populated (or vice versa) -- require real signal
-      // from either field, not both at once.
-      if (volume === 0 && oi === 0) continue;
+      if (o.volume === 0 && o.bid === 0 && o.ask === 0) continue;
 
-      const bid = o.bid ?? 0;
-      const ask = o.ask ?? 0;
-      const price = o.last || (bid + ask) / 2;
-      if (!price) continue;
-
-      const delta = o.greeks?.delta ?? 0;
-      const gamma = o.greeks?.gamma ?? 0;
-      const dollarFlow = volume * price * 100;
-      const side = o.option_type === "call" ? "C" : "P";
-      const patternInfo = patternBySymbol.get(ticker);
-      const { score, voi } = scoreRow(volume, oi, dollarFlow, gamma, price, ivRank, patternScore(side, patternInfo?.pattern ?? null));
-      // Derive the id from the contract's actual identity (strike + side +
-      // expiration) rather than its array position -- the array order isn't
-      // stable across scans, which would otherwise let two different
-      // contracts collide on the same id (or silently swap identities)
-      // between runs. Expiration must be part of this: a ticker is scanned
-      // across multiple expirations per run, so strike+side alone collides
-      // whenever the same strike/side shows up at more than one expiration
-      // (confirmed live -- e.g. two different RIOT $15 puts one week apart
-      // both producing "RIOT-15002", causing React key collisions and
-      // letting one silently overwrite the other in tracked-picks lookups).
+      const dollarFlow = o.volume * o.price * 100;
+      const { score } = scoreRow(o.volume, dollarFlow, o.gamma, o.price, ivRank, patternScore(o.cp, stockInfo?.pattern ?? null));
       const strikeCents = Math.round(o.strike * 100);
-      const contractId = strikeCents * 10 + (side === "C" ? 1 : 2);
+      const contractId = strikeCents * 10 + (o.cp === "C" ? 1 : 2);
 
-      // Breakeven vs. the chain's expected move: how far the stock has to
-      // move for this contract to break even, compared to how far it's
-      // statistically priced to move (1 SD) by expiration. A ratio above 1
-      // means breakeven needs a bigger-than-typical move to get there (a
-      // more conservative premium-selling setup); below 1 means breakeven
-      // sits inside the range the stock routinely moves within.
-      const breakeven = side === "C" ? o.strike + price : o.strike - price;
+      const breakeven = o.cp === "C" ? o.strike + o.price : o.strike - o.price;
       const breakevenMovePct = spot > 0 ? (Math.abs(breakeven - spot) / spot) * 100 : undefined;
       const beVsExpectedMove = breakevenMovePct !== undefined && expectedMovePct
         ? +(breakevenMovePct / expectedMovePct).toFixed(2)
@@ -479,23 +458,22 @@ Deno.serve(async (req) => {
         id: `${ticker}-${contractId}-${expiration}`,
         score,
         ticker,
-        cp: side,
+        cp: o.cp,
         stockPrice: spot,
         sector: "Other",
         type: term,
         strike: o.strike,
         expiration,
-        price,
-        bid,
-        ask,
-        delta,
-        gamma,
-        gpRatio: +((gamma / Math.max(price, 0.5)) * 100).toFixed(2),
+        price: o.price,
+        bid: o.bid,
+        ask: o.ask,
+        delta: o.delta,
+        gamma: o.gamma,
+        gpRatio: +((o.gamma / Math.max(o.price, 0.5)) * 100).toFixed(2),
         ivRank,
+        ivRankIsReal: (ivHistoryByTicker.get(ticker)?.length ?? 0) >= 5,
         ivRvRatio,
-        volume,
-        oi,
-        voi: +voi.toFixed(2),
+        volume: o.volume,
         dollarFlow,
         printType: "BLOCK",
         earningsInDays: null,
@@ -506,8 +484,8 @@ Deno.serve(async (req) => {
         breakevenMovePct: breakevenMovePct !== undefined ? +breakevenMovePct.toFixed(2) : null,
         beVsExpectedMove,
         withinExpectedMove,
-        pattern: patternInfo?.pattern ?? null,
-        patternConfidence: patternInfo?.confidence ?? undefined,
+        pattern: stockInfo?.pattern ?? null,
+        patternConfidence: stockInfo?.confidence ?? undefined,
       });
     }
 
@@ -519,41 +497,23 @@ Deno.serve(async (req) => {
     };
   };
 
-  // Covered-call / cash-secured-put candidates need genuine LEAPS contracts
-  // (300+ days out), which the near-term scan never sees -- it only ever
-  // targets ~45 days out. Fetch a second, explicitly long-dated expiration
-  // per ticker rather than trying to stretch the existing window, since a
-  // single global "top 80 by score" cutoff would otherwise let low-volume
-  // LEAPS get crowded out entirely by more-liquid near-term contracts.
-  const LONG_TERM_TARGET_DAYS = 365;
-
   const scanTicker = async (ticker: string) => {
-    const spot = spotBySymbol.get(ticker);
+    const spot = stockBySymbol.get(ticker)?.price;
     if (!spot) throw new Error("no spot price available");
 
-    const expRes = await fetch(`${base}/markets/options/expirations?symbol=${ticker}&includeAllRoots=true&strikes=false`, { headers });
-    if (!expRes.ok) {
-      throw new Error(`expirations request failed: ${await expRes.text()}`);
-    }
-    const expJson = await expRes.json();
-    const dates: string[] = Array.isArray(expJson?.expirations?.date) ? expJson.expirations.date : [];
-    if (!dates.length) throw new Error("no expirations returned");
+    const fullChain = await fetchFullChain(ticker, headers);
+    if (!fullChain.length) throw new Error("no option contracts returned");
+    const dates = [...new Set(fullChain.map((c) => c.expirationDate))];
 
     const now = Date.now();
     const nearExpiration = nearestExpiration(dates, expWindowDays, now);
     const longExpiration = nearestExpiration(dates, LONG_TERM_TARGET_DAYS, now);
 
-    const near = await scanExpiration(ticker, nearExpiration, spot, now);
-    // Only bother with a second fetch if a genuinely different, further-out
-    // expiration actually exists -- some tickers just don't list anything
-    // near a year out.
+    const near = scanExpiration(ticker, nearExpiration, fullChain, spot, now);
     const long = longExpiration !== nearExpiration
-      ? await scanExpiration(ticker, longExpiration, spot, now)
+      ? scanExpiration(ticker, longExpiration, fullChain, spot, now)
       : { rows: [], candidates: 0, currentIv: null, creditSpreads: [], spot, dte: 0, term: "LEAPS", expectedMove: null, expectedMovePct: null, callLegs: [] as Leg[], putLegs: [] as Leg[] };
 
-    // Poor man's covered call / poor man's cash-secured put: pair the LEAPS
-    // chain's deep-ITM leg with the near-term chain's OTM leg. Needs both
-    // scans to have actually returned usable strikes.
     const pmcc = (long.callLegs.length && near.callLegs.length)
       ? buildDiagonals(long.callLegs, near.callLegs, spot, ticker, longExpiration, nearExpiration, "call", near.expectedMove, near.expectedMovePct)
       : [];
@@ -571,94 +531,50 @@ Deno.serve(async (req) => {
     };
   };
 
-  // 76 tickers x up to 3 calls each (expirations + near/long chains) is well
-  // past what's safe to fire in one burst against the sandbox's rate limit.
-  // Running in small concurrent batches with a short pause between them
-  // keeps the sustained request rate reasonable without needing to know the
-  // exact window semantics -- same pacing approach used elsewhere in this
-  // app for other rate-limited providers.
-  const BATCH_SIZE = 10;
-  const BATCH_PAUSE_MS = 1200;
+  // Deliberately conservative pacing: this batch's ~30 tickers x ~3 Alpaca
+  // calls each (contracts + up to 2 expiration snapshots) is already close
+  // to Alpaca's 200 req/min cap -- small concurrent sub-batches with a pause
+  // between them keep the sustained rate safely under that ceiling instead
+  // of bursting the whole batch at once and risking 429s mid-run.
+  const SUB_BATCH_SIZE = 5;
+  const SUB_BATCH_PAUSE_MS = 2500;
   const settled: PromiseSettledResult<Awaited<ReturnType<typeof scanTicker>>>[] = [];
-  for (let i = 0; i < TICKERS.length; i += BATCH_SIZE) {
-    const batch = TICKERS.slice(i, i + BATCH_SIZE);
-    const batchResults = await Promise.allSettled(batch.map(scanTicker));
-    settled.push(...batchResults);
-    if (i + BATCH_SIZE < TICKERS.length) await new Promise((r) => setTimeout(r, BATCH_PAUSE_MS));
+  for (let i = 0; i < batchTickers.length; i += SUB_BATCH_SIZE) {
+    const sub = batchTickers.slice(i, i + SUB_BATCH_SIZE);
+    const subResults = await Promise.allSettled(sub.map(scanTicker));
+    settled.push(...subResults);
+    if (i + SUB_BATCH_SIZE < batchTickers.length) await new Promise((r) => setTimeout(r, SUB_BATCH_PAUSE_MS));
   }
-  const rows: Record<string, unknown>[] = [];
-  const leapsRows: Record<string, unknown>[] = [];
-  const creditSpreads: Record<string, unknown>[] = [];
-  const diagonals: Record<string, unknown>[] = [];
+
   const errors: Array<{ ticker: string; message: string }> = [];
   const ivSamples: Array<{ ticker: string; iv: number }> = [];
-  let candidates = 0;
+  const cacheUpserts: Array<{ ticker: string; payload: unknown; current_iv: number | null; candidates: number; scanned_at: string }> = [];
+  const now = new Date().toISOString();
+
   settled.forEach((r, i) => {
+    const ticker = batchTickers[i];
     if (r.status === "fulfilled") {
-      for (const row of r.value.rows) {
-        if (row.type === "LEAPS") leapsRows.push(row);
-        else rows.push(row);
-      }
-      creditSpreads.push(...r.value.creditSpreads);
-      diagonals.push(...r.value.diagonals);
-      candidates += r.value.candidates;
+      cacheUpserts.push({
+        ticker,
+        payload: { rows: r.value.rows, creditSpreads: r.value.creditSpreads, diagonals: r.value.diagonals },
+        current_iv: r.value.currentIv,
+        candidates: r.value.candidates,
+        scanned_at: now,
+      });
       if (r.value.currentIv !== null) ivSamples.push({ ticker: r.value.ticker, iv: r.value.currentIv });
     } else {
-      errors.push({ ticker: TICKERS[i], message: r.reason instanceof Error ? r.reason.message : String(r.reason) });
+      errors.push({ ticker, message: r.reason instanceof Error ? r.reason.message : String(r.reason) });
     }
   });
-  const scanned = TICKERS.length;
 
   if (ivSamples.length > 0) {
     await supabase.from("option_iv_history").insert(ivSamples);
   }
-
-  rows.sort((a, b) => (b.score as number) - (a.score as number));
-  const top = rows.slice(0, 80);
-  // LEAPS never compete with near-term contracts for a spot here -- they're
-  // naturally lower-volume/lower-score and would otherwise always lose out.
-  leapsRows.sort((a, b) => (b.score as number) - (a.score as number));
-  const topLeaps = leapsRows.slice(0, 150);
-  // Spreads/diagonals aren't scored the same way (no volume/OI concept for a
-  // constructed 2-leg position) -- rank by return on capital at risk instead
-  // and cap the list so the payload doesn't balloon.
-  creditSpreads.sort((a, b) => (b.returnOnRisk as number) - (a.returnOnRisk as number));
-  const topSpreads = creditSpreads.slice(0, 200);
-  diagonals.sort((a, b) => (b.maxGainApprox as number) - (a.maxGainApprox as number));
-  const topDiagonals = diagonals.slice(0, 100);
-
-  // Cache every successful scan and fall back to it if a run comes back
-  // empty (e.g. a transient sandbox outage), so users don't see a blank
-  // scanner for no real reason.
-  if (top.length > 0) {
-    const payload = {
-      rows: top, leapsRows: topLeaps, creditSpreads: topSpreads, diagonals: topDiagonals,
-      source, scanned, candidates, count: top.length, errors,
-    };
-    await supabase.from("options_scan_cache").upsert({ id: true, payload, scanned_at: new Date().toISOString() });
-    return new Response(JSON.stringify(payload), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  if (cacheUpserts.length > 0) {
+    await supabase.from("options_ticker_cache").upsert(cacheUpserts, { onConflict: "ticker" });
   }
 
-  const { data: cached } = await supabase
-    .from("options_scan_cache")
-    .select("payload, scanned_at")
-    .eq("id", true)
-    .maybeSingle();
-
-  if (cached) {
-    return new Response(
-      JSON.stringify({ ...cached.payload, cached: true, cachedAt: cached.scanned_at, errors }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  }
-
-  return new Response(
-    JSON.stringify({
-      rows: top, leapsRows: topLeaps, creditSpreads: topSpreads, diagonals: topDiagonals,
-      source, scanned, candidates, count: top.length, errors,
-    }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-  );
-});
+  return new Response(JSON.stringify({ scanned: batchTickers.length, updated: cacheUpserts.length, errors }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}

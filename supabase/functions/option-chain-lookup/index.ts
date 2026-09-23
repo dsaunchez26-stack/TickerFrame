@@ -1,32 +1,25 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { alpacaHeaders, fetchFullChain, snapshotPrice } from "../_shared/alpaca.ts";
+import { greeksFromPrice } from "../_shared/blackScholes.ts";
 
 // On-demand lookup for any ticker, not limited to the curated universe the
-// main scanner tracks -- if it's optionable on Tradier, this can look it up.
-interface TradierOption {
-  strike: number;
-  bid: number | null;
-  ask: number | null;
-  last: number | null;
-  volume: number | null;
-  open_interest: number | null;
-  option_type: "call" | "put";
-  greeks?: { delta?: number; gamma?: number; mid_iv?: number; smv_vol?: number } | null;
-}
-
+// main scanner tracks -- if it's optionable on Alpaca, this can look it up.
+// Single-ticker requests don't hit the same rate-limit ceiling the main
+// scanner does, so this fetches live on every call instead of reading a
+// rolling cache.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const TRADIER_API_KEY = Deno.env.get("TRADIER_API_KEY");
-  if (!TRADIER_API_KEY) {
-    return new Response(JSON.stringify({ error: "TRADIER_API_KEY is not configured" }), {
+  let headers: Record<string, string>;
+  try {
+    headers = alpacaHeaders();
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-
-  const base = "https://sandbox.tradier.com/v1";
-  const headers = { Authorization: `Bearer ${TRADIER_API_KEY}`, Accept: "application/json" };
 
   let symbol = "";
   let requestedExpiration: string | null = null;
@@ -50,24 +43,16 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const [quoteRes, expRes] = await Promise.all([
-      fetch(`${base}/markets/quotes?symbols=${symbol}`, { headers }),
-      fetch(`${base}/markets/options/expirations?symbol=${symbol}&includeAllRoots=true&strikes=false`, { headers }),
-    ]);
-
+    const quoteRes = await fetch(`https://data.alpaca.markets/v2/stocks/${symbol}/trades/latest`, { headers });
     if (!quoteRes.ok) throw new Error(`quote request failed: ${await quoteRes.text()}`);
     const quoteJson = await quoteRes.json();
-    const quote = Array.isArray(quoteJson?.quotes?.quote) ? quoteJson.quotes.quote[0] : quoteJson?.quotes?.quote;
-    const spot = typeof quote?.last === "number" ? quote.last : null;
+    const spot: number | null = typeof quoteJson?.trade?.p === "number" ? quoteJson.trade.p : null;
     if (!spot) throw new Error(`no quote found for ${symbol} -- check the ticker is correct and optionable`);
 
-    if (!expRes.ok) throw new Error(`expirations request failed: ${await expRes.text()}`);
-    const expJson = await expRes.json();
-    const expirations: string[] = Array.isArray(expJson?.expirations?.date) ? expJson.expirations.date : [];
-    if (!expirations.length) throw new Error(`no listed options found for ${symbol}`);
+    const fullChain = await fetchFullChain(symbol, headers);
+    if (!fullChain.length) throw new Error(`no listed options found for ${symbol}`);
+    const expirations = [...new Set(fullChain.map((c) => c.expirationDate))].sort();
 
-    // Default to the expiration closest to 30 days out if the caller didn't
-    // ask for a specific one, or didn't ask for one that's actually listed.
     const now = Date.now();
     const targetMs = now + 30 * 86400_000;
     const defaultExpiration = expirations.reduce((closest, d) =>
@@ -75,10 +60,9 @@ Deno.serve(async (req) => {
       expirations[0]);
     const expiration = requestedExpiration && expirations.includes(requestedExpiration) ? requestedExpiration : defaultExpiration;
 
-    const chainRes = await fetch(`${base}/markets/options/chains?symbol=${symbol}&expiration=${expiration}&greeks=true`, { headers });
-    if (!chainRes.ok) throw new Error(`chain request failed: ${await chainRes.text()}`);
-    const chainJson = await chainRes.json();
-    const options: TradierOption[] = Array.isArray(chainJson?.options?.option) ? chainJson.options.option : [];
+    const inExp = fullChain.filter((c) => c.expirationDate === expiration);
+    const dte = Math.max(1, Math.round((new Date(expiration).getTime() - now) / 86400_000));
+    const timeYears = dte / 365;
 
     const { data: patternRow } = await supabase
       .from("stock_cache")
@@ -86,39 +70,36 @@ Deno.serve(async (req) => {
       .eq("symbol", symbol)
       .maybeSingle();
 
-    // Same 1-SD expected-move estimate the main scanner uses: stock price x
-    // ATM IV x sqrt(time in years).
-    const atmIvs = options
-      .filter((o) => Math.abs(o.strike - spot) / spot < 0.05)
-      .map((o) => o.greeks?.mid_iv || o.greeks?.smv_vol)
-      .filter((iv): iv is number => !!iv && iv > 0);
+    const built = inExp.map((c) => {
+      const price = snapshotPrice(c.snapshot);
+      const cp: "C" | "P" = c.type === "call" ? "C" : "P";
+      const bid = c.snapshot.latestQuote?.bp ?? 0;
+      const ask = c.snapshot.latestQuote?.ap ?? 0;
+      const effectivePrice = price ?? (bid > 0 && ask > 0 ? (bid + ask) / 2 : 0);
+      const { iv, delta } = greeksFromPrice(cp, effectivePrice, spot, c.strike, timeYears);
+      const breakeven = cp === "C" ? c.strike + effectivePrice : c.strike - effectivePrice;
+      return { strike: c.strike, cp, price: effectivePrice, bid, ask, volume: c.snapshot.dailyBar?.v ?? 0, delta, iv, breakeven };
+    }).filter((r) => r.price > 0);
+
+    const atmIvs = built.filter((r) => r.iv !== null && Math.abs(r.strike - spot) / spot < 0.05).map((r) => r.iv as number);
     const currentIv = atmIvs.length ? atmIvs.reduce((a, b) => a + b, 0) / atmIvs.length : null;
-    const dte = Math.max(1, Math.round((new Date(expiration).getTime() - now) / 86400_000));
-    const expectedMove = currentIv !== null ? spot * currentIv * Math.sqrt(dte / 365) : null;
+    const expectedMove = currentIv !== null ? spot * currentIv * Math.sqrt(timeYears) : null;
     const expectedMovePct = expectedMove !== null ? (expectedMove / spot) * 100 : null;
 
-    const rows = options
-      .map((o) => {
-        const bid = o.bid ?? 0;
-        const ask = o.ask ?? 0;
-        const price = o.last || (bid + ask) / 2;
-        const side = o.option_type === "call" ? "C" : "P";
-        const breakeven = side === "C" ? o.strike + price : o.strike - price;
-        return {
-          id: `${symbol}-${Math.round(o.strike * 100)}-${side}-${expiration}`,
-          ticker: symbol,
-          cp: side,
-          strike: o.strike,
-          price: +price.toFixed(2),
-          bid: +bid.toFixed(2),
-          ask: +ask.toFixed(2),
-          delta: o.greeks?.delta ?? 0,
-          volume: o.volume ?? 0,
-          oi: o.open_interest ?? 0,
-          breakeven: +breakeven.toFixed(2),
-          withinExpectedMove: expectedMove !== null ? Math.abs(o.strike - spot) <= expectedMove : null,
-        };
-      })
+    const rows = built
+      .map((r) => ({
+        id: `${symbol}-${Math.round(r.strike * 100)}-${r.cp}-${expiration}`,
+        ticker: symbol,
+        cp: r.cp,
+        strike: r.strike,
+        price: +r.price.toFixed(2),
+        bid: +r.bid.toFixed(2),
+        ask: +r.ask.toFixed(2),
+        delta: r.delta,
+        volume: r.volume,
+        breakeven: +r.breakeven.toFixed(2),
+        withinExpectedMove: expectedMove !== null ? Math.abs(r.strike - spot) <= expectedMove : null,
+      }))
       .sort((a, b) => a.strike - b.strike);
 
     return new Response(JSON.stringify({

@@ -110,7 +110,7 @@ export const OptionsScanProvider = ({ children }: { children: ReactNode }) => {
       setLeapsRows(Array.isArray(data.leapsRows) ? data.leapsRows as OptionRow[] : []);
       setCreditSpreads(Array.isArray(data.creditSpreads) ? data.creditSpreads as CreditSpreadRow[] : []);
       setDiagonals(Array.isArray(data.diagonals) ? data.diagonals as DiagonalRow[] : []);
-      setSource((data.source as string) ?? 'marketdata.app-delayed');
+      setSource((data.source as string) ?? 'alpaca');
       setLastUpdate(new Date());
       setCachedAt(data.cached && data.cachedAt ? new Date(data.cachedAt as string) : null);
       setScanMeta({
@@ -139,11 +139,12 @@ export const OptionsScanProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => { loadLive(); }, [loadLive]);
   useEffect(() => {
-    // The underlying data is ~24h delayed on the MarketData.app fallback path,
-    // so polling every few minutes wouldn't surface anything new; every 2
-    // hours keeps a comfortable multi-day margin even if a page stays open
-    // all day. Tradier-sourced scans refresh sooner via manual "Refresh".
-    const id = window.setInterval(loadLive, 2 * 60 * 60_000);
+    // This just re-reads the server-side rolling cache (see options-scanner's
+    // "serveAggregate" path) -- no external API call, so it's cheap to poll
+    // fairly often. The cron job behind that cache refreshes a batch of
+    // tickers every 5 minutes, so polling faster than that wouldn't surface
+    // anything new.
+    const id = window.setInterval(loadLive, 5 * 60_000);
     return () => window.clearInterval(id);
   }, [loadLive]);
   useEffect(() => {

@@ -8,7 +8,6 @@ import {
 export interface FilterState {
   minScore: number;
   maxIv: number;
-  minVoi: number;
   minDollarFlow: number;
   deltaMin: number;
   deltaMax: number;
@@ -25,7 +24,6 @@ export interface FilterState {
 export const defaultFilters: FilterState = {
   minScore: 0,
   maxIv: 100,
-  minVoi: 0,
   minDollarFlow: 0,
   deltaMin: 0.35,
   deltaMax: 1,
@@ -54,10 +52,6 @@ export const AdvancedFilters = ({ filters, setFilters, sectors }: Props) => (
       <div className="space-y-1">
         <Label className="text-[10px]">Max IV rank</Label>
         <Input type="number" value={filters.maxIv} onChange={e => setFilters({ ...filters, maxIv: Number(e.target.value) || 0 })} className="h-8 text-xs" />
-      </div>
-      <div className="space-y-1">
-        <Label className="text-[10px]">Min V/OI</Label>
-        <Input type="number" step="0.1" value={filters.minVoi} onChange={e => setFilters({ ...filters, minVoi: Number(e.target.value) || 0 })} className="h-8 text-xs" />
       </div>
       <div className="space-y-1">
         <Label className="text-[10px]">Min $ flow</Label>

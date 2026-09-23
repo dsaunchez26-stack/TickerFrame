@@ -25,7 +25,7 @@ export const BudgetPicks = ({ rows }: { rows: OptionRow[] }) => {
   const { open } = useStockDetail();
 
   const bands = useMemo(() => {
-    const withLiquidity = rows.filter(r => r.price > 0 && (r.volume > 0 || r.oi > 0));
+    const withLiquidity = rows.filter(r => r.price > 0 && r.volume > 0);
     const perTicker = new Map<string, number>();
     let lowerBound = 0;
     const result = BANDS.map(band => {

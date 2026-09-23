@@ -18,7 +18,6 @@ interface ChainRow {
   ask: number;
   delta: number;
   volume: number;
-  oi: number;
   breakeven: number;
   withinExpectedMove: boolean | null;
 }

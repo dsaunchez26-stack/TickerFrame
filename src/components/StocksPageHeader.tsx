@@ -17,7 +17,7 @@ export const StocksPageHeader = ({ title, subtitle }: Props) => (
         <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
       </div>
       <div className="flex flex-col items-end gap-1 text-[10px]">
-        <span className="rounded-full bg-signal-hold/10 px-2 py-0.5 font-semibold text-signal-hold" title="Tradier sandbox feed can lag real-time quotes by ~15 minutes.">
+        <span className="rounded-full bg-signal-hold/10 px-2 py-0.5 font-semibold text-signal-hold" title="Finnhub's free-tier feed can lag real-time quotes by ~15 minutes.">
           🟡 Quotes may be delayed up to 15 min
         </span>
         <Link to="/methodology" className="text-muted-foreground underline hover:text-foreground">How signals are generated</Link>

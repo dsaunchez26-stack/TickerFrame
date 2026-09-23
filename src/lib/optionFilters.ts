@@ -16,7 +16,6 @@ export function applyOptionFilters(rows: OptionRow[], filters: FilterState, opti
   return rows.filter(r => {
     if (r.score < filters.minScore) return false;
     if (r.ivRank > filters.maxIv) return false;
-    if (r.voi < filters.minVoi) return false;
     if (r.dollarFlow < filters.minDollarFlow) return false;
     if (!options.skipDelta) {
       const ad = Math.abs(r.delta);

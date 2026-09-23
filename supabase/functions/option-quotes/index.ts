@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { alpacaHeaders, fetchSnapshots, snapshotPrice } from "../_shared/alpaca.ts";
 
 interface ContractRequest {
   id: string;
@@ -8,26 +9,29 @@ interface ContractRequest {
   cp: "C" | "P";
 }
 
-interface TradierOption {
-  strike: number;
-  bid: number | null;
-  ask: number | null;
-  last: number | null;
-  option_type: "call" | "put";
+// Builds the OCC-style contract symbol Alpaca's snapshot response is keyed
+// by, directly from the (ticker, expiration, strike, side) a tracked pick
+// already stores -- avoids a second lookup just to find the matching
+// contract, since the symbol is fully determined by those four fields.
+function occSymbol(c: ContractRequest): string {
+  const [y, m, d] = c.expiration.split("-");
+  const yymmdd = `${y.slice(2)}${m}${d}`;
+  const strike8 = String(Math.round(c.strike * 1000)).padStart(8, "0");
+  return `${c.ticker}${yymmdd}${c.cp}${strike8}`;
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const TRADIER_API_KEY = Deno.env.get("TRADIER_API_KEY");
-  if (!TRADIER_API_KEY) {
-    return new Response(JSON.stringify({ error: "TRADIER_API_KEY is not configured" }), {
+  let headers: Record<string, string>;
+  try {
+    headers = alpacaHeaders();
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-
-  const headers = { Authorization: `Bearer ${TRADIER_API_KEY}`, Accept: "application/json" };
 
   let contracts: ContractRequest[] = [];
   try {
@@ -46,8 +50,9 @@ Deno.serve(async (req) => {
   // A tracked pick's "current price" has to be the same option contract's
   // current premium, not the underlying stock's price -- comparing a $0.78
   // option premium against a ~$210 stock price produces a nonsense P/L.
-  // Group requested contracts by (ticker, expiration) so each distinct chain
-  // is only fetched once, no matter how many strikes/sides are being priced.
+  // Group requested contracts by (ticker, expiration) so each distinct
+  // expiration's snapshots are only fetched once, no matter how many
+  // strikes/sides are being priced.
   const groups = new Map<string, ContractRequest[]>();
   for (const c of contracts) {
     const key = `${c.ticker}|${c.expiration}`;
@@ -61,22 +66,10 @@ Deno.serve(async (req) => {
   await Promise.allSettled(
     Array.from(groups.entries()).map(async ([key, group]) => {
       const [ticker, expiration] = key.split("|");
-      const res = await fetch(
-        `https://sandbox.tradier.com/v1/markets/options/chains?symbol=${ticker}&expiration=${expiration}`,
-        { headers },
-      );
-      if (!res.ok) return;
-      const chainJson = await res.json();
-      const options: TradierOption[] = Array.isArray(chainJson?.options?.option) ? chainJson.options.option : [];
-      if (!options.length) return;
-
+      const snapshots = await fetchSnapshots(ticker, expiration, headers).catch(() => new Map());
       for (const c of group) {
-        const match = options.find((o) =>
-          Math.abs(o.strike - c.strike) < 0.01 && o.option_type === (c.cp === "C" ? "call" : "put")
-        );
-        if (!match) continue;
-        const price = match.last || ((match.bid ?? 0) + (match.ask ?? 0)) / 2;
-        if (price > 0) quotes.push({ id: c.id, price });
+        const price = snapshotPrice(snapshots.get(occSymbol(c)));
+        if (price !== null && price > 0) quotes.push({ id: c.id, price });
       }
     }),
   );

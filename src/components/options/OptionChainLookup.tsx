@@ -17,7 +17,6 @@ interface ChainRow {
   ask: number;
   delta: number;
   volume: number;
-  oi: number;
   breakeven: number;
   withinExpectedMove: boolean | null;
 }
@@ -107,7 +106,7 @@ export const OptionChainLookup = () => {
                         <th className="py-1.5 pr-2">Strike</th>
                         <th className="py-1.5 pr-2">Bid/Ask</th>
                         <th className="py-1.5 pr-2">Δ</th>
-                        <th className="py-1.5 pr-2">Vol/OI</th>
+                        <th className="py-1.5 pr-2">Volume</th>
                         <th className="py-1.5 pr-2">Breakeven</th>
                         <th className="py-1.5 pr-2">vs Expected Move</th>
                       </tr>
@@ -118,7 +117,7 @@ export const OptionChainLookup = () => {
                           <td className="py-1.5 pr-2 font-semibold">${r.strike}</td>
                           <td className="py-1.5 pr-2">${r.bid.toFixed(2)}/${r.ask.toFixed(2)}</td>
                           <td className="py-1.5 pr-2">{r.delta.toFixed(2)}</td>
-                          <td className="py-1.5 pr-2">{r.volume}/{r.oi}</td>
+                          <td className="py-1.5 pr-2">{r.volume}</td>
                           <td className="py-1.5 pr-2">${r.breakeven.toFixed(2)}</td>
                           <td className="py-1.5 pr-2">
                             {r.withinExpectedMove === null ? (
@@ -145,7 +144,7 @@ export const OptionChainLookup = () => {
                         <th className="py-1.5 pr-2">Strike</th>
                         <th className="py-1.5 pr-2">Bid/Ask</th>
                         <th className="py-1.5 pr-2">Δ</th>
-                        <th className="py-1.5 pr-2">Vol/OI</th>
+                        <th className="py-1.5 pr-2">Volume</th>
                         <th className="py-1.5 pr-2">Breakeven</th>
                         <th className="py-1.5 pr-2">vs Expected Move</th>
                       </tr>
@@ -156,7 +155,7 @@ export const OptionChainLookup = () => {
                           <td className="py-1.5 pr-2 font-semibold">${r.strike}</td>
                           <td className="py-1.5 pr-2">${r.bid.toFixed(2)}/${r.ask.toFixed(2)}</td>
                           <td className="py-1.5 pr-2">{r.delta.toFixed(2)}</td>
-                          <td className="py-1.5 pr-2">{r.volume}/{r.oi}</td>
+                          <td className="py-1.5 pr-2">{r.volume}</td>
                           <td className="py-1.5 pr-2">${r.breakeven.toFixed(2)}</td>
                           <td className="py-1.5 pr-2">
                             {r.withinExpectedMove === null ? (
