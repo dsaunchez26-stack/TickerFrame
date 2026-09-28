@@ -35,6 +35,18 @@ export interface RegimeResult {
   description: string;
 }
 
+// FRED normally lags by ~1 business day, but its own feed can stall for
+// longer (confirmed live: it went 6 calendar days without a new VIXCLS
+// point). Past this threshold the reading is stale enough that it
+// shouldn't silently drive a risk-off call on its own -- just show it with
+// a clear "(stale)" flag and let real SPY/QQQ movement carry the
+// classification instead.
+const VIX_STALE_AFTER_DAYS = 4;
+
+function daysSince(dateStr: string): number {
+  return (Date.now() - new Date(`${dateStr}T00:00:00Z`).getTime()) / 86_400_000;
+}
+
 // A simple, fully disclosed rule, not a prediction or a model: broad risk-off
 // needs either an elevated VIX (>= 20, the commonly cited "elevated
 // volatility" threshold) or a real down day across both index ETFs; broad
@@ -42,12 +54,15 @@ export interface RegimeResult {
 // Everything else is neutral. Same spirit as the two-indicator buy/sell
 // signal documented on the Methodology page -- a transparent rule anyone can
 // verify against the real numbers shown, not a black-box score.
-export function classifyRegime(vix: number | null, spyChangePct: number | null, qqqChangePct: number | null): RegimeResult {
+export function classifyRegime(vix: number | null, vixAsOf: string | null, spyChangePct: number | null, qqqChangePct: number | null): RegimeResult {
+  const vixIsStale = vixAsOf !== null && daysSince(vixAsOf) > VIX_STALE_AFTER_DAYS;
+  const effectiveVix = vixIsStale ? null : vix;
+
   const avgChange = spyChangePct !== null && qqqChangePct !== null ? (spyChangePct + qqqChangePct) / 2 : spyChangePct ?? qqqChangePct;
   let trend: RegimeResult["trend"] = "neutral";
-  if ((vix !== null && vix >= 20) || (avgChange !== null && avgChange <= -0.75)) {
+  if ((effectiveVix !== null && effectiveVix >= 20) || (avgChange !== null && avgChange <= -0.75)) {
     trend = "risk-off";
-  } else if (vix !== null && vix < 15 && avgChange !== null && avgChange > 0.25) {
+  } else if (effectiveVix !== null && effectiveVix < 15 && avgChange !== null && avgChange > 0.25) {
     trend = "risk-on";
   }
   const label = trend === "risk-off" ? "Risk-Off" : trend === "risk-on" ? "Risk-On" : "Neutral";
@@ -55,9 +70,11 @@ export function classifyRegime(vix: number | null, spyChangePct: number | null, 
   if (spyChangePct !== null) parts.push(`SPY ${spyChangePct >= 0 ? "+" : ""}${spyChangePct.toFixed(1)}%`);
   if (qqqChangePct !== null) parts.push(`QQQ ${qqqChangePct >= 0 ? "+" : ""}${qqqChangePct.toFixed(1)}%`);
   return {
-    label, trend, vix: vix !== null ? +vix.toFixed(1) : null, vixAsOf: null,
+    label, trend, vix: vix !== null ? +vix.toFixed(1) : null, vixAsOf,
     spyChangePct: spyChangePct !== null ? +spyChangePct.toFixed(2) : null,
     qqqChangePct: qqqChangePct !== null ? +qqqChangePct.toFixed(2) : null,
     description: parts.join(", "),
   };
 }
+
+export { VIX_STALE_AFTER_DAYS, daysSince };

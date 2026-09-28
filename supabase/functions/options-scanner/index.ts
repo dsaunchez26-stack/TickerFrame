@@ -3,7 +3,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { TRACKED_TICKERS } from "../_shared/symbols.ts";
 import { alpacaHeaders, fetchFullChain, fetchStockSnapshot, snapshotPrice, type AlpacaChainContract } from "../_shared/alpaca.ts";
 import { greeksFromPrice } from "../_shared/blackScholes.ts";
-import { fetchVix, classifyRegime } from "../_shared/marketRegime.ts";
+import { fetchVix, classifyRegime, daysSince, VIX_STALE_AFTER_DAYS } from "../_shared/marketRegime.ts";
 
 // This used to be its own hand-copied 76-symbol list that never got updated
 // when the shared tracked universe grew to 114 (the same ticker-list-drift
@@ -309,7 +309,9 @@ async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient
     vix: regimeRow.vix as number | null,
     description: [
       regimeRow.description,
-      regimeRow.vix_as_of ? `VIX as of ${regimeRow.vix_as_of} close (FRED)` : null,
+      regimeRow.vix_as_of
+        ? `VIX as of ${regimeRow.vix_as_of} close (FRED)${daysSince(regimeRow.vix_as_of) > VIX_STALE_AFTER_DAYS ? " -- FRED hasn't published a newer reading, VIX excluded from the trend below" : ""}`
+        : null,
     ].filter(Boolean).join(" · "),
   } : null;
 
@@ -403,7 +405,7 @@ async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: 
   if (spySnap) stockBySymbol.set("SPY", { price: spySnap.price, pattern: null, confidence: null });
   if (qqqSnap) stockBySymbol.set("QQQ", { price: qqqSnap.price, pattern: null, confidence: null });
 
-  const regime = classifyRegime(vixData?.vix ?? null, spySnap?.changePct ?? null, qqqSnap?.changePct ?? null);
+  const regime = classifyRegime(vixData?.vix ?? null, vixData?.asOf ?? null, spySnap?.changePct ?? null, qqqSnap?.changePct ?? null);
   await supabase.from("market_regime_cache").upsert({
     id: true,
     vix: regime.vix,
