@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  const quotes: Record<string, { price: number; prevClose: number; changePercent: number }> = {};
+  const quotes: Record<string, { price: number; prevClose: number; changePercent: number; name?: string }> = {};
 
   // Firing every symbol as one unpaced Promise.allSettled burst (the
   // original approach here) works fine for the common case -- a handful of
@@ -45,13 +45,21 @@ Deno.serve(async (req) => {
     const batch = symbols.slice(i, i + BATCH_SIZE);
     await Promise.allSettled(
       batch.map(async (symbol) => {
-        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`);
-        const quote = await res.json();
+        const [quoteRes, profileRes] = await Promise.all([
+          fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
+          // Same free-tier endpoint as the tracked-universe scanner's own
+          // name field -- a company's display name, not part of the quote
+          // response itself, so this needs its own call.
+          fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_API_KEY}`),
+        ]);
+        const quote = await quoteRes.json();
         if (!quote || typeof quote.c !== "number" || quote.c === 0) return;
+        const profile = await profileRes.json().catch(() => null);
         quotes[symbol] = {
           price: quote.c,
           prevClose: quote.pc ?? quote.c,
           changePercent: quote.dp ?? 0,
+          name: typeof profile?.name === "string" && profile.name ? profile.name : undefined,
         };
       }),
     );

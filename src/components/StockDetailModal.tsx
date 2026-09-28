@@ -13,7 +13,7 @@ interface Props {
   onClose: () => void;
 }
 
-interface LiveQuote { price: number; prevClose: number; changePercent: number }
+interface LiveQuote { price: number; prevClose: number; changePercent: number; name?: string }
 type FundamentalsRow = Database['public']['Tables']['stock_fundamentals']['Row'];
 type InsiderRow = Database['public']['Tables']['insider_activity']['Row'];
 
@@ -91,7 +91,10 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {symbol}
+            <span>{symbol}</span>
+            {(stock?.name || liveQuote?.name) && (
+              <span className="text-sm font-normal text-muted-foreground">{stock?.name || liveQuote?.name}</span>
+            )}
             {stock?.pattern && <PatternBadge pattern={stock.pattern} confidence={stock.patternConfidence} />}
           </DialogTitle>
         </DialogHeader>

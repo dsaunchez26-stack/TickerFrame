@@ -43,6 +43,7 @@ const Patterns = () => {
                     <span className="font-heading text-sm font-semibold">{s.symbol}</span>
                     <span className="text-xs text-muted-foreground">${s.price.toFixed(2)}</span>
                   </div>
+                  {s.name && <p className="truncate text-[10px] text-muted-foreground">{s.name}</p>}
                   <div className="mt-2">
                     <PatternBadge pattern={s.pattern} confidence={s.patternConfidence} />
                   </div>

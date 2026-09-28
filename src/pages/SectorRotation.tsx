@@ -244,7 +244,10 @@ const SectorRotation = () => {
                       <tbody>
                         {selected.stocks.map(({ row: r, quality, momentum }) => (
                           <tr key={r.symbol} onClick={() => setSelectedStock(r)} className="cursor-pointer border-b last:border-0 hover:bg-secondary/40">
-                            <td className="py-2 pr-3 font-semibold">{r.symbol}</td>
+                            <td className="py-2 pr-3">
+                              <div className="font-semibold">{r.symbol}</div>
+                              {r.name && <div className="text-[10px] font-normal text-muted-foreground">{r.name}</div>}
+                            </td>
                             <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                             <td className={`py-2 pr-3 ${momentum !== null ? momentumColor(momentum) : 'text-muted-foreground'}`}>
                               {momentum !== null ? fmtPct(momentum) : '-'}

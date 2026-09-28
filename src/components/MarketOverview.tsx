@@ -23,12 +23,13 @@ export const MarketOverview = () => {
       {
         label: hasVolumeData ? 'Most Active' : 'Biggest Mover',
         value: mostActive.symbol,
+        name: mostActive.name,
         sub: hasVolumeData ? formatVolume(mostActive.volume) + ' vol' : `${mostActive.changePercent > 0 ? '+' : ''}${mostActive.changePercent.toFixed(2)}%`,
         icon: <Activity className="h-4 w-4" />,
       },
-      { label: 'Top Gainer', value: topGainer.symbol, sub: `+${topGainer.changePercent.toFixed(2)}%`, icon: <TrendingUp className="h-4 w-4" />, color: 'text-signal-buy' },
-      { label: 'Top Loser', value: topLoser.symbol, sub: `${topLoser.changePercent.toFixed(2)}%`, icon: <TrendingDown className="h-4 w-4" />, color: 'text-signal-sell' },
-      { label: 'Watching', value: String(stocks.length), sub: 'stocks', icon: <Eye className="h-4 w-4" /> },
+      { label: 'Top Gainer', value: topGainer.symbol, name: topGainer.name, sub: `+${topGainer.changePercent.toFixed(2)}%`, icon: <TrendingUp className="h-4 w-4" />, color: 'text-signal-buy' },
+      { label: 'Top Loser', value: topLoser.symbol, name: topLoser.name, sub: `${topLoser.changePercent.toFixed(2)}%`, icon: <TrendingDown className="h-4 w-4" />, color: 'text-signal-sell' },
+      { label: 'Watching', value: String(stocks.length), name: undefined, sub: 'stocks', icon: <Eye className="h-4 w-4" /> },
     ];
   }, [data]);
 
@@ -55,6 +56,7 @@ export const MarketOverview = () => {
             <span className={s.color || 'text-muted-foreground'}>{s.icon}</span>
           </div>
           <p className={`font-heading text-lg font-bold ${s.color || 'text-foreground'}`}>{s.value}</p>
+          {s.name && <p className="truncate text-[10px] text-muted-foreground">{s.name}</p>}
           <p className="text-[10px] text-muted-foreground">{s.sub}</p>
         </div>
       ))}

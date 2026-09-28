@@ -8,6 +8,7 @@ import { useStockDetail } from '@/context/StockDetailContext';
 import { OptionRiskDialogButton } from '@/components/tools/OptionRiskDialogButton';
 import { EarningsBadge } from '@/components/EarningsBadge';
 import { useEarningsCalendar } from '@/hooks/useEarningsCalendar';
+import { useSymbolNames } from '@/hooks/useSymbolNames';
 
 const INITIAL = 20;
 const STEP = 20;
@@ -39,6 +40,7 @@ const COLUMNS: Array<{ key: SortKey; label: string }> = [
 export const ScannerTable = ({ rows, trackedIds, onTrack }: Props) => {
   const { open } = useStockDetail();
   const { earningsBySymbol } = useEarningsCalendar();
+  const symbolNames = useSymbolNames();
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [visible, setVisible] = useState(INITIAL);
@@ -104,6 +106,7 @@ export const ScannerTable = ({ rows, trackedIds, onTrack }: Props) => {
                         <button onClick={() => open(r.ticker)} className="font-semibold hover:text-primary hover:underline">{r.ticker}</button>
                         <EarningsBadge earnings={earningsBySymbol.get(r.ticker)} referenceDate={r.expiration} size="xs" />
                       </div>
+                      {symbolNames.get(r.ticker) && <div className="truncate text-[10px] text-muted-foreground">{symbolNames.get(r.ticker)}</div>}
                     </td>
                     <td className="py-2 pr-3">${r.stockPrice.toFixed(2)}</td>
                     <td className="py-2 pr-3">{r.cp}{r.strike}</td>

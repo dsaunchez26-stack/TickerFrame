@@ -30,7 +30,7 @@ export const TopMovers = () => {
       const isBullish = s.changePercent > 0;
       const risk = Math.abs(s.changePercent) > 5 ? 'High' : Math.abs(s.changePercent) > 2 ? 'Medium' : 'Low';
       const potentialGain = isBullish ? ((s.exit - s.price) / s.price * 100).toFixed(1) : ((s.price - s.entry) / s.price * 100).toFixed(1);
-      return { symbol: s.symbol, price: s.price, changePercent: s.changePercent, direction: isBullish ? 'Long' as const : 'Short' as const, entry: s.price, target: isBullish ? s.exit : s.entry, stopLoss: isBullish ? s.entry : s.exit, risk, potentialGain, volume: s.volume, signal: s.signal, holdDuration: s.holdDuration || 'Swing' };
+      return { symbol: s.symbol, name: s.name, price: s.price, changePercent: s.changePercent, direction: isBullish ? 'Long' as const : 'Short' as const, entry: s.price, target: isBullish ? s.exit : s.entry, stopLoss: isBullish ? s.entry : s.exit, risk, potentialGain, volume: s.volume, signal: s.signal, holdDuration: s.holdDuration || 'Swing' };
     });
   }, [data]);
 
@@ -51,8 +51,8 @@ export const TopMovers = () => {
           const isEditing = editing === m.symbol;
           return (
             <div key={m.symbol} className="p-4 hover:bg-secondary/30 transition-colors">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex min-w-0 items-center gap-2">
                   <Checkbox checked={isOwned || isEditing} onCheckedChange={(checked) => {
                     if (checked && !isOwned) { setEditing(m.symbol); setBuyPrice(m.entry.toFixed(2)); setQty('1'); setPtype(m.direction === 'Long' ? 'day_trade' : 'watchlist'); }
                     else if (isOwned) { owned!.forEach(pt => { removeStock.mutate({ symbol: m.symbol, portfolio_type: pt }); }); }
@@ -66,6 +66,7 @@ export const TopMovers = () => {
                 </div>
                 <span className={`font-heading text-sm font-bold ${m.changePercent >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>{m.changePercent > 0 ? '+' : ''}{m.changePercent.toFixed(2)}%</span>
               </div>
+              {m.name && <p className="mb-2 truncate text-[10px] text-muted-foreground">{m.name}</p>}
 
               {isEditing && !isOwned && (
                 <div className="mb-3 rounded border border-primary/30 bg-primary/5 p-2 space-y-2">

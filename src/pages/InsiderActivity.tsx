@@ -5,6 +5,7 @@ import { Slider } from '@/components/ui/slider';
 import { Disclaimer } from '@/components/Disclaimer';
 import { Loader2, RefreshCw, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSymbolNames } from '@/hooks/useSymbolNames';
 import type { Database } from '@/integrations/supabase/types';
 
 type InsiderRow = Database['public']['Tables']['insider_activity']['Row'];
@@ -13,6 +14,7 @@ const fmtUsd = (v: number) => v.toLocaleString(undefined, { style: 'currency', c
 const fmtDate = (d: string | null) => (d ? new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '-');
 
 const InsiderActivity = () => {
+  const symbolNames = useSymbolNames();
   const [rows, setRows] = useState<InsiderRow[]>([]);
   const [prices, setPrices] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -139,7 +141,10 @@ const InsiderActivity = () => {
                       const pctSince = current && r.price_per_share ? ((current - r.price_per_share) / r.price_per_share) * 100 : null;
                       return (
                         <tr key={r.id} className="border-b last:border-0">
-                          <td className="py-2 pr-3 font-semibold">{r.ticker}</td>
+                          <td className="py-2 pr-3">
+                            <div className="font-semibold">{r.ticker}</div>
+                            {symbolNames.get(r.ticker) && <div className="text-[10px] font-normal text-muted-foreground">{symbolNames.get(r.ticker)}</div>}
+                          </td>
                           <td className="py-2 pr-3">{r.filer_name}</td>
                           <td className="py-2 pr-3 text-muted-foreground">{r.filer_title ?? '-'}</td>
                           <td className="py-2 pr-3">{fmtDate(r.transaction_date)}</td>
@@ -189,7 +194,10 @@ const InsiderActivity = () => {
                   <tbody>
                     {holderFilings.map(r => (
                       <tr key={r.id} className="border-b last:border-0">
-                        <td className="py-2 pr-3 font-semibold">{r.ticker}</td>
+                        <td className="py-2 pr-3">
+                          <div className="font-semibold">{r.ticker}</div>
+                          {symbolNames.get(r.ticker) && <div className="text-[10px] font-normal text-muted-foreground">{symbolNames.get(r.ticker)}</div>}
+                        </td>
                         <td className="py-2 pr-3">{r.filer_name}</td>
                         <td className="py-2 pr-3 text-muted-foreground">{r.form_type}</td>
                         <td className="py-2 pr-3">{fmtDate(r.filing_date)}</td>

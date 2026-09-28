@@ -18,6 +18,7 @@ import { PortfolioRating } from '@/components/PortfolioRating';
 import { PortfolioTrend } from '@/components/PortfolioTrend';
 import { PortfolioOptions } from '@/components/PortfolioOptions';
 import { PortfolioFutures } from '@/components/PortfolioFutures';
+import { useSymbolNames } from '@/hooks/useSymbolNames';
 
 type ViewMode = 'compare' | 'single';
 
@@ -135,6 +136,7 @@ const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
   const { user } = useAuth();
   const { enriched, totals, isLoading, addStock, removeStock, updateAlerts } = usePortfolioEnriched(name);
   const { earningsBySymbol } = useEarningsCalendar();
+  const symbolNames = useSymbolNames();
   const [showForm, setShowForm] = useState(false);
   const [sym, setSym] = useState(''); const [bp, setBp] = useState(''); const [qty, setQty] = useState('1');
   const [editingSymbol, setEditingSymbol] = useState<string | null>(null);
@@ -226,6 +228,7 @@ const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
                     <EarningsBadge earnings={earningsBySymbol.get(e.symbol)} size="xs" />
                     <PositionAlertBadge pnlPct={e.pnlPct} targetGainPct={e.target_gain_pct} stopLossPct={e.stop_loss_pct} size="xs" />
                   </div>
+                  {symbolNames.get(e.symbol) && <p className="truncate text-[10px] text-muted-foreground">{symbolNames.get(e.symbol)}</p>}
                   <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap gap-x-2">
                     <span>Buy ${e.buy_price.toFixed(2)} × {e.quantity} · Now ${e.currentPrice.toFixed(2)}</span>
                     <span className={e.todayDollar >= 0 ? 'text-signal-buy' : 'text-signal-sell'}>

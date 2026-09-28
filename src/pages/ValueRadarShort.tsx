@@ -118,7 +118,8 @@ const ValueRadarShort = () => {
                       return (
                       <tr key={r.symbol} className="border-b last:border-0 hover:bg-secondary/40">
                         <td className="py-2 pr-3">
-                          <button onClick={() => openStockDetail(r.symbol)} className="font-semibold hover:text-primary hover:underline">{r.symbol}</button>
+                          <button onClick={() => openStockDetail(r.symbol)} className="block font-semibold hover:text-primary hover:underline">{r.symbol}</button>
+                          {r.name && <div className="text-[10px] text-muted-foreground">{r.name}</div>}
                         </td>
                         <td className="py-2 pr-3">${t.price.toFixed(2)}</td>
                         <td className="py-2 pr-3">{fmtRatio(r.debt_to_equity)}</td>

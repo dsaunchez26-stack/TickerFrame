@@ -5,9 +5,11 @@ import { PatternBadge } from '@/components/PatternBadge';
 import { OptionRiskDialogButton } from '@/components/tools/OptionRiskDialogButton';
 import { EarningsBadge } from '@/components/EarningsBadge';
 import { useEarningsCalendar } from '@/hooks/useEarningsCalendar';
+import { useSymbolNames } from '@/hooks/useSymbolNames';
 
 export const BestTradeCards = ({ rows }: { rows: OptionRow[] }) => {
   const { earningsBySymbol } = useEarningsCalendar();
+  const symbolNames = useSymbolNames();
   const top = useMemo(() => [...rows].sort((a, b) => b.score - a.score).slice(0, 3), [rows]);
 
   if (!top.length) return null;
@@ -22,6 +24,7 @@ export const BestTradeCards = ({ rows }: { rows: OptionRow[] }) => {
               <span className="font-heading text-sm font-semibold">{r.ticker} {r.cp}{r.strike}</span>
               <span className="text-xs font-bold text-primary">{r.score}</span>
             </div>
+            {symbolNames.get(r.ticker) && <p className="truncate text-[10px] text-muted-foreground">{symbolNames.get(r.ticker)}</p>}
             <p className="mt-0.5 text-[11px] text-muted-foreground">Exp {r.expiration} · Δ{r.delta.toFixed(2)}</p>
             <div className="mt-1"><EarningsBadge earnings={earningsBySymbol.get(r.ticker)} referenceDate={r.expiration} size="xs" /></div>
             <div className="mt-2 flex items-center justify-between">

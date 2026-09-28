@@ -105,7 +105,10 @@ const ValueRadar = () => {
                   <tbody>
                     {candidates.map(r => (
                       <tr key={r.symbol} onClick={() => setSelected(r)} className="cursor-pointer border-b last:border-0 hover:bg-secondary/40">
-                        <td className="py-2 pr-3 font-semibold">{r.symbol}</td>
+                        <td className="py-2 pr-3">
+                          <div className="font-semibold">{r.symbol}</div>
+                          {r.name && <div className="text-[10px] font-normal text-muted-foreground">{r.name}</div>}
+                        </td>
                         <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                         <td className="py-2 pr-3 text-muted-foreground">
                           {r.week52_low && r.week52_high ? `$${r.week52_low.toFixed(0)}–$${r.week52_high.toFixed(0)}` : '-'}

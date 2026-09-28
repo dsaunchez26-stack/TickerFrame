@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { OptionRow } from '@/lib/optionsMockData';
 import { PatternBadge } from '@/components/PatternBadge';
 import { useStockDetail } from '@/context/StockDetailContext';
+import { useSymbolNames } from '@/hooks/useSymbolNames';
 
 const MAX_PER_TICKER = 2;
 const PER_BAND = 3;
@@ -23,6 +24,7 @@ const BANDS: Array<{ label: string; max: number }> = [
 // which are cheap for the opposite reason (low odds, not just low price).
 export const BudgetPicks = ({ rows }: { rows: OptionRow[] }) => {
   const { open } = useStockDetail();
+  const symbolNames = useSymbolNames();
 
   const bands = useMemo(() => {
     const withLiquidity = rows.filter(r => r.price > 0 && r.volume > 0);
@@ -69,6 +71,7 @@ export const BudgetPicks = ({ rows }: { rows: OptionRow[] }) => {
                     <button onClick={() => open(r.ticker)} className="font-heading text-sm font-semibold hover:text-primary hover:underline">{r.ticker} {r.cp}{r.strike}</button>
                     <span className="text-xs font-bold text-primary">{r.score}</span>
                   </div>
+                  {symbolNames.get(r.ticker) && <p className="truncate text-[10px] text-muted-foreground">{symbolNames.get(r.ticker)}</p>}
                   <p className="mt-0.5 text-[11px] text-muted-foreground">Exp {r.expiration} · Δ{r.delta.toFixed(2)}</p>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-xs font-semibold">

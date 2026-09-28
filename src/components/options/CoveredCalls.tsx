@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { OptionRow } from '@/lib/optionsMockData';
 import { TrackButton } from '@/components/options/TrackButton';
 import { useStockDetail } from '@/context/StockDetailContext';
+import { useSymbolNames } from '@/hooks/useSymbolNames';
 
 interface Props {
   rows: OptionRow[];
@@ -84,10 +85,12 @@ function pickBest(pool: OptionRow[], count: number) {
 
 const Row = ({ r, tracked, onTrack }: { r: OptionRow; tracked: boolean; onTrack: (portfolioName: string | null) => void }) => {
   const { open } = useStockDetail();
+  const symbolNames = useSymbolNames();
   return (
   <tr className="border-b last:border-0">
     <td className="py-2 pr-3">
-      <button onClick={() => open(r.ticker)} className="font-semibold hover:text-primary hover:underline">{r.ticker}</button>
+      <button onClick={() => open(r.ticker)} className="block font-semibold hover:text-primary hover:underline">{r.ticker}</button>
+      {symbolNames.get(r.ticker) && <div className="text-[10px] text-muted-foreground">{symbolNames.get(r.ticker)}</div>}
     </td>
     <td className="py-2 pr-3 text-muted-foreground">
       {r.type}

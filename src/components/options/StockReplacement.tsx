@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DiagonalRow } from '@/lib/spreads';
 import { useStockDetail } from '@/context/StockDetailContext';
+import { useSymbolNames } from '@/hooks/useSymbolNames';
 
 interface Props {
   diagonals: DiagonalRow[];
@@ -34,10 +35,12 @@ function pickBest(pool: DiagonalRow[], count: number) {
 
 const Row = ({ r }: { r: DiagonalRow }) => {
   const { open } = useStockDetail();
+  const symbolNames = useSymbolNames();
   return (
   <tr className="border-b last:border-0">
     <td className="py-2 pr-3">
-      <button onClick={() => open(r.ticker)} className="font-semibold hover:text-primary hover:underline">{r.ticker}</button>
+      <button onClick={() => open(r.ticker)} className="block font-semibold hover:text-primary hover:underline">{r.ticker}</button>
+      {symbolNames.get(r.ticker) && <div className="text-[10px] text-muted-foreground">{symbolNames.get(r.ticker)}</div>}
     </td>
     <td className="py-2 pr-3">${r.stockPrice.toFixed(2)}</td>
     <td className="py-2 pr-3">
