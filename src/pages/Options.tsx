@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, RefreshCw, TrendingUp, Zap } from 'lucide-react';
 import { TickerBanner } from '@/components/options/TickerBanner';
-import { SentimentSummary } from '@/components/options/SentimentSummary';
+import { PutCallRatio } from '@/components/options/PutCallRatio';
 import { BestTradeCards } from '@/components/options/BestTradeCards';
 import { BudgetPicks } from '@/components/options/BudgetPicks';
 import { AdvancedFilters, defaultFilters, FilterState } from '@/components/options/AdvancedFilters';
@@ -22,7 +22,7 @@ import { useOptionsScan } from '@/context/OptionsScanContext';
 // OptionsScanContext instead of each re-fetching independently.
 const Options = () => {
   const {
-    allRows, loading, source, lastUpdate, scanError, scanMeta, cachedAt, regime, indexWarnings, loadLive,
+    allRows, loading, source, lastUpdate, scanError, scanMeta, cachedAt, regime, putCallRatio, indexWarnings, loadLive,
   } = useOptionsScan();
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
 
@@ -79,7 +79,7 @@ const Options = () => {
         )}
         <MarketRegimeBar regime={regime} />
         <IndexEarlyWarning warnings={indexWarnings} />
-        <SentimentSummary rows={allRows} />
+        <PutCallRatio data={putCallRatio} />
         <AdvancedFilters filters={filters} setFilters={setFilters} sectors={sectors} />
         <BestTradeCards rows={filteredRows} />
         <BudgetPicks rows={filteredRows} />

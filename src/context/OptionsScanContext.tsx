@@ -5,6 +5,7 @@ import type { CreditSpreadRow, DiagonalRow } from '@/lib/spreads';
 import type { MarketRegime } from '@/components/options/MarketRegimeBar';
 import type { IndexWarning } from '@/components/options/IndexEarlyWarning';
 import type { FlowAgg } from '@/components/options/FlowTiltPanel';
+import type { PutCallRatioData } from '@/components/options/PutCallRatio';
 import {
   addPick, loadCloudPicks, loadPicks, mergePicks,
   saveCloudPick, saveCloudPicks, savePicks, type TrackedPick,
@@ -26,6 +27,7 @@ interface OptionsScanState {
   scanMeta: ScanMeta | null;
   cachedAt: Date | null;
   regime: MarketRegime | null;
+  putCallRatio: PutCallRatioData | null;
   indexWarnings: IndexWarning[];
   picks: TrackedPick[];
   pickQuotes: Record<string, number>;
@@ -61,6 +63,7 @@ export const OptionsScanProvider = ({ children }: { children: ReactNode }) => {
   const [scanMeta, setScanMeta] = useState<ScanMeta | null>(null);
   const [cachedAt, setCachedAt] = useState<Date | null>(null);
   const [regime, setRegime] = useState<MarketRegime | null>(null);
+  const [putCallRatio, setPutCallRatio] = useState<PutCallRatioData | null>(null);
   const [indexWarnings, setIndexWarnings] = useState<IndexWarning[]>([]);
   const [picks, setPicks] = useState<TrackedPick[]>(() => loadPicks());
   const [pickQuotes, setPickQuotes] = useState<Record<string, number>>({});
@@ -119,6 +122,7 @@ export const OptionsScanProvider = ({ children }: { children: ReactNode }) => {
         count: Number(data.count) || (data.rows as OptionRow[]).length,
       });
       if (data.regime) setRegime(data.regime as MarketRegime);
+      setPutCallRatio((data.putCallRatio as PutCallRatioData | null) ?? null);
       if (Array.isArray(data.indexWarnings)) setIndexWarnings(data.indexWarnings as IndexWarning[]);
       if (Array.isArray(data.flowPrints)) {
         const mapped: FlowPrint[] = (data.flowPrints as Array<{ ticker: string; cp: 'C' | 'P'; strike: number; exp: string; volume: number; dollarFlow: number; price: number; symbol: string }>).map((p, i) => ({
@@ -164,11 +168,11 @@ export const OptionsScanProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo<OptionsScanState>(() => ({
     allRows, leapsRows, creditSpreads, diagonals, liveFlow, flowAggs, loading, source, lastUpdate,
-    scanError, scanMeta, cachedAt, regime, indexWarnings, picks, pickQuotes, pickPrevCloses, trackedIds,
+    scanError, scanMeta, cachedAt, regime, putCallRatio, indexWarnings, picks, pickQuotes, pickPrevCloses, trackedIds,
     loadLive, handleTrack, setAndPersistPicks, refreshPickQuotes,
   }), [
     allRows, leapsRows, creditSpreads, diagonals, liveFlow, flowAggs, loading, source, lastUpdate,
-    scanError, scanMeta, cachedAt, regime, indexWarnings, picks, pickQuotes, pickPrevCloses, trackedIds,
+    scanError, scanMeta, cachedAt, regime, putCallRatio, indexWarnings, picks, pickQuotes, pickPrevCloses, trackedIds,
     loadLive, handleTrack, setAndPersistPicks, refreshPickQuotes,
   ]);
 

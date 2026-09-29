@@ -240,7 +240,7 @@ async function serveAggregate(supabase: ReturnType<typeof createClient>): Promis
   // so the UI shows its normal "no results yet" state instead of a scanner
   // error banner.
   const payload = aggRow?.payload ?? {
-    rows: [], leapsRows: [], creditSpreads: [], diagonals: [], flowAggs: [], regime: null,
+    rows: [], leapsRows: [], creditSpreads: [], diagonals: [], flowAggs: [], regime: null, putCallRatio: null,
     source, scanned: TICKERS.length, candidates: 0, count: 0, errors: [],
     cached: true, cachedAt: null, tickersCached: 0,
   };
@@ -272,6 +272,15 @@ async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient
   const flowByTicker = new Map<string, { callDollarFlow: number; putDollarFlow: number }>();
   let candidates = 0;
   let oldestScan: string | null = null;
+  // Classic put/call ratio (total put contract volume / total call contract
+  // volume) -- summed across every currently-cached contract, not just the
+  // top-80-by-score subset the UI's "rows" list is capped to, so this
+  // reflects the real scanned universe's positioning rather than only
+  // today's highest-scoring setups. > 1 (more puts trading) reads bearish,
+  // < 1 (more calls) reads bullish -- the same convention CBOE's own
+  // published ratio uses.
+  let totalCallVolume = 0;
+  let totalPutVolume = 0;
 
   for (const row of cacheRows ?? []) {
     const payload = row.payload as { rows?: Record<string, unknown>[]; creditSpreads?: Record<string, unknown>[]; diagonals?: Record<string, unknown>[] };
@@ -280,7 +289,9 @@ async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient
       const ticker = r.ticker as string;
       const agg = flowByTicker.get(ticker) ?? { callDollarFlow: 0, putDollarFlow: 0 };
       const flow = Number(r.dollarFlow) || 0;
-      if (r.cp === "C") agg.callDollarFlow += flow; else agg.putDollarFlow += flow;
+      const volume = Number(r.volume) || 0;
+      if (r.cp === "C") { agg.callDollarFlow += flow; totalCallVolume += volume; }
+      else { agg.putDollarFlow += flow; totalPutVolume += volume; }
       flowByTicker.set(ticker, agg);
     }
     creditSpreads.push(...(payload.creditSpreads ?? []));
@@ -288,6 +299,11 @@ async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient
     candidates += Number(row.candidates) || 0;
     if (!oldestScan || row.scanned_at < oldestScan) oldestScan = row.scanned_at as string;
   }
+
+  const putCallRatio = totalCallVolume > 0 ? +(totalPutVolume / totalCallVolume).toFixed(2) : null;
+  const putCallSentiment: "bullish" | "bearish" | "neutral" | null = putCallRatio === null
+    ? null
+    : putCallRatio < 0.7 ? "bullish" : putCallRatio > 1.0 ? "bearish" : "neutral";
 
   rows.sort((a, b) => (b.score as number) - (a.score as number));
   leapsRows.sort((a, b) => (b.score as number) - (a.score as number));
@@ -322,6 +338,12 @@ async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient
     diagonals: diagonals.slice(0, 100),
     flowAggs,
     regime,
+    putCallRatio: putCallRatio === null ? null : {
+      ratio: putCallRatio,
+      sentiment: putCallSentiment,
+      totalCallVolume,
+      totalPutVolume,
+    },
     source, scanned: TICKERS.length, candidates, count: Math.min(rows.length, 80),
     errors: [],
     // Every response here is served from the rolling cache by design (see
