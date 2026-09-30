@@ -44,13 +44,50 @@ interface TastytradeFuture {
   "active-month"?: boolean;
 }
 
-interface TastytradeQuote {
-  symbol: string;
-  last?: string | number;
-  bid?: string | number;
-  ask?: string | number;
-  "prev-close"?: string | number;
-  "updated-at"?: string;
+// Yahoo Finance's own chart endpoint (query1.finance.yahoo.com) -- unofficial
+// and undocumented (Yahoo shut down its official finance API in 2017), but it
+// serves genuinely live futures quotes with no signup, no API key, and no
+// funded account required. Confirmed live: every product code below resolves
+// as "{code}=F" (e.g. "ES=F", "6E=F"). Unlike tastytrade's market-data
+// endpoint, it doesn't expose bid/ask -- only last, previous close, day
+// high/low, and volume -- so bid/ask is left null rather than estimated.
+const YAHOO_CHART_BASE = "https://query1.finance.yahoo.com/v8/finance/chart";
+
+interface YahooChartMeta {
+  regularMarketPrice?: number;
+  chartPreviousClose?: number;
+  regularMarketDayHigh?: number;
+  regularMarketDayLow?: number;
+  regularMarketVolume?: number;
+  regularMarketTime?: number;
+}
+
+interface YahooQuote {
+  last: number | null;
+  prevClose: number | null;
+  dayHigh: number | null;
+  dayLow: number | null;
+  volume: number | null;
+  updatedAt: string | null;
+}
+
+async function fetchYahooQuote(code: string): Promise<YahooQuote | null> {
+  const symbol = encodeURIComponent(`${code}=F`);
+  const res = await fetch(`${YAHOO_CHART_BASE}/${symbol}?interval=1d&range=1d`, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; TickerframeBot/1.0)" },
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  const meta: YahooChartMeta | undefined = json?.chart?.result?.[0]?.meta;
+  if (!meta || meta.regularMarketPrice == null) return null;
+  return {
+    last: meta.regularMarketPrice ?? null,
+    prevClose: meta.chartPreviousClose ?? null,
+    dayHigh: meta.regularMarketDayHigh ?? null,
+    dayLow: meta.regularMarketDayLow ?? null,
+    volume: meta.regularMarketVolume ?? null,
+    updatedAt: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : null,
+  };
 }
 
 // Access tokens last 15 min (confirmed via live test: expires_in=900).
@@ -159,45 +196,44 @@ Deno.serve(async (req) => {
       };
     }).filter((c): c is NonNullable<typeof c> => c !== null);
 
-    // Live pricing is a separate call, and is known to be unreliable on
-    // tastytrade's sandbox specifically -- confirmed live that their cert
-    // market-data service can return 502 while every other endpoint (auth,
-    // instruments) works fine on the same token. Treat a failure here as
-    // "prices unavailable" rather than failing the whole response, since the
-    // contract specs above are genuinely useful on their own.
+    // Live pricing comes from Yahoo's unofficial chart endpoint (see
+    // fetchYahooQuote above), not tastytrade -- tastytrade's own sandbox
+    // market-data service is confirmed unreliable (spontaneous 502s on an
+    // otherwise-working token) and its production equivalent requires a
+    // funded brokerage account. Fetched per-symbol in parallel and isolated
+    // with allSettled so one product's failure doesn't blank out the rest.
     let quotesError: string | null = null;
-    const quotesBySymbol = new Map<string, TastytradeQuote>();
-    if (contracts.length) {
-      try {
-        const futureParams = contracts.map((c) => `future[]=${encodeURIComponent(c.symbol)}`).join("&");
-        const quotesRes = await fetch(`${BASE}/market-data/by-type?${futureParams}`, { headers: authHeaders });
-        if (!quotesRes.ok) {
-          quotesError = `Live pricing is temporarily unavailable (tastytrade sandbox market-data returned ${quotesRes.status}).`;
-        } else {
-          const quotesJson = await quotesRes.json();
-          const quoteItems: TastytradeQuote[] = quotesJson?.data?.items ?? [];
-          for (const q of quoteItems) quotesBySymbol.set(q.symbol, q);
-        }
-      } catch (e) {
-        quotesError = `Live pricing is temporarily unavailable (${e instanceof Error ? e.message : String(e)}).`;
-      }
+    const quoteResults = await Promise.allSettled(contracts.map((c) => fetchYahooQuote(c.code)));
+    const quotesByCode = new Map<string, YahooQuote>();
+    let failures = 0;
+    quoteResults.forEach((result, i) => {
+      if (result.status === "fulfilled" && result.value) quotesByCode.set(contracts[i].code, result.value);
+      else failures++;
+    });
+    if (failures > 0 && failures === contracts.length) {
+      quotesError = "Live pricing is temporarily unavailable (Yahoo Finance's quote feed did not return data for any tracked product).";
+    } else if (failures > 0) {
+      quotesError = `Live pricing is temporarily unavailable for ${failures} of ${contracts.length} products this refresh -- the rest below are current.`;
     }
 
     const rows = contracts.map((c) => {
-      const q = quotesBySymbol.get(c.symbol);
-      const last = q?.last != null ? Number(q.last) : null;
-      const prevClose = q?.["prev-close"] != null ? Number(q["prev-close"]) : null;
+      const q = quotesByCode.get(c.code);
+      const last = q?.last ?? null;
+      const prevClose = q?.prevClose ?? null;
       const change = last != null && prevClose != null ? last - prevClose : null;
       const changePercent = change != null && prevClose ? (change / prevClose) * 100 : null;
       return {
         ...c,
         last,
-        bid: q?.bid != null ? Number(q.bid) : null,
-        ask: q?.ask != null ? Number(q.ask) : null,
+        bid: null,
+        ask: null,
+        dayHigh: q?.dayHigh ?? null,
+        dayLow: q?.dayLow ?? null,
+        volume: q?.volume ?? null,
         prevClose,
         change,
         changePercent,
-        updatedAt: q?.["updated-at"] ?? null,
+        updatedAt: q?.updatedAt ?? null,
       };
     });
 
@@ -206,7 +242,7 @@ Deno.serve(async (req) => {
         rows,
         quotesError,
         missingProducts,
-        source: "tastytrade-sandbox",
+        source: "tastytrade-yahoo",
         fetchedAt: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },

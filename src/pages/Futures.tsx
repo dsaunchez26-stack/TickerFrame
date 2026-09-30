@@ -21,6 +21,9 @@ interface FutureRow {
   last: number | null;
   bid: number | null;
   ask: number | null;
+  dayHigh: number | null;
+  dayLow: number | null;
+  volume: number | null;
   prevClose: number | null;
   change: number | null;
   changePercent: number | null;
@@ -111,7 +114,7 @@ const Futures = () => {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div className="min-w-0">
             <h1 className="truncate font-heading text-lg font-bold">Futures</h1>
-            <p className="text-xs text-muted-foreground">Front-month contract specs and live pricing across major futures, via tastytrade's sandbox API.</p>
+            <p className="text-xs text-muted-foreground">Front-month contract specs (tastytrade) and live pricing (Yahoo Finance) across major futures.</p>
           </div>
           <Button size="sm" variant="outline" onClick={load} disabled={loading}>
             {loading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <RefreshCw className="mr-1 h-3 w-3" />}
@@ -122,9 +125,11 @@ const Futures = () => {
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
         <Disclaimer />
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
-          <strong className="text-amber-300">Sandbox data.</strong> This is running against tastytrade's sandbox/certification environment, not
-          their production API. Contract specs (symbol, expiration, tick size, contract size) are real and current. Live pricing should also be
-          real when available, but the sandbox pricing service is a testing environment tastytrade can take down independent of this app - if it's unavailable below, that's why.
+          <strong className="text-amber-300">Two data sources, both real.</strong> Contract specs (symbol, expiration, tick size, contract size)
+          come from tastytrade's sandbox/certification environment - real reference data, just not their production API (which requires a funded
+          brokerage account). Live pricing (last, change, day high/low, volume) comes from Yahoo Finance's public quote feed instead - genuinely
+          live and free, but an unofficial endpoint Yahoo doesn't formally support, so it can occasionally go down or rate-limit independent of
+          this app. Bid/ask isn't available from this pricing source and is never shown or estimated.
         </div>
         {error && (
           <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">
@@ -160,7 +165,8 @@ const Futures = () => {
                         <th className="py-2 pr-3">Tick Size</th>
                         <th className="py-2 pr-3">Contract Size</th>
                         <th className="py-2 pr-3">Last</th>
-                        <th className="py-2 pr-3">Bid / Ask</th>
+                        <th className="py-2 pr-3">Day High / Low</th>
+                        <th className="py-2 pr-3">Volume</th>
                         <th className="py-2 pr-3">Change</th>
                         <th className="py-2 pr-3" />
                       </tr>
@@ -176,8 +182,9 @@ const Futures = () => {
                           <td className="py-2 pr-3">{r.contractSize ?? '-'}</td>
                           <td className="py-2 pr-3 font-semibold">{r.last != null ? `$${fmt(r.last)}` : '-'}</td>
                           <td className="py-2 pr-3 text-muted-foreground">
-                            {r.bid != null && r.ask != null ? `$${fmt(r.bid)} / $${fmt(r.ask)}` : '-'}
+                            {r.dayHigh != null && r.dayLow != null ? `$${fmt(r.dayHigh)} / $${fmt(r.dayLow)}` : '-'}
                           </td>
+                          <td className="py-2 pr-3 text-muted-foreground">{r.volume != null ? r.volume.toLocaleString() : '-'}</td>
                           <td className="py-2 pr-3">
                             {r.change != null && r.changePercent != null ? (
                               <span className={r.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}>
@@ -207,6 +214,7 @@ const Futures = () => {
           <CardContent className="space-y-2 text-xs text-muted-foreground">
             <p>Each contract shown is the current front-month (nearest active) expiration for that product, pulled live from tastytrade's own instrument reference data - not hand-maintained or guessed.</p>
             <p><strong className="text-foreground">Tick Size</strong> and <strong className="text-foreground">Contract Size</strong> are real exchange-defined contract specs: tick size is the minimum price increment, contract size is the multiplier applied to price to get the dollar value of one contract.</p>
+            <p><strong className="text-foreground">Last, Day High/Low, Volume, and Change</strong> come from Yahoo Finance's public quote feed for that same front-month contract - real live pricing, refreshed on every visit. It's an unofficial endpoint (no signup or API key involved), so treat a temporary gap in pricing as a feed hiccup, not a site outage.</p>
             <p>This is research/reference data only - not a recommendation to trade futures, which carry substantial risk of loss, often exceeding the amount initially invested.</p>
           </CardContent>
         </Card>
