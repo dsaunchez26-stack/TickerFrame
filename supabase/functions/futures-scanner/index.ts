@@ -124,6 +124,23 @@ async function getAccessToken(): Promise<string> {
   return cachedToken.token;
 }
 
+// tastytrade's sandbox/certification host is confirmed intermittently flaky
+// independent of load or credentials (live-observed both 502 Bad Gateway and
+// 429 Too Many Requests on the instruments endpoint, seconds apart, on an
+// otherwise-working token) -- a short retry absorbs that instability instead
+// of surfacing a hard error for what's usually a one-off blip.
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
+  let lastRes: Response | null = null;
+  for (let i = 0; i < attempts; i++) {
+    const res = await fetch(url, init);
+    if (res.ok) return res;
+    lastRes = res;
+    if (![429, 502, 503, 504].includes(res.status)) return res;
+    if (i < attempts - 1) await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+  }
+  return lastRes!;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -140,7 +157,7 @@ Deno.serve(async (req) => {
     const items: TastytradeFuture[] = [];
     const PAGE_SIZE = 250;
     for (let pageOffset = 0; ; pageOffset++) {
-      const instrumentsRes = await fetch(
+      const instrumentsRes = await fetchWithRetry(
         `${BASE}/instruments/futures?${productCodesQuery}&per-page=${PAGE_SIZE}&page-offset=${pageOffset}`,
         { headers: authHeaders },
       );
