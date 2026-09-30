@@ -257,10 +257,33 @@ async function serveAggregate(supabase: ReturnType<typeof createClient>): Promis
 // the client's request timeout ("Edge Function returned a non-2xx status
 // code"). Doing it here instead makes the read path a single-row lookup no
 // matter how large the underlying cache grows.
-async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient>): Promise<void> {
-  const { data: cacheRows } = await supabase
-    .from("options_ticker_cache")
-    .select("ticker, payload, candidates, scanned_at");
+async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient>): Promise<{ ok: boolean; error?: string; tickersCached: number }> {
+  // Paginated, not one unfiltered select -- with the tracked universe now at
+  // 786 tickers, each carrying a full option-chain payload as JSONB, a single
+  // select pulling every row blew past Postgres's 8s statement_timeout on the
+  // connection's inherited session setting and errored out silently (the
+  // result was never checked before), wiping the aggregate to empty on every
+  // batch since the universe expansion. Smaller pages keep each individual
+  // query fast regardless of how large the cache grows.
+  const CACHE_PAGE_SIZE = 100;
+  type CacheRow = { ticker: string; payload: unknown; candidates: number; scanned_at: string };
+  const cacheRows: CacheRow[] = [];
+  for (let offset = 0; ; offset += CACHE_PAGE_SIZE) {
+    const { data: page, error: cacheReadError } = await supabase
+      .from("options_ticker_cache")
+      .select("ticker, payload, candidates, scanned_at")
+      .range(offset, offset + CACHE_PAGE_SIZE - 1);
+
+    // A failed read here (timeout, oversized response, transient network
+    // error) must NOT be allowed to silently overwrite a healthy aggregate
+    // with an empty one -- bail out and leave the previous cache in place
+    // rather than wiping every ticker's data because of one bad page.
+    if (cacheReadError) {
+      return { ok: false, error: cacheReadError.message, tickersCached: cacheRows.length };
+    }
+    cacheRows.push(...((page ?? []) as CacheRow[]));
+    if (!page || page.length < CACHE_PAGE_SIZE) break;
+  }
 
   const rows: Record<string, unknown>[] = [];
   const leapsRows: Record<string, unknown>[] = [];
@@ -354,11 +377,13 @@ async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient
     tickersCached: (cacheRows ?? []).length,
   };
 
-  await supabase.from("options_aggregate_cache").upsert({
+  const { error: upsertError } = await supabase.from("options_aggregate_cache").upsert({
     id: true,
     payload,
     updated_at: new Date().toISOString(),
   });
+  if (upsertError) return { ok: false, error: upsertError.message, tickersCached: (cacheRows ?? []).length };
+  return { ok: true, tickersCached: (cacheRows ?? []).length };
 }
 
 async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: Record<string, string>, expWindowDays: number): Promise<Response> {
@@ -693,9 +718,13 @@ async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: 
   // Recompute the client-facing aggregate now, server-side, so every read
   // for the next 5 minutes is a cheap single-row lookup instead of each
   // client re-scanning the whole cache itself -- see computeAndStoreAggregate.
-  await computeAndStoreAggregate(supabase);
+  const aggregateResult = await computeAndStoreAggregate(supabase);
 
-  return new Response(JSON.stringify({ scanned: batchTickers.length, updated: cacheUpserts.length, errors }), {
+  return new Response(JSON.stringify({
+    scanned: batchTickers.length, updated: cacheUpserts.length, errors,
+    aggregateError: aggregateResult.ok ? null : aggregateResult.error,
+    tickersCached: aggregateResult.tickersCached,
+  }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
