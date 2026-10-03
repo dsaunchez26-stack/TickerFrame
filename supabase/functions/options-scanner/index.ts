@@ -250,93 +250,13 @@ async function serveAggregate(supabase: ReturnType<typeof createClient>): Promis
   });
 }
 
-// Does the actual O(every cached ticker) aggregation -- called once at the
-// end of each scan batch (every 5 minutes, server-side) instead of on every
-// client page load. Confirmed live why this matters: with ~614 tickers
-// cached, re-aggregating on every read took ~8.9s and occasionally exceeded
-// the client's request timeout ("Edge Function returned a non-2xx status
-// code"). Doing it here instead makes the read path a single-row lookup no
-// matter how large the underlying cache grows.
+// The O(every cached ticker) aggregation runs inside Postgres
+// (compute_options_aggregate), not here. Pulling every ticker's full
+// option-chain payload over the API on each 5-minute batch (~10 MB
+// compressed, far more as JSON, ~288x/day) exhausted the project's egress
+// quota and got the whole project restricted. In-database, nothing but the
+// small regime object crosses the wire.
 async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient>): Promise<{ ok: boolean; error?: string; tickersCached: number }> {
-  // Paginated, not one unfiltered select -- with the tracked universe now at
-  // 786 tickers, each carrying a full option-chain payload as JSONB, a single
-  // select pulling every row blew past Postgres's 8s statement_timeout on the
-  // connection's inherited session setting and errored out silently (the
-  // result was never checked before), wiping the aggregate to empty on every
-  // batch since the universe expansion. Smaller pages keep each individual
-  // query fast regardless of how large the cache grows.
-  const CACHE_PAGE_SIZE = 100;
-  type CacheRow = { ticker: string; payload: unknown; candidates: number; scanned_at: string };
-  const cacheRows: CacheRow[] = [];
-  for (let offset = 0; ; offset += CACHE_PAGE_SIZE) {
-    const { data: page, error: cacheReadError } = await supabase
-      .from("options_ticker_cache")
-      .select("ticker, payload, candidates, scanned_at")
-      .range(offset, offset + CACHE_PAGE_SIZE - 1);
-
-    // A failed read here (timeout, oversized response, transient network
-    // error) must NOT be allowed to silently overwrite a healthy aggregate
-    // with an empty one -- bail out and leave the previous cache in place
-    // rather than wiping every ticker's data because of one bad page.
-    if (cacheReadError) {
-      return { ok: false, error: cacheReadError.message, tickersCached: cacheRows.length };
-    }
-    cacheRows.push(...((page ?? []) as CacheRow[]));
-    if (!page || page.length < CACHE_PAGE_SIZE) break;
-  }
-
-  const rows: Record<string, unknown>[] = [];
-  const leapsRows: Record<string, unknown>[] = [];
-  const creditSpreads: Record<string, unknown>[] = [];
-  const diagonals: Record<string, unknown>[] = [];
-  // Real call-vs-put dollar flow per ticker, straight from the same
-  // contract rows already computed during the scan -- no new data source,
-  // just an aggregation the old single-blob cache never bothered exposing.
-  const flowByTicker = new Map<string, { callDollarFlow: number; putDollarFlow: number }>();
-  let candidates = 0;
-  let oldestScan: string | null = null;
-  // Classic put/call ratio (total put contract volume / total call contract
-  // volume) -- summed across every currently-cached contract, not just the
-  // top-80-by-score subset the UI's "rows" list is capped to, so this
-  // reflects the real scanned universe's positioning rather than only
-  // today's highest-scoring setups. > 1 (more puts trading) reads bearish,
-  // < 1 (more calls) reads bullish -- the same convention CBOE's own
-  // published ratio uses.
-  let totalCallVolume = 0;
-  let totalPutVolume = 0;
-
-  for (const row of cacheRows ?? []) {
-    const payload = row.payload as { rows?: Record<string, unknown>[]; creditSpreads?: Record<string, unknown>[]; diagonals?: Record<string, unknown>[] };
-    for (const r of payload.rows ?? []) {
-      if (r.type === "LEAPS") leapsRows.push(r); else rows.push(r);
-      const ticker = r.ticker as string;
-      const agg = flowByTicker.get(ticker) ?? { callDollarFlow: 0, putDollarFlow: 0 };
-      const flow = Number(r.dollarFlow) || 0;
-      const volume = Number(r.volume) || 0;
-      if (r.cp === "C") { agg.callDollarFlow += flow; totalCallVolume += volume; }
-      else { agg.putDollarFlow += flow; totalPutVolume += volume; }
-      flowByTicker.set(ticker, agg);
-    }
-    creditSpreads.push(...(payload.creditSpreads ?? []));
-    diagonals.push(...(payload.diagonals ?? []));
-    candidates += Number(row.candidates) || 0;
-    if (!oldestScan || row.scanned_at < oldestScan) oldestScan = row.scanned_at as string;
-  }
-
-  const putCallRatio = totalCallVolume > 0 ? +(totalPutVolume / totalCallVolume).toFixed(2) : null;
-  const putCallSentiment: "bullish" | "bearish" | "neutral" | null = putCallRatio === null
-    ? null
-    : putCallRatio < 0.7 ? "bullish" : putCallRatio > 1.0 ? "bearish" : "neutral";
-
-  rows.sort((a, b) => (b.score as number) - (a.score as number));
-  leapsRows.sort((a, b) => (b.score as number) - (a.score as number));
-  creditSpreads.sort((a, b) => (b.returnOnRisk as number) - (a.returnOnRisk as number));
-  diagonals.sort((a, b) => (b.maxGainApprox as number) - (a.maxGainApprox as number));
-
-  const flowAggs = [...flowByTicker.entries()]
-    .filter(([, v]) => v.callDollarFlow + v.putDollarFlow > 0)
-    .map(([ticker, v]) => ({ ticker, callDollarFlow: v.callDollarFlow, putDollarFlow: v.putDollarFlow }));
-
   const { data: regimeRow } = await supabase
     .from("market_regime_cache")
     .select("*")
@@ -354,39 +274,36 @@ async function computeAndStoreAggregate(supabase: ReturnType<typeof createClient
     ].filter(Boolean).join(" · "),
   } : null;
 
-  const payload = {
-    rows: rows.slice(0, 80),
-    leapsRows: leapsRows.slice(0, 150),
-    creditSpreads: creditSpreads.slice(0, 200),
-    diagonals: diagonals.slice(0, 100),
-    flowAggs,
-    regime,
-    putCallRatio: putCallRatio === null ? null : {
-      ratio: putCallRatio,
-      sentiment: putCallSentiment,
-      totalCallVolume,
-      totalPutVolume,
-    },
-    source, scanned: TICKERS.length, candidates, count: Math.min(rows.length, 80),
-    errors: [],
-    // Every response here is served from the rolling cache by design (see
-    // the cron comment above) -- cachedAt is always set so the UI can show
-    // "as of" freshness honestly instead of implying this second's data.
-    cached: true,
-    cachedAt: oldestScan ?? new Date().toISOString(),
-    tickersCached: (cacheRows ?? []).length,
-  };
-
-  const { error: upsertError } = await supabase.from("options_aggregate_cache").upsert({
-    id: true,
-    payload,
-    updated_at: new Date().toISOString(),
+  const { data, error } = await supabase.rpc("compute_options_aggregate", {
+    p_regime: regime,
+    p_scanned: TICKERS.length,
+    p_source: source,
   });
-  if (upsertError) return { ok: false, error: upsertError.message, tickersCached: (cacheRows ?? []).length };
-  return { ok: true, tickersCached: (cacheRows ?? []).length };
+  if (error) return { ok: false, error: error.message, tickersCached: 0 };
+  return { ok: true, tickersCached: Number((data as { tickersCached?: number } | null)?.tickersCached) || 0 };
 }
 
 async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: Record<string, string>, expWindowDays: number): Promise<Response> {
+  // Only the stalest tickers this run -- see the migration's cron comment
+  // for why a full-universe live scan doesn't fit in one invocation against
+  // Alpaca's 200 req/min cap. Never-scanned tickers sort first.
+  const BATCH_LIMIT = 30;
+  const { data: cacheAges } = await supabase
+    .from("options_ticker_cache")
+    .select("ticker, scanned_at")
+    .in("ticker", TICKERS);
+  const scannedAtByTicker = new Map((cacheAges ?? []).map((r) => [r.ticker, r.scanned_at as string]));
+  const batchTickers = [...TICKERS]
+    .sort((a, b) => {
+      const aTime = scannedAtByTicker.get(a);
+      const bTime = scannedAtByTicker.get(b);
+      if (!aTime && !bTime) return 0;
+      if (!aTime) return -1;
+      if (!bTime) return 1;
+      return new Date(aTime).getTime() - new Date(bTime).getTime();
+    })
+    .slice(0, BATCH_LIMIT);
+
   // A genuine IV Rank needs the underlying's own recent IV range, not just
   // its raw IV value rescaled -- fetch each ticker's history in one round trip.
   //
@@ -394,14 +311,14 @@ async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: 
   // explicit .limit() beyond that (same issue found and fixed in
   // fetch-stock-data's price-history query). Paginating with .range() in
   // 1000-row pages actually gets each ticker its full history window.
-  const IV_HISTORY_TARGET = TICKERS.length * 90;
+  const IV_HISTORY_TARGET = batchTickers.length * 90;
   const IV_PAGE_SIZE = 1000;
   const allIvHistory: Array<{ ticker: string; iv: number }> = [];
   for (let offset = 0; offset < IV_HISTORY_TARGET; offset += IV_PAGE_SIZE) {
     const { data: page } = await supabase
       .from("option_iv_history")
       .select("ticker, iv")
-      .in("ticker", TICKERS)
+      .in("ticker", batchTickers)
       .order("recorded_at", { ascending: false })
       .range(offset, Math.min(offset + IV_PAGE_SIZE, IV_HISTORY_TARGET) - 1);
     if (!page || page.length === 0) break;
@@ -422,7 +339,7 @@ async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: 
   const { data: stockRows } = await supabase
     .from("stock_cache")
     .select("symbol, price, pattern, pattern_confidence")
-    .in("symbol", TICKERS);
+    .in("symbol", batchTickers);
   const stockBySymbol = new Map<string, { price: number; pattern: string | null; confidence: number | null }>();
   for (const row of stockRows ?? []) {
     if (typeof row.price === "number" && row.price > 0) {
@@ -433,7 +350,7 @@ async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: 
   const { data: rvRows } = await supabase
     .from("realized_volatility")
     .select("symbol, rv_annualized")
-    .in("symbol", TICKERS);
+    .in("symbol", batchTickers);
   const rvBySymbol = new Map<string, number | null>(
     (rvRows ?? []).map((r) => [r.symbol, r.rv_annualized !== null ? Number(r.rv_annualized) : null]),
   );
@@ -466,26 +383,6 @@ async function runScanBatch(supabase: ReturnType<typeof createClient>, headers: 
     description: regime.description,
     updated_at: new Date().toISOString(),
   });
-
-  // Only the stalest tickers this run -- see the migration's cron comment
-  // for why a full-universe live scan doesn't fit in one invocation against
-  // Alpaca's 200 req/min cap. Never-scanned tickers sort first.
-  const BATCH_LIMIT = 30;
-  const { data: cacheAges } = await supabase
-    .from("options_ticker_cache")
-    .select("ticker, scanned_at")
-    .in("ticker", TICKERS);
-  const scannedAtByTicker = new Map((cacheAges ?? []).map((r) => [r.ticker, r.scanned_at as string]));
-  const batchTickers = [...TICKERS]
-    .sort((a, b) => {
-      const aTime = scannedAtByTicker.get(a);
-      const bTime = scannedAtByTicker.get(b);
-      if (!aTime && !bTime) return 0;
-      if (!aTime) return -1;
-      if (!bTime) return 1;
-      return new Date(aTime).getTime() - new Date(bTime).getTime();
-    })
-    .slice(0, BATCH_LIMIT);
 
   const nearestExpiration = (dates: string[], targetDays: number, now: number) => {
     const targetMs = now + targetDays * 86400_000;
