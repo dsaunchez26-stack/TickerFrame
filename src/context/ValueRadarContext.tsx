@@ -37,27 +37,18 @@ export const ValueRadarProvider = ({ children }: { children: ReactNode }) => {
     const [fundamentalsRes, technicalsRes, putsRes] = await Promise.all([
       supabase.from('stock_fundamentals').select('*').order('balance_sheet_score', { ascending: false }),
       supabase.from('stock_cache').select('symbol, price, bollinger_pct_b, rsi, pattern, pattern_confidence'),
-      // One row per ticker (rolling-refreshed by options-scanner's cron --
-      // see OptionsScanContext) rather than the old single "top 80 across
-      // the whole universe" blob, so every scanned ticker's own best put is
-      // available here, not just tickers that happened to clear a global
-      // top-80 cutoff.
-      supabase.from('options_ticker_cache').select('payload, scanned_at'),
+      // Each scanned ticker's own best put, picked inside the database
+      // (get_best_puts) -- selecting every ticker's full option-chain payload
+      // here instead pulled tens of MB per page view.
+      supabase.rpc('get_best_puts'),
     ]);
     setRows(fundamentalsRes.data ?? []);
     setTechnicals(technicalsRes.data ?? []);
 
+    const putsPayload = (putsRes.data ?? null) as { rows?: OptionRow[]; oldestScan?: string | null } | null;
     const bestPuts = new Map<string, OptionRow>();
-    let oldestPutsScan: string | null = null;
-    for (const row of putsRes.data ?? []) {
-      const payload = row.payload as { rows?: OptionRow[] } | null;
-      for (const r of payload?.rows ?? []) {
-        if (r.cp !== 'P') continue;
-        const existing = bestPuts.get(r.ticker);
-        if (!existing || r.score > existing.score) bestPuts.set(r.ticker, r);
-      }
-      if (!oldestPutsScan || row.scanned_at < oldestPutsScan) oldestPutsScan = row.scanned_at;
-    }
+    for (const r of putsPayload?.rows ?? []) bestPuts.set(r.ticker, r);
+    const oldestPutsScan = putsPayload?.oldestScan ?? null;
     setBestPutByTicker(bestPuts);
     setPutsScannedAt(oldestPutsScan);
     setLoading(false);
