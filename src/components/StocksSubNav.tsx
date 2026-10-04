@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 
 const TABS = [
   { label: 'Overview', to: '/stocks' },
+  { label: 'S&P Top 50', to: '/stocks/top50' },
   { label: 'Chart & Indicators', to: '/stocks/chart' },
   { label: 'Penny Stocks', to: '/stocks/penny' },
   { label: 'Signals & Track Record', to: '/stocks/signals' },

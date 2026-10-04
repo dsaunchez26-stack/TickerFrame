@@ -864,6 +864,10 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   { symbol: "WY", name: "Weyerhaeuser Co" },
   { symbol: "XPO", name: "XPO Inc" },
   { symbol: "ZI", name: "ZoomInfo Technologies Inc" },
+  // Berkshire Hathaway: ~14th-largest S&P 500 company by market cap and
+  // previously the one top-50 name missing from the universe. Finnhub
+  // quotes the B shares as "BRK.B".
+  { symbol: "BRK.B", name: "Berkshire Hathaway Inc Class B" },
 ];
 
 export const TRACKED_TICKERS: string[] = TRACKED_SYMBOLS.map((s) => s.symbol);
