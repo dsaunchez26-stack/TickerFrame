@@ -8,10 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { useUniverse } from '@/hooks/useUniverse';
 
 export const TopMovers = () => {
   const { data, isLoading } = useStockData();
   const { open } = useStockDetail();
+  const { filter } = useUniverse();
   const { data: portfolio, addStock, removeStock } = usePortfolio();
   const [editing, setEditing] = useState<string | null>(null);
   const [qty, setQty] = useState('1');
@@ -26,13 +28,13 @@ export const TopMovers = () => {
 
   const movers = useMemo(() => {
     if (!data?.stocks?.length) return [];
-    return [...data.stocks].sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)).slice(0, 4).map((s) => {
+    return [...filter(data.stocks)].sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)).slice(0, 4).map((s) => {
       const isBullish = s.changePercent > 0;
       const risk = Math.abs(s.changePercent) > 5 ? 'High' : Math.abs(s.changePercent) > 2 ? 'Medium' : 'Low';
       const potentialGain = isBullish ? ((s.exit - s.price) / s.price * 100).toFixed(1) : ((s.price - s.entry) / s.price * 100).toFixed(1);
       return { symbol: s.symbol, name: s.name, price: s.price, changePercent: s.changePercent, direction: isBullish ? 'Long' as const : 'Short' as const, entry: s.price, target: isBullish ? s.exit : s.entry, stopLoss: isBullish ? s.entry : s.exit, risk, potentialGain, volume: s.volume, signal: s.signal, holdDuration: s.holdDuration || 'Swing' };
     });
-  }, [data]);
+  }, [data, filter]);
 
   if (isLoading) return <div className="rounded-lg border border-border bg-card p-6 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   if (!movers.length) return null;

@@ -12,6 +12,7 @@ const snap = snapshot as unknown as {
   tables: Record<string, Row[]>;
   optionsAggregate: unknown;
   bestPuts: unknown;
+  signalTrackRecord: unknown;
   futures: unknown;
 };
 
@@ -264,7 +265,9 @@ export const demoFetch = async (input: RequestInfo | URL, init?: RequestInit): P
 
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
     const fn = url.pathname.slice('/rest/v1/rpc/'.length);
-    return fn === 'get_best_puts' ? json(snap.bestPuts) : json({ message: `${fn} unavailable in demo` }, 404);
+    if (fn === 'get_best_puts') return json(snap.bestPuts);
+    if (fn === 'signal_track_record') return json(snap.signalTrackRecord);
+    return json({ message: `${fn} unavailable in demo` }, 404);
   }
   if (url.pathname.startsWith('/rest/v1/')) {
     return handleRest(url.pathname.slice('/rest/v1/'.length), method, url, headers, bodyText);

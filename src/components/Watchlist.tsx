@@ -10,10 +10,13 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { SignalBadge } from '@/components/SignalBadge';
+import { UniverseToggle } from '@/components/UniverseToggle';
+import { useUniverse } from '@/hooks/useUniverse';
 
 export const Watchlist = () => {
   const { data, isLoading } = useStockData();
   const { open } = useStockDetail();
+  const { filter } = useUniverse();
   const { data: portfolio, addStock, removeStock } = usePortfolio();
   const [editing, setEditing] = useState<string | null>(null);
   const [qty, setQty] = useState('1');
@@ -38,12 +41,12 @@ export const Watchlist = () => {
     // movers first. A big sell-signal drop should never outrank an actual
     // buy pick just because its percentage move happens to be larger.
     const signalTier = (s: Stock['signal']) => (s === 'buy' ? 0 : s === 'hold' ? 1 : 2);
-    return [...data.stocks].sort((a, b) => {
+    return [...filter(data.stocks)].sort((a, b) => {
       const tierDiff = signalTier(a.signal) - signalTier(b.signal);
       if (tierDiff !== 0) return tierDiff;
       return Math.abs(b.changePercent) - Math.abs(a.changePercent);
     });
-  }, [data]);
+  }, [data, filter]);
   const shown = sortedStocks.slice(0, visible);
   const hasMore = visible < sortedStocks.length;
   const canCollapse = visible > INITIAL;
@@ -55,7 +58,10 @@ export const Watchlist = () => {
           <h3 className="font-heading text-sm font-semibold text-foreground">Top Bullish Picks</h3>
           <span className="text-[9px] text-muted-foreground italic">✓ to track</span>
         </div>
-        {data?.fetchedAt && <span className="text-[9px] text-muted-foreground">Updated {new Date(data.fetchedAt).toLocaleTimeString()}</span>}
+        <div className="flex items-center gap-3">
+          {data?.fetchedAt && <span className="hidden text-[9px] text-muted-foreground sm:inline">Updated {new Date(data.fetchedAt).toLocaleTimeString()}</span>}
+          <UniverseToggle />
+        </div>
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>

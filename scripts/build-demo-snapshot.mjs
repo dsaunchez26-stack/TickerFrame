@@ -93,6 +93,7 @@ if (regimeRow && !optionsAggregate.regime) {
   };
 }
 const bestPuts = q('select get_best_puts() as j')[0].j;
+const signalTrackRecord = q('select signal_track_record() as j')[0].j;
 
 console.log('fetching futures quotes...');
 const SPECS = [
@@ -120,7 +121,7 @@ const snapshot = {
     insider_activity: agg('select * from insider_activity'), earnings_calendar: agg('select * from earnings_calendar'),
     cron_runs: agg('select * from cron_runs order by ran_at desc limit 300'), stock_price_history, daily_closes,
   },
-  optionsAggregate, bestPuts,
+  optionsAggregate, bestPuts, signalTrackRecord,
   futures: { rows: futureRows, quotesError: null, missingProducts: [], source: 'demo-snapshot', fetchedAt: nowIso },
 };
 fs.writeFileSync('src/demo/snapshot.json', JSON.stringify(snapshot));

@@ -1,13 +1,16 @@
 import { Activity, TrendingUp, TrendingDown, Eye, Loader2 } from 'lucide-react';
 import { useStockData } from '@/hooks/useStockData';
 import { useMemo } from 'react';
+import { useUniverse } from '@/hooks/useUniverse';
 
 export const MarketOverview = () => {
   const { data, isLoading } = useStockData();
+  const { universe, filter } = useUniverse();
 
   const stats = useMemo(() => {
     if (!data?.stocks?.length) return null;
-    const stocks = data.stocks;
+    const stocks = filter(data.stocks);
+    if (!stocks.length) return null;
 
     const hasVolumeData = stocks.some(s => s.volume > 0);
     // Our data provider's free tier doesn't return volume at all, so "most
@@ -29,9 +32,9 @@ export const MarketOverview = () => {
       },
       { label: 'Top Gainer', value: topGainer.symbol, name: topGainer.name, sub: `+${topGainer.changePercent.toFixed(2)}%`, icon: <TrendingUp className="h-4 w-4" />, color: 'text-signal-buy' },
       { label: 'Top Loser', value: topLoser.symbol, name: topLoser.name, sub: `${topLoser.changePercent.toFixed(2)}%`, icon: <TrendingDown className="h-4 w-4" />, color: 'text-signal-sell' },
-      { label: 'Watching', value: String(stocks.length), name: undefined, sub: 'stocks', icon: <Eye className="h-4 w-4" /> },
+      { label: 'Watching', value: String(stocks.length), name: undefined, sub: universe === 'top50' ? 'S&P Top 50 stocks' : 'stocks', icon: <Eye className="h-4 w-4" /> },
     ];
-  }, [data]);
+  }, [data, filter]);
 
   if (isLoading) {
     return (

@@ -1,4 +1,5 @@
 import { PredictionTracker } from '@/components/PredictionTracker';
+import { SignalTrackRecord } from '@/components/SignalTrackRecord';
 import { StocksPageHeader } from '@/components/StocksPageHeader';
 import { Disclaimer } from '@/components/Disclaimer';
 
@@ -7,6 +8,7 @@ const StocksSignals = () => (
     <StocksPageHeader title="Signals & Track Record" subtitle="How current stock signals are tracking against today's actual price moves." />
     <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
       <Disclaimer />
+      <SignalTrackRecord />
       <PredictionTracker />
     </main>
   </div>

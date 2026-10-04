@@ -1,6 +1,7 @@
 import { MarketOverview } from '@/components/MarketOverview';
 import { TopMovers } from '@/components/TopMovers';
 import { AssetClassPanel } from '@/components/AssetClassPanel';
+import { UniverseToggle } from '@/components/UniverseToggle';
 import { Disclaimer } from '@/components/Disclaimer';
 
 // Deliberately lean: this used to also carry a 10-tile navigation grid
@@ -12,9 +13,12 @@ import { Disclaimer } from '@/components/Disclaimer';
 // one-click add-to-portfolio.
 const Dashboard = () => (
   <div className="mx-auto max-w-7xl space-y-6 px-4 py-6">
-    <div>
-      <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
-      <p className="text-xs text-muted-foreground mt-1">Today's market at a glance.</p>
+    <div className="flex flex-wrap items-end justify-between gap-2">
+      <div>
+        <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
+        <p className="text-xs text-muted-foreground mt-1">Today's market at a glance.</p>
+      </div>
+      <UniverseToggle />
     </div>
     <Disclaimer />
     <MarketOverview />

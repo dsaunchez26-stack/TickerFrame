@@ -10,7 +10,8 @@ export const PredictionTracker = () => {
     const signalTier = (s: string) => (s === 'buy' ? 0 : s === 'hold' ? 1 : 2);
     return (data?.stocks ?? [])
       .map(s => {
-        const hit = s.signal === 'buy' ? s.change >= 0 : s.signal === 'sell' ? s.change <= 0 : true;
+        // A hold makes no directional call, so it can't be "right" or "wrong".
+        const hit = s.signal === 'buy' ? s.change >= 0 : s.signal === 'sell' ? s.change <= 0 : null;
         return { ...s, hit };
       })
       .sort((a, b) => {
@@ -20,13 +21,15 @@ export const PredictionTracker = () => {
       });
   }, [data]);
 
-  const hitRate = rows.length ? Math.round((rows.filter(r => r.hit).length / rows.length) * 100) : null;
+  // Only buy/sell calls count -- including holds as automatic hits inflated this.
+  const called = rows.filter(r => r.hit !== null);
+  const hitRate = called.length ? Math.round((called.filter(r => r.hit).length / called.length) * 100) : null;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-semibold">Signal Prediction Tracker</CardTitle>
-        {hitRate !== null && <span className="text-xs font-semibold text-primary">{hitRate}% tracking correctly</span>}
+        {hitRate !== null && <span className="text-xs font-semibold text-primary" title="Buy/sell signals only - holds make no call">{hitRate}% of buy/sell calls moving the right way today</span>}
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -52,7 +55,7 @@ export const PredictionTracker = () => {
                     <td className="py-2 pr-3">${r.entry.toFixed(2)}</td>
                     <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                     <td className={`py-2 pr-3 ${r.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>{r.changePercent > 0 ? '+' : ''}{r.changePercent.toFixed(2)}%</td>
-                    <td className="py-2 pr-3">{r.hit ? '✅ On track' : '⚠️ Off track'}</td>
+                    <td className="py-2 pr-3">{r.hit === null ? '-' : r.hit ? '✅ On track' : '⚠️ Off track'}</td>
                   </tr>
                 ))}
               </tbody>

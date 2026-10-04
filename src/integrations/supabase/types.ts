@@ -920,6 +920,7 @@ export type Database = {
     }
     Functions: {
       get_best_puts: { Args: Record<PropertyKey, never>; Returns: Json }
+      signal_track_record: { Args: Record<PropertyKey, never>; Returns: Json }
     }
     Enums: {
       [_ in never]: never

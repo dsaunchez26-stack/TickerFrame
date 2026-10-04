@@ -362,6 +362,22 @@ Deno.serve(async (req) => {
       results.map((r) => ({ symbol: r.symbol, price: r.price, volume: r.volume })),
     );
 
+    // Daily signal log: today's buy/sell/hold call and the price it was made
+    // at, one row per symbol per weekday (the day's last run wins). Compared
+    // with later prices by signal_track_record() to measure whether the
+    // signal actually predicts anything. Weekends are skipped -- no new
+    // prices, so a row would only duplicate Friday's.
+    const nyNow = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
+    const nyDate = new Date(nyNow);
+    const nyDay = nyDate.getDay();
+    if (nyDay !== 0 && nyDay !== 6) {
+      const tradeDate = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, "0")}-${String(nyDate.getDate()).padStart(2, "0")}`;
+      await supabase.from("signal_history").upsert(
+        results.map((r) => ({ symbol: r.symbol, trade_date: tradeDate, signal: r.signal, signal_score: r.signal_score, price: r.price, source: "live" })),
+        { onConflict: "symbol,trade_date,source" },
+      );
+    }
+
     // One row per symbol per trading day, upserted on every run -- by the
     // time a given day's cron runs stop (market closes), whatever was the
     // last price fetched that day is left sitting in the row, which
