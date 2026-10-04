@@ -29,12 +29,15 @@ export const Top50Table = () => {
   const rows = useMemo(() => {
     const bySymbol = new Map((data?.stocks ?? []).map(s => [s.symbol, s]));
     const list = SP500_TOP50.map((symbol, i) => ({ symbol, fallbackRank: i, stock: bySymbol.get(symbol) ?? null, cap: caps?.get(symbol) ?? null }));
-    return list.sort((a, b) => {
-      if (a.cap != null && b.cap != null) return b.cap - a.cap;
-      if (a.cap != null) return -1;
-      if (b.cap != null) return 1;
-      return a.fallbackRank - b.fallbackRank;
-    });
+    // Rank by live market cap; a company whose cap isn't loaded yet (e.g.
+    // Berkshire before its first fundamentals scan) keeps its approximate
+    // position from the fixed list instead of dropping to the bottom.
+    const withCap = list.filter(r => r.cap != null).sort((a, b) => (b.cap as number) - (a.cap as number));
+    const result = [...withCap];
+    for (const r of list.filter(r => r.cap == null).sort((a, b) => a.fallbackRank - b.fallbackRank)) {
+      result.splice(Math.min(r.fallbackRank, result.length), 0, r);
+    }
+    return result;
   }, [data, caps]);
 
   const counts = useMemo(() => {

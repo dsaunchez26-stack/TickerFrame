@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { getMarketStatus, marketStatusLabel, type MarketStatus } from '@/lib/marketHours';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { MarketChat } from '@/components/MarketChat';
+import { DemoBanner } from '@/components/DemoBanner';
 
 export default function AppLayout() {
   const location = useLocation();
@@ -30,6 +31,7 @@ export default function AppLayout() {
       <OnboardingTour />
       {!onChatPage && <MarketChat />}
       <div className="min-h-screen flex w-full flex-col bg-background">
+        <DemoBanner />
         <header className="border-b border-border bg-card/40 backdrop-blur-sm">
           <div className="flex h-12 items-center justify-between px-3">
             <div className="flex items-center gap-2">
