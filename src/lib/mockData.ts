@@ -6,10 +6,14 @@ export interface Stock {
   changePercent: number;
   volume: number;
   signal: 'buy' | 'sell' | 'hold';
+  signalScore?: number | null;
+  assetClass?: string;
   entry: number;
   exit: number;
   rsi: number;
   macd: number;
+  macdHistogram?: number | null;
+  bollingerPctB?: number | null;
   sma20: number;
   ema9: number;
   holdDuration?: string;

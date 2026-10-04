@@ -21,6 +21,7 @@ const Methodology = () => (
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <p><strong className="text-foreground">Stock prices, RSI, MACD, SMA/EMA, patterns:</strong> Finnhub, refreshed on a rotating schedule across the tracked universe (roughly every 20-35 minutes per symbol as the universe has grown, not every symbol every 5 minutes).</p>
         <p><strong className="text-foreground">Options chains & quotes:</strong> Alpaca's free options feed - real bid/ask/last/volume per contract, refreshed on a rolling schedule across the tracked universe rather than all at once (see the Options Radar header for how current a given view is). Alpaca doesn't report Open Interest at all, so it isn't shown anywhere on this site rather than estimating it. Delta, gamma, and implied volatility also aren't supplied by this feed - they're computed here directly from the real bid/ask/last data using the standard Black-Scholes formula, the same math any provider's own "greeks" field is built from.</p>
+        <p><strong className="text-foreground">Asset classes (bonds, gold, bitcoin, real estate, index funds):</strong> tracked through exchange-traded funds - AGG, TLT, IEF, LQD and HYG for bonds, GLD and SLV for gold and silver, IBIT and ETHA for bitcoin and ethereum, VNQ and IYR for real estate, and SPY, QQQ, DIA and IWM for the broad market. They use the same Finnhub prices and the same technical signal as stocks. Funds have no balance sheet or earnings, so they don't appear in the fundamentals screens or insider activity.</p>
         <p><strong className="text-foreground">Futures contract specs:</strong> tastytrade's sandbox/certification API - real, current front-month specs (symbol, expiration, tick size, contract size). Tastytrade's production API would need a funded brokerage account, so this uses their sandbox reference data instead, same as the options migration avoided requiring a funded Tradier account.</p>
         <p><strong className="text-foreground">Futures live pricing:</strong> Yahoo Finance's public quote feed - real, live last price, day high/low, volume, and change for that same front-month contract. This is an unofficial, undocumented endpoint (Yahoo hasn't published a supported finance API since 2017), used because it's the only genuinely live, free, no-account-required futures pricing source available - it can occasionally go down or get rate-limited independent of this app. Bid/ask isn't available from this feed and is never shown or estimated.</p>
         <p><strong className="text-foreground">Insider activity:</strong> SEC EDGAR directly - Form 4 open-market purchases and Schedule 13D/13G 5%+ holder filings. Not 8-K, not 13F, and no filer is specially tagged or prioritized.</p>
@@ -39,14 +40,16 @@ const Methodology = () => (
         <CardTitle className="text-base">How the buy/sell signal actually works</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
-        <p>This is a two-indicator technical rule, not a multi-factor model or a 0-100 composite score:</p>
+        <p>Each stock gets a composite technical score built from points, not a single all-or-nothing rule. Every condition below adds or subtracts points, up to +9 or -9 in total, shown on the badge as a score from -100 to +100:</p>
         <ul className="ml-4 list-disc space-y-1">
-          <li><strong className="text-foreground">Buy:</strong> RSI under 35, price at or above its 20-period SMA, and MACD already above its own signal line.</li>
-          <li><strong className="text-foreground">Sell:</strong> RSI over 68 and MACD already below its own signal line.</li>
-          <li><strong className="text-foreground">Otherwise:</strong> hold.</li>
+          <li><strong className="text-foreground">Trend:</strong> price above (+2) or below (-2) its 20-period SMA, and its 9-period EMA above (+1) or below (-1) that SMA.</li>
+          <li><strong className="text-foreground">Momentum:</strong> MACD above (+2) or below (-2) its own signal line.</li>
+          <li><strong className="text-foreground">Stretch:</strong> RSI at or under 30 (+2, oversold) or at or over 70 (-2, overbought), and Bollinger %B at or under 0.05 (+1) or at or over 0.95 (-1).</li>
         </ul>
-        <p>Requiring MACD to already agree with the RSI extreme is what keeps a stock in a real, sustained downtrend from firing a false "oversold" buy just because RSI dipped - RSI alone can stay under 35 for a long stretch while a stock keeps making new lows.</p>
-        <p>Chart patterns (breakout, breakdown, bull/bear flag, consolidation) are detected separately from recent intraday price action and shown as a badge next to the signal - they don't feed into the buy/sell rule itself.</p>
+        <p><strong className="text-foreground">Buy</strong> is 5 or more points, <strong className="text-foreground">Sell</strong> is -5 or fewer, everything between is <strong className="text-foreground">Hold</strong> - and the score shows how close a Hold is to either side. Open any stock to see a "Why this signal" panel with the real RSI, trend and momentum readings and the points each contributed, so you can agree or overrule the call yourself.</p>
+        <p>The earlier rule required RSI under 35 and price above its 20-SMA at the same time, which almost never happen together - on live data it produced no Buy signals across ~780 stocks. Weighing the conditions together fixes that. The 5-point cutoff was picked so roughly a fifth of the universe reads Buy and a fifth Sell rather than nearly everything reading Hold; it is not a statistically optimized number.</p>
+        <p><strong className="text-foreground">Not validated:</strong> this is a standard technical-indicator composite computed from this site's own rolling price samples, and it has not been backtested over a long history or shown to predict returns. Treat it as a way to organize momentum and trend information, not a forecast.</p>
+        <p>Chart patterns (breakout, breakdown, bull/bear flag, consolidation) are detected separately from recent intraday price action and shown as a badge next to the signal - they don't feed into the score.</p>
       </CardContent>
     </Card>
 
@@ -91,7 +94,7 @@ const Methodology = () => (
         single page load regardless of whether anything changed. */}
     <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
       <Shield className="h-3 w-3" />
-      <span>Methodology last updated 9/9/2026</span>
+      <span>Methodology last updated 10/4/2026</span>
     </div>
   </div>
 );

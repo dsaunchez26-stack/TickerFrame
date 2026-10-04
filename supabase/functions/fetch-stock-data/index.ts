@@ -1,26 +1,22 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
-import { TRACKED_SYMBOLS } from "../_shared/symbols.ts";
+import { TRACKED_SYMBOLS, ASSET_CLASS_ETFS } from "../_shared/symbols.ts";
 import { logCronRun } from "../_shared/logCronRun.ts";
 
 // Real US equities tracked across the app -- see _shared/symbols.ts for the
 // full list. All live under category='core' since every current consumer
 // of stock_cache reads that category by default.
 //
-// SPY/QQQ added on top: options-scanner and realized-volatility-scanner
-// both include them (the two most liquid, most-traded options underlyings)
-// for options coverage, but neither actually collects price history --
-// this is the only function that populates stock_price_history, so without
-// this, SPY/QQQ's realized volatility could never be computed and their
-// IV/RV ratio would silently stay null forever. Appended only to this
-// function's own local list, not to the shared TRACKED_SYMBOLS -- the other
-// 3 scanners (fundamentals/insider/earnings) don't apply to index ETFs the
-// way they do to individual companies.
-const SYMBOLS = [
-  ...TRACKED_SYMBOLS,
-  { symbol: "SPY", name: "SPDR S&P 500 ETF Trust" },
-  { symbol: "QQQ", name: "Invesco QQQ Trust" },
+// ASSET_CLASS_ETFS added on top (SPY/QQQ plus bond, gold, bitcoin and real
+// estate funds): this is the only function that populates
+// stock_price_history, so without them here, their realized volatility could
+// never be computed and options-scanner's IV/RV ratio would stay null.
+// Kept out of the shared TRACKED_SYMBOLS because the fundamentals, insider
+// and earnings scanners rely on company filings that funds don't have.
+const SYMBOLS: Array<{ symbol: string; name: string; assetClass: string }> = [
+  ...TRACKED_SYMBOLS.map((t) => ({ ...t, assetClass: "Equity" })),
+  ...ASSET_CLASS_ETFS,
 ];
 
 function sma(values: number[], period: number): number {
@@ -97,6 +93,32 @@ function bollingerPctB(values: number[], period = 20, numStdDev = 2): number | n
   const lower = mean - numStdDev * stdDev;
   if (upper === lower) return null;
   return (slice[slice.length - 1] - lower) / (upper - lower);
+}
+
+// Composite technical score, in points (max +/-9), mapped to buy/sell/hold.
+// The previous rule required RSI < 35 AND price >= its 20-SMA AND positive
+// MACD momentum for a buy -- oversold and above-trend are close to mutually
+// exclusive, so in practice no stock ever qualified (live: 0 buys of 783, 773
+// holds). Each condition now contributes points instead of acting as a hard
+// gate, so trend, momentum and mean-reversion extremes are weighed together:
+//   trend      price vs SMA20 (+/-2), EMA9 vs SMA20 (+/-1)
+//   momentum   MACD histogram above/below zero (+/-2)
+//   extremes   RSI <= 30 (+2, oversold) / >= 70 (-2, overbought),
+//              Bollinger %B <= 0.05 (+1) / >= 0.95 (-1)
+// Points >= BUY_POINTS is a buy, <= -BUY_POINTS a sell, otherwise hold. The
+// threshold of 5 was chosen so roughly a fifth of the universe reads buy and
+// a fifth sell on live data, instead of ~99% hold.
+const SIGNAL_MAX_POINTS = 9;
+const SIGNAL_THRESHOLD_POINTS = 5;
+
+function signalPoints(price: number, sma20: number, ema9: number, rsiVal: number, macdHist: number, pctB: number | null): number {
+  let pts = 0;
+  pts += price > sma20 ? 2 : price < sma20 ? -2 : 0;
+  pts += ema9 > sma20 ? 1 : ema9 < sma20 ? -1 : 0;
+  pts += macdHist > 0 ? 2 : macdHist < 0 ? -2 : 0;
+  pts += rsiVal <= 30 ? 2 : rsiVal >= 70 ? -2 : 0;
+  if (pctB !== null) pts += pctB <= 0.05 ? 1 : pctB >= 0.95 ? -1 : 0;
+  return pts;
 }
 
 // Rule-based detection over our own intraday 5-min-sample history. Deliberately
@@ -231,7 +253,7 @@ Deno.serve(async (req) => {
   }
   for (const list of historyBySymbol.values()) list.reverse();
 
-  const fetchOne = async ({ symbol, name }: { symbol: string; name: string }) => {
+  const fetchOne = async ({ symbol, name, assetClass }: { symbol: string; name: string; assetClass: string }) => {
     const quoteRes = await fetch(
       `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`,
     );
@@ -259,19 +281,13 @@ Deno.serve(async (req) => {
     const macdVal = macd(closes);
     const macdHist = macdHistogram(closes);
 
-    // RSI-oversold/overbought alone is a classic mean-reversion trap -- a
-    // stock in a real downtrend can sit under RSI 35 for a long stretch
-    // while still making new lows. Requiring MACD momentum to already agree
-    // with the direction (above its signal line for a buy, below for a
-    // sell) cuts down on exactly that false-positive pattern, on top of the
-    // existing price-vs-SMA20 trend filter.
-    const signal = rsiVal < 35 && price >= sma20 && macdHist > 0 ? "buy"
-      : rsiVal > 68 && macdHist < 0 ? "sell"
-      : "hold";
+    const pctB = bollingerPctB(closes);
+    const points = signalPoints(price, sma20, ema9, rsiVal, macdHist, pctB);
+    const signal = points >= SIGNAL_THRESHOLD_POINTS ? "buy" : points <= -SIGNAL_THRESHOLD_POINTS ? "sell" : "hold";
+    const signalScore = Math.round((points / SIGNAL_MAX_POINTS) * 100);
     const entry = signal === "buy" ? price * 0.99 : price;
     const exitPrice = signal === "buy" ? price * 1.08 : price * 0.95;
     const { pattern, confidence: patternConfidence } = detectPattern(closes);
-    const pctB = bollingerPctB(closes);
 
     return {
       symbol,
@@ -281,17 +297,20 @@ Deno.serve(async (req) => {
       change_percent: changePercent,
       volume: quote.v ?? 0,
       signal,
+      signal_score: signalScore,
       entry,
       exit_price: exitPrice,
       pattern,
       pattern_confidence: pattern ? patternConfidence : null,
       rsi: rsiVal,
       macd: macdVal,
+      macd_histogram: macdHist,
       sma20,
       ema9,
       bollinger_pct_b: pctB,
       prev_close: prevClose,
       category: "core",
+      asset_class: assetClass,
       hold_duration: "Swing",
       fetched_at: new Date().toISOString(),
     };

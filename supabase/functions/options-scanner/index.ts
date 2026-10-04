@@ -1,6 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
-import { TRACKED_TICKERS } from "../_shared/symbols.ts";
+import { TRACKED_TICKERS, ASSET_CLASS_ETF_TICKERS } from "../_shared/symbols.ts";
 import { alpacaHeaders, fetchFullChain, fetchStockSnapshot, snapshotPrice, type AlpacaChainContract } from "../_shared/alpaca.ts";
 import { greeksFromPrice } from "../_shared/blackScholes.ts";
 import { fetchVix, classifyRegime, daysSince, VIX_STALE_AFTER_DAYS } from "../_shared/marketRegime.ts";
@@ -12,7 +12,7 @@ import { fetchVix, classifyRegime, daysSince, VIX_STALE_AFTER_DAYS } from "../_s
 // explicitly: they're intentionally included for options liquidity as
 // broad-market index ETFs, not because they're part of the tracked-stock
 // fundamentals universe, so they aren't in TRACKED_TICKERS itself.
-const TICKERS = [...TRACKED_TICKERS, "SPY", "QQQ"];
+const TICKERS = [...new Set([...TRACKED_TICKERS, ...ASSET_CLASS_ETF_TICKERS])];
 
 interface NormalizedOption {
   strike: number;

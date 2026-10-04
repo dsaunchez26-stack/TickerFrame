@@ -25,7 +25,7 @@ type ViewMode = 'compare' | 'single';
 function usePortfolioEnriched(name: string) {
   const { user } = useAuth();
   const { data: portfolio, isLoading, addStock, removeStock, updateAlerts } = usePortfolio(undefined, name);
-  const { data: stockData } = useStockData('all');
+  const { data: stockData } = useStockData('all', 'all');
   const cached = useMemo(() => new Set((stockData?.stocks ?? []).map(s => s.symbol)), [stockData]);
   const missing = useMemo(() => (portfolio ?? []).map(p => p.symbol).filter(s => !cached.has(s)), [portfolio, cached]);
   const { data: extra } = useQuery<Record<string, any>>({

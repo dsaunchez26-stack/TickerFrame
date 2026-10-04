@@ -867,3 +867,31 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
 ];
 
 export const TRACKED_TICKERS: string[] = TRACKED_SYMBOLS.map((s) => s.symbol);
+
+// Exchange-traded funds standing in for non-equity asset classes (bonds,
+// gold, bitcoin, real estate) plus broad-market index funds. Kept separate
+// from TRACKED_SYMBOLS on purpose: the fundamentals, earnings and insider
+// scanners work from company filings, which funds don't have, so those
+// scanners must keep iterating only TRACKED_SYMBOLS. Price/signal tracking
+// (fetch-stock-data) and options scanning include these.
+export interface AssetClassEtf extends TrackedSymbol { assetClass: string }
+
+export const ASSET_CLASS_ETFS: AssetClassEtf[] = [
+  { symbol: "SPY", name: "SPDR S&P 500 ETF Trust", assetClass: "Index" },
+  { symbol: "QQQ", name: "Invesco QQQ Trust", assetClass: "Index" },
+  { symbol: "DIA", name: "SPDR Dow Jones Industrial Average ETF", assetClass: "Index" },
+  { symbol: "IWM", name: "iShares Russell 2000 ETF", assetClass: "Index" },
+  { symbol: "AGG", name: "iShares Core U.S. Aggregate Bond ETF", assetClass: "Bonds" },
+  { symbol: "TLT", name: "iShares 20+ Year Treasury Bond ETF", assetClass: "Bonds" },
+  { symbol: "IEF", name: "iShares 7-10 Year Treasury Bond ETF", assetClass: "Bonds" },
+  { symbol: "LQD", name: "iShares iBoxx Investment Grade Corporate Bond ETF", assetClass: "Bonds" },
+  { symbol: "HYG", name: "iShares iBoxx High Yield Corporate Bond ETF", assetClass: "Bonds" },
+  { symbol: "GLD", name: "SPDR Gold Shares", assetClass: "Gold & Silver" },
+  { symbol: "SLV", name: "iShares Silver Trust", assetClass: "Gold & Silver" },
+  { symbol: "IBIT", name: "iShares Bitcoin Trust ETF", assetClass: "Crypto" },
+  { symbol: "ETHA", name: "iShares Ethereum Trust ETF", assetClass: "Crypto" },
+  { symbol: "VNQ", name: "Vanguard Real Estate ETF", assetClass: "Real Estate" },
+  { symbol: "IYR", name: "iShares U.S. Real Estate ETF", assetClass: "Real Estate" },
+];
+
+export const ASSET_CLASS_ETF_TICKERS: string[] = ASSET_CLASS_ETFS.map((e) => e.symbol);

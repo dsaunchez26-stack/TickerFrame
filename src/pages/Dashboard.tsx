@@ -1,5 +1,6 @@
 import { MarketOverview } from '@/components/MarketOverview';
 import { TopMovers } from '@/components/TopMovers';
+import { AssetClassPanel } from '@/components/AssetClassPanel';
 import { Disclaimer } from '@/components/Disclaimer';
 
 // Deliberately lean: this used to also carry a 10-tile navigation grid
@@ -17,6 +18,7 @@ const Dashboard = () => (
     </div>
     <Disclaimer />
     <MarketOverview />
+    <AssetClassPanel />
     <TopMovers />
   </div>
 );

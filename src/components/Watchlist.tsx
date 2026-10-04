@@ -9,11 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-
-const SignalBadge = ({ signal }: { signal: Stock['signal'] }) => {
-  const styles = { buy: 'bg-signal-buy/15 text-signal-buy', sell: 'bg-signal-sell/15 text-signal-sell', hold: 'bg-signal-hold/15 text-signal-hold' };
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${styles[signal]}`}>{signal}</span>;
-};
+import { SignalBadge } from '@/components/SignalBadge';
 
 export const Watchlist = () => {
   const { data, isLoading } = useStockData();
@@ -86,7 +82,8 @@ export const Watchlist = () => {
                       <div className="flex items-center gap-2">
                         {isBigMover && <Flame className="h-3 w-3 text-orange-400" />}
                         <span className="font-heading text-xs font-semibold text-foreground">{s.symbol}</span>
-                        <SignalBadge signal={s.signal} />
+                        <SignalBadge signal={s.signal} score={s.signalScore} />
+                        <span className="text-[9px] text-muted-foreground" title="14-period RSI: under 30 oversold, over 70 overbought">RSI {s.rsi.toFixed(0)}</span>
                         {isOwned && <span className="rounded-full bg-signal-buy/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-signal-buy">✓</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">

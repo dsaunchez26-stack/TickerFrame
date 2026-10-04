@@ -1,12 +1,12 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
-import { TRACKED_TICKERS } from "../_shared/symbols.ts";
+import { TRACKED_TICKERS, ASSET_CLASS_ETF_TICKERS } from "../_shared/symbols.ts";
 import { logCronRun } from "../_shared/logCronRun.ts";
 import { isMarketOpen } from "../_shared/marketHours.ts";
 
 // Same universe options-scanner covers (tracked stocks + the two broad-
 // market ETFs it adds back for options liquidity).
-const TICKERS = [...TRACKED_TICKERS, "SPY", "QQQ"];
+const TICKERS = [...new Set([...TRACKED_TICKERS, ...ASSET_CLASS_ETF_TICKERS])];
 
 // fetch-stock-data samples every 5 minutes around the clock, so most of a
 // long lookback window is actually closed-market: a flat last-trade price

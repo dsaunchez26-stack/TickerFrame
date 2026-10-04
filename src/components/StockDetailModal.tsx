@@ -1,3 +1,4 @@
+import { SignalBreakdown } from '@/components/SignalBreakdown';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useStockData } from '@/hooks/useStockData';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,7 +29,7 @@ const fmtNum = (v: number | null, digits = 2) => (v === null ? 'not reported' : 
 const scoreColor = (score: number) => (score >= 65 ? 'text-signal-buy' : score >= 40 ? 'text-signal-hold' : 'text-signal-sell');
 
 export const StockDetailModal = ({ symbol, onClose }: Props) => {
-  const { data } = useStockData();
+  const { data } = useStockData('core', 'all');
   const stock = useMemo(() => data?.stocks.find(s => s.symbol === symbol) ?? null, [data, symbol]);
   const [timeframe, setTimeframe] = useState<Timeframe>('1D');
   const { candles, loading: loadingHistory } = useStockCandles(symbol, timeframe);
@@ -139,8 +140,8 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
                 <CandlestickChart candles={candles} height={192} tickInterval={Math.ceil(candles.length / 6)} />
               )}
             </div>
-            <div className="grid grid-cols-3 gap-3 text-xs">
-              <div><div className="text-muted-foreground">RSI</div><div className="font-semibold">{stock.rsi.toFixed(1)}</div></div>
+            <SignalBreakdown stock={stock} />
+            <div className="grid grid-cols-2 gap-3 text-xs">
               <div><div className="text-muted-foreground">MACD</div><div className="font-semibold">{stock.macd.toFixed(3)}</div></div>
               <div><div className="text-muted-foreground">Volume</div><div className="font-semibold">{stock.volume > 0 ? `${(stock.volume / 1e6).toFixed(1)}M` : 'N/A'}</div></div>
             </div>
