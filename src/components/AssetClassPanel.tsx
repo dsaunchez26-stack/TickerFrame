@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowDownRight, ArrowUpRight, Loader2 } from 'lucide-react';
 import { useStockData } from '@/hooks/useStockData';
 import { useStockDetail } from '@/context/StockDetailContext';
@@ -32,7 +33,10 @@ export const AssetClassPanel = () => {
   return (
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
-        <h3 className="font-heading text-sm font-semibold text-foreground">Asset Classes</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading text-sm font-semibold text-foreground">Asset Classes</h3>
+          <Link to="/stocks/etfs" className="text-[10px] text-muted-foreground underline hover:text-foreground">View all ETFs</Link>
+        </div>
         <p className="text-[10px] text-muted-foreground">Bonds, gold, crypto, real estate and index funds - tracked through exchange-traded funds.</p>
       </div>
       <div className="grid gap-px bg-border md:grid-cols-2 xl:grid-cols-3">

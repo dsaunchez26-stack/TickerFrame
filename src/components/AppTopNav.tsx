@@ -16,6 +16,8 @@ interface NavGroup { label: string; items: NavItem[] }
 const groups: NavGroup[] = [
   { label: 'Stocks', items: [
     { title: 'Overview', url: '/stocks', icon: LineChart },
+    { title: 'S&P Top 50', url: '/stocks/top50', icon: Building2 },
+    { title: 'ETFs', url: '/stocks/etfs', icon: Layers },
     { title: 'Chart & Indicators', url: '/stocks/chart', icon: BarChart3 },
     { title: 'Penny Stocks', url: '/stocks/penny', icon: Coins },
     { title: 'Signals & Track Record', url: '/stocks/signals', icon: Target },

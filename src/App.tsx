@@ -16,6 +16,7 @@ const Stocks = lazy(() => import("./pages/Stocks.tsx"));
 const StocksChart = lazy(() => import("./pages/StocksChart.tsx"));
 const StocksPenny = lazy(() => import("./pages/StocksPenny.tsx"));
 const StocksTop50 = lazy(() => import("./pages/StocksTop50.tsx"));
+const StocksEtfs = lazy(() => import("./pages/StocksEtfs.tsx"));
 const StocksSignals = lazy(() => import("./pages/StocksSignals.tsx"));
 const Options = lazy(() => import("./pages/Options.tsx"));
 const OptionsScanner = lazy(() => import("./pages/OptionsScanner.tsx"));
@@ -110,6 +111,7 @@ const App = () => (
               <Route path="/stocks" element={<Stocks />} />
               <Route path="/stocks/chart" element={<StocksChart />} />
               <Route path="/stocks/top50" element={<StocksTop50 />} />
+              <Route path="/stocks/etfs" element={<StocksEtfs />} />
               <Route path="/stocks/penny" element={<StocksPenny />} />
               <Route path="/stocks/signals" element={<StocksSignals />} />
               <Route element={<OptionsScanLayout />}>
