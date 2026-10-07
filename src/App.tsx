@@ -38,6 +38,8 @@ const News = lazy(() => import("./pages/News.tsx"));
 const PortfolioPage = lazy(() => import("./pages/PortfolioPage.tsx"));
 const Performance = lazy(() => import("./pages/Performance.tsx"));
 const Legal = lazy(() => import("./pages/Legal.tsx"));
+const Terms = lazy(() => import("./pages/Terms.tsx"));
+const Privacy = lazy(() => import("./pages/Privacy.tsx"));
 const Methodology = lazy(() => import("./pages/Methodology.tsx"));
 const Health = lazy(() => import("./pages/Health.tsx"));
 const SettingsPage = lazy(() => import("./pages/Settings.tsx"));
@@ -99,6 +101,12 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/legal" element={<AppLayout />}>
               <Route index element={<Legal />} />
+            </Route>
+            <Route path="/terms" element={<AppLayout />}>
+              <Route index element={<Terms />} />
+            </Route>
+            <Route path="/privacy" element={<AppLayout />}>
+              <Route index element={<Privacy />} />
             </Route>
             <Route path="/methodology" element={<AppLayout />}>
               <Route index element={<Methodology />} />

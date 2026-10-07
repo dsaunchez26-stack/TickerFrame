@@ -36,7 +36,7 @@ const STEPS = [
   {
     icon: ShieldAlert,
     title: 'Research only',
-    body: 'Tickerframe is not investment advice, and it\'s not a registered adviser or broker-dealer. Quotes may be delayed. Always verify before trading - see Disclaimers & Terms for the full picture.',
+    body: 'Tickerframe is not investment advice, and it\'s not a registered adviser or broker-dealer. Quotes may be delayed. Always verify before trading - see the Disclaimers, Terms of Use and Privacy Policy for the full picture.',
   },
 ];
 

@@ -67,9 +67,13 @@ export default function AppLayout() {
               <strong className="text-foreground">Tickerframe</strong> · Research & education only · Not investment advice
             </p>
             <p>
-              <Link to="/legal" className="underline hover:text-foreground">Disclaimers & Terms</Link>
+              <Link to="/terms" className="underline hover:text-foreground">Terms of Use</Link>
               {' · '}
-              <Link to="/methodology" className="underline hover:text-foreground">How signals are generated</Link>
+              <Link to="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
+              {' · '}
+              <Link to="/legal" className="underline hover:text-foreground">Disclaimers</Link>
+              {' · '}
+              <Link to="/methodology" className="underline hover:text-foreground">How readings are generated</Link>
               {' · '}
               <Link to="/handbook" className="underline hover:text-foreground">Handbook</Link>
               {' · '}

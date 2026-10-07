@@ -135,7 +135,7 @@ export default function Auth() {
         </Card>
 
         <p className="text-[11px] text-center text-muted-foreground px-4">
-          By creating an account you agree to our <Link to="/legal" className="underline">Terms & Disclaimers</Link>.
+          By creating an account you agree to our <Link to="/terms" className="underline">Terms of Use</Link>, <Link to="/privacy" className="underline">Privacy Policy</Link> and <Link to="/legal" className="underline">Disclaimers</Link>.
           Tickerframe is research and education only - not investment advice.
         </p>
       </div>

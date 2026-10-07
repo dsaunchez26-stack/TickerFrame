@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Disclaimer } from '@/components/Disclaimer';
 
-interface Entry { term: string; def: string }
+interface Entry { term: string; def: string; to?: string }
 interface Section { title: string; entries: Entry[] }
 
 // Every definition here matches what the code actually does -- see
@@ -92,6 +92,18 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    title: 'Terms, privacy & disclaimers',
+    entries: [
+      { term: 'Not investment advice', def: 'Tickerframe is a research and education tool. It is not a registered investment adviser, broker-dealer or financial planner, does not hold your money or place trades, and shows the same impersonal information to every visitor. Readings are not tailored to your finances or goals and the site does not take payment to promote any security. Investing can lose money - do your own research and consult a licensed professional.', to: '/legal' },
+      { term: 'What a Bullish / Neutral / Bearish reading is - and is not', def: 'A summary of what trend, momentum and RSI currently show for a stock. It is not an instruction to buy or sell and not a prediction, and it has not been shown to forecast returns. The Reading Track Record on the Signals page shows how past readings actually played out, including when they were wrong.', to: '/methodology' },
+      { term: 'Data delays and sources', def: 'Prices come from Finnhub and can lag about 15 minutes; options from Alpaca (no Open Interest - greeks and implied volatility are calculated here); futures prices from Yahoo Finance and contract specs from tastytrade; insider filings from SEC EDGAR; the VIX from FRED. Any of it can be delayed, incomplete or wrong.', to: '/methodology' },
+      { term: 'Terms of Use (summary)', def: 'You must be 18+, you are responsible for your account and your decisions, the data comes from third parties without any guarantee, and you agree not to scrape or redistribute the data or present the readings to others as advice. Liability is limited. Read the full document for the details.', to: '/terms' },
+      { term: 'Privacy (summary)', def: 'We store your email and hashed password, the holdings, positions and alert settings you enter, your Slack webhook URL if you add one, and your assistant history. Error logs are deleted after 30 days. There are no advertising or analytics trackers and we do not sell personal information. You can edit or remove your entries yourself, and email support@tickerframe.app from your account address to delete your account and data.', to: '/privacy' },
+      { term: 'Assistant', def: 'The in-app assistant answers from fixed rules and the same data shown on the site. It can be wrong, does not know your situation, and will not tell you what to buy or sell. Ask it about the terms, privacy, data sources or what a reading means.' },
+      { term: 'Demo mode', def: 'A saved snapshot of real data used for demonstrations. Prices and readings do not update, anything you add stays in that browser tab, and the assistant and live option-chain lookup are off. A banner shows when it is active.' },
+    ],
+  },
+  {
     title: 'Alerts (Settings)',
     entries: [
       { term: 'Insider buy alerts', def: 'Notifies you when an officer, director, or 10%+ owner buys shares in a stock you hold, based on real Form 4 filings.' },
@@ -161,6 +173,7 @@ const Handbook = () => {
                 <div key={entry.term}>
                   <div className="text-sm font-semibold">{entry.term}</div>
                   <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{entry.def}</p>
+                  {entry.to && <Link to={entry.to} className="mt-0.5 inline-block text-[11px] text-primary underline">Read more</Link>}
                 </div>
               ))}
             </CardContent>

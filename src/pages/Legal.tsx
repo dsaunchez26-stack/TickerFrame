@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { ShieldAlert } from 'lucide-react';
 
@@ -15,7 +16,7 @@ const Legal = () => (
         <ShieldAlert className="h-5 w-5 text-amber-400" />
       </div>
       <div>
-        <h1 className="font-heading text-2xl font-bold">Disclaimers & Terms</h1>
+        <h1 className="font-heading text-2xl font-bold">Disclaimers</h1>
         {/* Fixed to the date this content was actually last edited -- new
             Date() here would silently relabel it "updated today" on every
             single page load regardless of whether anything changed,
@@ -30,6 +31,10 @@ const Legal = () => (
         Nothing on this site is a personal recommendation, solicitation, or offer to buy or sell any security, derivative, or other financial instrument.
       </p>
     </Card>
+
+    <p className="text-xs text-muted-foreground">
+      See also the full <Link to="/terms" className="underline">Terms of Use</Link> and <Link to="/privacy" className="underline">Privacy Policy</Link>.
+    </p>
 
     <Card className="p-5 space-y-6">
       <Section title="No Investment Advice">

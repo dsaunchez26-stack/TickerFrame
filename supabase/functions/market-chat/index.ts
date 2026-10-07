@@ -91,7 +91,39 @@ Deno.serve(async (req) => {
   });
 });
 
+
+// Plain-language answers about the site's terms, privacy practices and what its
+// readings are. Kept in sync with the Terms, Privacy and Disclaimers pages and
+// checked before every other rule so a question like "delete my portfolio data"
+// reaches the privacy answer instead of the portfolio-allocation one.
+function policyReply(t: string): string | null {
+  const has = (...words: string[]) => words.some((w) => t.indexOf(w) !== -1);
+
+  if (has("privacy", "my data", "personal data", "personal information", "delete my", "delete account", "delete data", "remove my data", "my portfolio data", "what data", "data do you", "cookie", "do you track", "do you sell", "slack webhook")) {
+    return "Privacy in short: we store your email and (hashed) password, the holdings and alert settings you enter, your Slack webhook URL if you add one, and your assistant history. If the app errors we log the error, page and browser type, and delete those logs after 30 days. There are no ad or analytics trackers, and we don't sell personal information. You can edit or remove holdings and your webhook yourself, and email support@tickerframe.app from your account address to have your account and data deleted. Full details are on the Privacy Policy page (/privacy).";
+  }
+  if (has("terms of use", "terms of service", "terms and conditions", "the terms", "your terms") || (has("terms") && has("agree", "accept", "legal"))) {
+    return "The Terms of Use (/terms) say, in short: Tickerframe is a research and education tool, not a registered investment adviser or broker, and nothing here is personal advice; data comes from third parties and can be delayed or wrong; you're responsible for your account and decisions; and you agree not to scrape or redistribute the data or present it to others as advice. The Disclaimers page (/legal) covers the risk of loss in more detail.";
+  }
+  if (has("financial advice", "investment advice", "is this advice", "disclaimer", "registered", "adviser", "advisor", "fiduciary", "liable", "liability", "legal")) {
+    return "Nothing on Tickerframe is investment advice. It isn't a registered investment adviser, broker-dealer or financial planner, doesn't hold your money or place trades, and shows the same impersonal information to every visitor - readings aren't tailored to your finances or goals, and the site doesn't take payment to promote any security. Investing can lose money, so do your own research and talk to a licensed professional. See Disclaimers (/legal) and Terms of Use (/terms).";
+  }
+  if ((has("bullish", "bearish", "neutral")) && has("mean", "what is", "what does", "what's", "how", "calculated", "work", "score")) {
+    return "A reading is a summary of what technical indicators show right now, not an instruction. Each stock earns points for price above its 20-day average (+2) and the 9-day average above it (+1), MACD above its signal line (+2), RSI at or under 30 (+2) or at or over 70 (-2), and Bollinger %B at or under 0.05 (+1) or at or over 0.95 (-1). 5 or more points reads Bullish, -5 or fewer reads Bearish, in between is Neutral, and the score (-100 to +100) shows how close a Neutral is to either side. It isn't a prediction and hasn't been shown to forecast returns - open any stock's \"Why this reading\" panel to see every input.";
+  }
+  if (has("delayed", "delay", "real-time", "real time", "data source", "where does the data", "where do you get", "data come from", "data provider")) {
+    return "Prices come from Finnhub and may lag by about 15 minutes; options data comes from Alpaca's free feed (no Open Interest - greeks and implied volatility are calculated here); futures prices come from Yahoo Finance with contract specs from tastytrade; insider filings from SEC EDGAR; the VIX from FRED. Any of it can be delayed, incomplete or wrong. The Methodology page lists every source.";
+  }
+  if (has("demo")) {
+    return "Demo mode runs the site on a saved snapshot of real data instead of live data - prices and readings don't update, anything you add stays in your browser tab, and the assistant and live option-chain lookup are off. A banner at the top says so, with an Exit demo button.";
+  }
+  return null;
+}
+
 async function buildReply(supabase: ReturnType<typeof createClient>, userId: string | null, text: string, t: string): Promise<string> {
+  const policy = policyReply(t);
+  if (policy) return policy;
+
   const tickersMentioned = extractTickers(text);
 
   // --- A specific tracked ticker's current reading ---
