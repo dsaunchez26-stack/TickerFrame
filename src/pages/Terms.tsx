@@ -68,7 +68,7 @@ const Terms = () => (
     </S>
 
     <S title="14. Ending use">
-      <p>You can stop using the Service at any time and ask us to delete your account (see the Privacy Policy). We may suspend or end the Service or your access at any time. Sections that by their nature should survive (including 3, 4, 7, 9, 11-13 and 15) will survive.</p>
+      <p>You can stop using the Service at any time and delete your account yourself under Settings (see the Privacy Policy). We may suspend or end the Service or your access at any time. Sections that by their nature should survive (including 3, 4, 7, 9, 11-13 and 15) will survive.</p>
     </S>
 
     <S title="15. Governing law and disputes">

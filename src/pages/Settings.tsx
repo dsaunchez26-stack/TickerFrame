@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, Save, BookOpen, ChevronRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Loader2, Save, BookOpen, ChevronRight, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,9 @@ import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Settings {
   slack_webhook_url: string;
@@ -31,8 +34,29 @@ const DEFAULTS: Settings = {
 };
 
 const SettingsPage = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteAccount = async () => {
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke('delete-account', { body: { confirm: confirmText } });
+    // A non-2xx reply surfaces as a generic error, so read the function's own message if there is one.
+    let message: string | null = data?.error ?? null;
+    if (error && !message) {
+      try { message = (await (error as { context?: Response }).context?.json())?.error ?? error.message; } catch { message = error.message; }
+    }
+    if (message) {
+      setDeleting(false);
+      toast({ title: "Couldn't delete the account", description: message, variant: 'destructive' });
+      return;
+    }
+    await signOut();
+    toast({ title: 'Account deleted', description: 'Your account and its data have been removed.' });
+    navigate('/auth');
+  };
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -182,6 +206,40 @@ const SettingsPage = () => {
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Save
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-signal-sell/30">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Delete account</CardTitle>
+            <CardDescription className="text-xs">
+              Permanently deletes your account and everything tied to it: portfolio, tracked positions, alert settings (including your Slack webhook), and assistant history. This can't be undone. See the <Link to="/privacy" className="underline">Privacy Policy</Link> for what is stored.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AlertDialog onOpenChange={(open) => { if (!open) setConfirmText(''); }}>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 border-signal-sell/40 text-signal-sell hover:bg-signal-sell/10">
+                  <Trash2 className="h-3.5 w-3.5" /> Delete my account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently removes your account and all of your data. Type <strong>DELETE</strong> to confirm.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder="DELETE" className="text-sm" autoComplete="off" />
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                  <Button variant="destructive" disabled={confirmText !== 'DELETE' || deleting} onClick={deleteAccount} className="gap-1.5">
+                    {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                    Delete permanently
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
       </main>

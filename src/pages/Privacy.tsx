@@ -36,13 +36,14 @@ const Privacy = () => (
     </S>
 
     <S title="5. How long we keep it">
-      <p>Account, portfolio, alert and conversation data is kept while your account is active. Error logs are deleted after 30 days. When you ask us to delete your account we remove your account and the data tied to it, except where we must keep something to meet legal obligations or resolve a dispute. Backups may take a short additional time to age out.</p>
+      <p>Account, portfolio, alert and conversation data is kept while your account is active. Error logs are deleted after 30 days, or immediately if you delete your account. When you delete your account (in Settings, or by asking us) we remove your account and the data tied to it, except where we must keep something to meet legal obligations or resolve a dispute. Backups may take a short additional time to age out.</p>
     </S>
 
     <S title="6. Your choices and rights">
       <ul className="ml-4 list-disc space-y-1">
         <li>You can edit or delete holdings, tracked positions and alert settings yourself in the app, and remove your Slack webhook in Settings.</li>
-        <li>To access, correct or delete your data or your account, email <a href={`mailto:${LEGAL.contactEmail}`} className="underline">{LEGAL.contactEmail}</a> from your account email address. We aim to respond within 30 days.</li>
+        <li>You can delete your account and all of its data yourself under Settings, then Delete account. This is permanent and takes effect immediately.</li>
+        <li>To access or correct your data, or if you can't use Settings, email <a href={`mailto:${LEGAL.contactEmail}`} className="underline">{LEGAL.contactEmail}</a> from your account email address. We aim to respond within 30 days.</li>
         <li>Depending on where you live (for example California, other U.S. states with privacy laws, or the EU/UK), you may have additional rights, such as to know what we hold, to correct or delete it, to receive a copy, to object to or restrict certain processing, and not to be discriminated against for exercising them. Write to us and we will honor the rights that apply to you.</li>
         <li>You can clear your browser's local storage at any time; that signs you out and resets saved preferences.</li>
       </ul>

@@ -245,6 +245,7 @@ const handleFunction = async (name: string, bodyText: string | null): Promise<Re
     case 'insider-scanner':
     case 'realized-volatility-scanner': return json({ ok: true, demo: true, message: 'Demo snapshot - data refresh is disabled.' });
     case 'admin-list-users': return json({ users: [] });
+    case 'delete-account': return json({ error: 'Account deletion is turned off in the demo - there is no real account here.' });
     case 'market-chat':
       return sse("The AI assistant is switched off in this demo, since the demo runs on a saved snapshot with no live backend. On the live site it answers questions about the stocks, signals and options data you see here.");
     default: return json({ error: `${name} is not available in the demo` }, 404);
