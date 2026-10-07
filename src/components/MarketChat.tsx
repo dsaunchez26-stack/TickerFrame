@@ -10,7 +10,7 @@ import { MessageSquare, Send, Loader2, Sparkles, Maximize2 } from 'lucide-react'
 interface Msg { role: 'user' | 'assistant'; content: string }
 
 const DEFAULT_SUGGESTIONS = [
-  'Top 3 buy signals right now',
+  'Strongest bullish readings right now',
   'How is AAPL performing?',
   'Any unusual insider activity?',
   'Compare TSLA vs NVDA fundamentals',

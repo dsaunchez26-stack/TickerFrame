@@ -21,7 +21,7 @@ interface ValueRadarState {
 const ValueRadarCtx = createContext<ValueRadarState | null>(null);
 
 // Shared by every Value Radar sub-page (Quality Screen, Price-to-Sales,
-// Short Candidates) so they all show the same scan instead of each
+// Weak Balance Sheets) so they all show the same scan instead of each
 // independently re-fetching stock_fundamentals/stock_cache/options_ticker_cache
 // -- same reasoning as OptionsScanContext.
 export const ValueRadarProvider = ({ children }: { children: ReactNode }) => {

@@ -1,4 +1,5 @@
 import type { Stock } from '@/lib/mockData';
+import { signalLabel } from '@/lib/signalLabel';
 
 const styles = {
   buy: 'bg-signal-buy/15 text-signal-buy',
@@ -10,10 +11,10 @@ const styles = {
 // reads as leaning one way or the other instead of a flat, uninformative tag.
 export const SignalBadge = ({ signal, score }: { signal: Stock['signal']; score?: number | null }) => (
   <span
-    title={score != null ? `Composite signal score ${score > 0 ? '+' : ''}${score} of ±100 - see Methodology` : undefined}
+    title={score != null ? `Composite reading score ${score > 0 ? '+' : ''}${score} of ±100 - see Methodology` : undefined}
     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${styles[signal]}`}
   >
-    {signal}
+    {signalLabel(signal)}
     {score != null && <span className="font-normal opacity-80">{score > 0 ? '+' : ''}{score}</span>}
   </span>
 );

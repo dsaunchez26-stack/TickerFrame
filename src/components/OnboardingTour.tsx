@@ -15,8 +15,8 @@ const STEPS = [
   },
   {
     icon: LineChart,
-    title: 'Signals are a real, simple rule',
-    body: 'Buy/sell/hold comes from one technical rule - RSI plus MACD confirmation - not a black box. Balance Sheet and Growth scores compare a stock to its own sector\'s peers, not one flat cutoff for the whole market.',
+    title: 'Readings come from a real, simple rule',
+    body: 'The bullish / neutral / bearish reading is a composite of trend, momentum and RSI - not a black box, and not advice. Balance Sheet and Growth scores compare a stock to its own sector\'s peers, not one flat cutoff for the whole market.',
   },
   {
     icon: ListFilter,

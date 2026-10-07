@@ -55,7 +55,7 @@ export const Watchlist = () => {
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="font-heading text-sm font-semibold text-foreground">Top Bullish Picks</h3>
+          <h3 className="font-heading text-sm font-semibold text-foreground">Most Bullish Readings</h3>
           <span className="text-[9px] text-muted-foreground italic">✓ to track</span>
         </div>
         <div className="flex items-center gap-3">

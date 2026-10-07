@@ -4,7 +4,7 @@ const TABS = [
   { label: 'Quality Screen', to: '/value-radar' },
   { label: 'Price-to-Sales', to: '/value-radar/price-to-sales' },
   { label: 'Small-Cap Value', to: '/value-radar/small-cap' },
-  { label: 'Short Candidates', to: '/value-radar/short-candidates' },
+  { label: 'Weak Balance Sheets', to: '/value-radar/short-candidates' },
 ];
 
 export const ValueRadarSubNav = () => (

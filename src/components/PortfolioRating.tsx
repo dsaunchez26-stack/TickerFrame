@@ -58,7 +58,7 @@ export const PortfolioRating = ({ enriched, totalValue, pnlPct, winRate }: Props
       notes.push({
         tone: 'warn',
         text: `${largest.symbol} makes up ${largestPct.toFixed(0)}% of this portfolio's value - a position this concentrated means its moves dominate the whole portfolio's swings.`,
-        suggestion: `Consider whether that position size still matches your risk tolerance, or whether trimming it would reduce how much a single stock can move your total return.`,
+        suggestion: `A position this size means one stock's move can swing the whole portfolio's return.`,
       });
     }
     if (positions.length < 5) {
@@ -67,22 +67,22 @@ export const PortfolioRating = ({ enriched, totalValue, pnlPct, winRate }: Props
     if (sellCount > positions.length / 2) {
       notes.push({
         tone: 'warn',
-        text: `${sellCount} of ${positions.length} holdings currently carry a "sell" signal (RSI-based) - worth a closer look before adding to these.`,
-        suggestion: `Remember this reflects short-term RSI momentum, not your original thesis for the position -- worth checking whether anything's actually changed before acting on it.`,
+        text: `${sellCount} of ${positions.length} holdings currently show a bearish reading (trend and momentum leaning down).`,
+        suggestion: `This reflects short-term trend and momentum only, not a view on the company or why it was bought.`,
       });
     }
     if (bearish.length > 0) {
       notes.push({
         tone: 'warn',
         text: `${bearish.length} holding${bearish.length === 1 ? ' shows' : 's show'} a bearish chart pattern: ${bearish.map(p => p.symbol).join(', ')}.`,
-        suggestion: `If you're holding through this, a stop-loss or a smaller position size can limit how much further downside affects the portfolio; if the pattern doesn't match your reason for holding, it may be worth revisiting.`,
+        suggestion: `Chart patterns describe recent price action; they are not predictions.`,
       });
     }
     if (bullish.length > 0) {
       notes.push({ tone: 'info', text: `${bullish.length} holding${bullish.length === 1 ? ' shows' : 's show'} a bullish chart pattern: ${bullish.map(p => p.symbol).join(', ')}.` });
     }
     if (buyCount > 0) {
-      notes.push({ tone: 'info', text: `${buyCount} of ${positions.length} holdings currently carry a "buy" signal.` });
+      notes.push({ tone: 'info', text: `${buyCount} of ${positions.length} holdings currently show a bullish reading.` });
     }
     if (notes.length === 0) {
       notes.push({ tone: 'info', text: 'No major concentration or signal-based flags right now.' });
@@ -114,7 +114,7 @@ export const PortfolioRating = ({ enriched, totalValue, pnlPct, winRate }: Props
           </div>
         ))}
         <p className="pt-1 text-[10px] italic text-muted-foreground/70">
-          Based on realized performance plus position sizing and the same signals/patterns shown per stock below - not a recommendation to buy, hold, or sell. Research & education only.
+          Based on realized performance plus position sizing and the same signals/patterns shown per stock below - not a recommendation to buy, hold, or sell, and not personalized advice. Research & education only.
         </p>
       </CardContent>
     </Card>

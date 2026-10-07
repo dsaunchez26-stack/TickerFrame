@@ -1,5 +1,5 @@
 import { useStockData } from '@/hooks/useStockData';
-import { ArrowDownRight, Target, Shield, Loader2, Flame, TrendingUp, Clock, Check } from 'lucide-react';
+import { ArrowDownRight, Loader2, Flame, TrendingUp, Clock, Check } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useStockDetail } from '@/context/StockDetailContext';
 import { usePortfolio } from '@/hooks/usePortfolio';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { SignalBadge } from '@/components/SignalBadge';
 import { useUniverse } from '@/hooks/useUniverse';
 
 export const TopMovers = () => {
@@ -30,9 +31,8 @@ export const TopMovers = () => {
     if (!data?.stocks?.length) return [];
     return [...filter(data.stocks)].sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)).slice(0, 4).map((s) => {
       const isBullish = s.changePercent > 0;
-      const risk = Math.abs(s.changePercent) > 5 ? 'High' : Math.abs(s.changePercent) > 2 ? 'Medium' : 'Low';
-      const potentialGain = isBullish ? ((s.exit - s.price) / s.price * 100).toFixed(1) : ((s.price - s.entry) / s.price * 100).toFixed(1);
-      return { symbol: s.symbol, name: s.name, price: s.price, changePercent: s.changePercent, direction: isBullish ? 'Long' as const : 'Short' as const, entry: s.price, target: isBullish ? s.exit : s.entry, stopLoss: isBullish ? s.entry : s.exit, risk, potentialGain, volume: s.volume, signal: s.signal, holdDuration: s.holdDuration || 'Swing' };
+      const swing = Math.abs(s.changePercent) > 5 ? 'Large' : Math.abs(s.changePercent) > 2 ? 'Moderate' : 'Small';
+      return { symbol: s.symbol, name: s.name, price: s.price, changePercent: s.changePercent, direction: isBullish ? 'Long' as const : 'Short' as const, entry: s.price, rsi: s.rsi, swing, volume: s.volume, signal: s.signal, signalScore: s.signalScore, holdDuration: s.holdDuration || 'Swing' };
     });
   }, [data, filter]);
 
@@ -43,7 +43,7 @@ export const TopMovers = () => {
     <div className="rounded-lg border border-border bg-card">
       <div className="border-b border-border px-4 py-3 flex items-center gap-2">
         <Flame className="h-4 w-4 text-orange-400" />
-        <h3 className="font-heading text-sm font-semibold text-foreground">Top Movers - Trade Setups</h3>
+        <h3 className="font-heading text-sm font-semibold text-foreground">Biggest Movers Today</h3>
         <span className="ml-auto text-[10px] text-muted-foreground">Check ✓ to add to portfolio</span>
       </div>
       <div className="grid gap-0 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x">
@@ -62,7 +62,7 @@ export const TopMovers = () => {
                   }} />
                   <span className="font-heading text-base font-bold text-foreground cursor-pointer" onClick={() => open(m.symbol)}>{m.symbol}</span>
                   <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${m.direction === 'Long' ? 'bg-signal-buy/15 text-signal-buy' : 'bg-signal-sell/15 text-signal-sell'}`}>
-                    {m.direction === 'Long' ? <TrendingUp className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}{m.direction}
+                    {m.direction === 'Long' ? <TrendingUp className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}{m.direction === 'Long' ? 'Rising' : 'Falling'}
                   </span>
                   {isOwned && <span className="rounded-full bg-signal-buy/15 px-2 py-0.5 text-[9px] font-bold uppercase text-signal-buy">In {Array.from(owned!)[0].replace('_',' ')}</span>}
                 </div>
@@ -91,15 +91,14 @@ export const TopMovers = () => {
               )}
 
               <div className="grid grid-cols-3 gap-2 mb-3 text-[10px] cursor-pointer" onClick={() => open(m.symbol)}>
-                <div className="rounded bg-secondary/50 p-2"><span className="text-muted-foreground block">Entry</span><p className="font-heading font-semibold text-foreground">${m.entry.toFixed(2)}</p></div>
-                <div className="rounded bg-signal-buy/10 p-2"><div className="flex items-center gap-1 text-muted-foreground"><Target className="h-3 w-3 text-signal-buy" /> Target</div><p className="font-heading font-semibold text-signal-buy">${m.target.toFixed(2)}</p></div>
-                <div className="rounded bg-signal-sell/10 p-2"><div className="flex items-center gap-1 text-muted-foreground"><Shield className="h-3 w-3 text-signal-sell" /> Stop</div><p className="font-heading font-semibold text-signal-sell">${m.stopLoss.toFixed(2)}</p></div>
+                <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">Price</span><p className="font-heading font-semibold text-foreground">${m.price.toFixed(2)}</p></div>
+                <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">RSI (14)</span><p className="font-heading font-semibold text-foreground">{m.rsi.toFixed(0)}</p></div>
+                <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">Reading</span><div className="mt-0.5"><SignalBadge signal={m.signal} score={m.signalScore} /></div></div>
               </div>
 
               <div className="flex items-center justify-between text-[10px]">
-                <span className={`font-medium ${m.risk === 'High' ? 'text-signal-sell' : m.risk === 'Medium' ? 'text-signal-hold' : 'text-signal-buy'}`}>{m.risk} Risk</span>
+                <span className="font-medium text-muted-foreground">{m.swing} move today</span>
                 <span className="flex items-center gap-0.5 text-primary/80 font-medium"><Clock className="h-3 w-3" />{m.holdDuration}</span>
-                <span className="text-signal-buy font-semibold">+{m.potentialGain}% potential</span>
                 <span className="text-muted-foreground">{m.volume > 0 ? `${formatVolume(m.volume)} vol` : 'vol n/a'}</span>
               </div>
             </div>

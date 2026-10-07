@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { useStockData } from '@/hooks/useStockData';
+import { signalLabel } from '@/lib/signalLabel';
 
 export const PredictionTracker = () => {
   const { data, isLoading } = useStockData();
@@ -28,8 +29,8 @@ export const PredictionTracker = () => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-semibold">Signal Prediction Tracker</CardTitle>
-        {hitRate !== null && <span className="text-xs font-semibold text-primary" title="Buy/sell signals only - holds make no call">{hitRate}% of buy/sell calls moving the right way today</span>}
+        <CardTitle className="text-sm font-semibold">Reading Tracker</CardTitle>
+        {hitRate !== null && <span className="text-xs font-semibold text-primary" title="Bullish/bearish readings only - neutral makes no directional call">{hitRate}% of bullish/bearish readings moving that way today</span>}
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -40,10 +41,10 @@ export const PredictionTracker = () => {
               <thead className="border-b text-left text-muted-foreground">
                 <tr>
                   <th className="py-2 pr-3">Symbol</th>
-                  <th className="py-2 pr-3">Signal</th>
-                  <th className="py-2 pr-3">Entry</th>
+                  <th className="py-2 pr-3">Reading</th>
+                  <th className="py-2 pr-3">Reference price</th>
                   <th className="py-2 pr-3">Current</th>
-                  <th className="py-2 pr-3">Move since signal</th>
+                  <th className="py-2 pr-3">Move since reading</th>
                   <th className="py-2 pr-3">Tracking</th>
                 </tr>
               </thead>
@@ -51,7 +52,7 @@ export const PredictionTracker = () => {
                 {rows.map(r => (
                   <tr key={r.symbol} className="border-b last:border-0">
                     <td className="py-2 pr-3 font-semibold">{r.symbol}</td>
-                    <td className="py-2 pr-3 uppercase">{r.signal}</td>
+                    <td className="py-2 pr-3 uppercase">{signalLabel(r.signal)}</td>
                     <td className="py-2 pr-3">${r.entry.toFixed(2)}</td>
                     <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                     <td className={`py-2 pr-3 ${r.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>{r.changePercent > 0 ? '+' : ''}{r.changePercent.toFixed(2)}%</td>

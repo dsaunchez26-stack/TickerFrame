@@ -43,7 +43,7 @@ const ValueRadarShort = () => {
   return (
     <div className="min-h-screen bg-background">
       <ValueRadarPageHeader
-        title="Short Candidates"
+        title="Weak Balance Sheets"
         subtitle="The inverse screen: a weak balance sheet paired with a price that's technically stretched above its own normal trading range (Bollinger %B) - same objective data, same criteria applied to every stock."
         scanning={scanning}
         onRefresh={runScan}
@@ -89,7 +89,7 @@ const ValueRadarShort = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-semibold">Short Candidates ({shortCandidates.length})</CardTitle>
+            <CardTitle className="text-sm font-semibold">Weak Balance Sheets ({shortCandidates.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (

@@ -54,13 +54,13 @@ export const Top50Table = () => {
     <div className="rounded-lg border border-border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
         <div>
-          <h3 className="font-heading text-sm font-semibold">50 largest S&amp;P 500 companies</h3>
+          <h3 className="font-heading text-sm font-semibold">50 largest U.S. companies (S&amp;P 500 members)</h3>
           <p className="text-[10px] text-muted-foreground">Ranked by live market value. Click any row for the full signal breakdown.</p>
         </div>
         <div className="flex gap-2 text-[10px] font-semibold">
-          <span className="rounded-full bg-signal-buy/15 px-2 py-0.5 text-signal-buy">{counts.buy} Buy</span>
-          <span className="rounded-full bg-signal-hold/15 px-2 py-0.5 text-signal-hold">{counts.hold} Hold</span>
-          <span className="rounded-full bg-signal-sell/15 px-2 py-0.5 text-signal-sell">{counts.sell} Sell</span>
+          <span className="rounded-full bg-signal-buy/15 px-2 py-0.5 text-signal-buy">{counts.buy} Bullish</span>
+          <span className="rounded-full bg-signal-hold/15 px-2 py-0.5 text-signal-hold">{counts.hold} Neutral</span>
+          <span className="rounded-full bg-signal-sell/15 px-2 py-0.5 text-signal-sell">{counts.sell} Bearish</span>
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -73,7 +73,7 @@ export const Top50Table = () => {
               <th className="py-2 pr-3 text-right">Today</th>
               <th className="py-2 pr-3 text-right">Market cap</th>
               <th className="py-2 pr-3 text-right">RSI</th>
-              <th className="py-2 pr-4">Signal</th>
+              <th className="py-2 pr-4">Reading</th>
             </tr>
           </thead>
           <tbody>

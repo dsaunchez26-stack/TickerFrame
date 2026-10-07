@@ -20,7 +20,7 @@ const Legal = () => (
             Date() here would silently relabel it "updated today" on every
             single page load regardless of whether anything changed,
             which is exactly backwards for a disclaimers page. */}
-        <p className="text-xs text-muted-foreground mt-1">Last updated 7/31/2026</p>
+        <p className="text-xs text-muted-foreground mt-1">Last updated 10/7/2026</p>
       </div>
     </div>
 
@@ -35,6 +35,11 @@ const Legal = () => (
       <Section title="No Investment Advice">
         <p>All signals, scores, patterns, alerts, commentary, and analytics are produced by automated software for informational and educational purposes only. They reflect the output of statistical models on publicly available data and do not consider your personal financial situation, risk tolerance, investment objectives, or tax circumstances.</p>
         <p>Always conduct your own due diligence and consult a licensed financial professional before making any investment decision.</p>
+      </Section>
+
+      <Section title="General, Impersonal Information">
+        <p>Everything here is general information published the same way to every visitor. Bullish, Neutral and Bearish readings describe what technical indicators currently show - they are not instructions or recommendations to buy, sell or hold anything, and they are not tailored to any individual's circumstances. Portfolio views (allocation, ratings, alerts) summarize the holdings a user enters and apply the same fixed rules to everyone.</p>
+        <p>Tickerframe does not accept payment to feature, rate or promote any security. Market data may be delayed or contain errors, and the site may be unavailable at times.</p>
       </Section>
 
       <Section title="Risk of Loss">

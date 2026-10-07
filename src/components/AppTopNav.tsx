@@ -16,7 +16,7 @@ interface NavGroup { label: string; items: NavItem[] }
 const groups: NavGroup[] = [
   { label: 'Stocks', items: [
     { title: 'Overview', url: '/stocks', icon: LineChart },
-    { title: 'S&P Top 50', url: '/stocks/top50', icon: Building2 },
+    { title: 'Top 50', url: '/stocks/top50', icon: Building2 },
     { title: 'ETFs', url: '/stocks/etfs', icon: Layers },
     { title: 'Chart & Indicators', url: '/stocks/chart', icon: BarChart3 },
     { title: 'Penny Stocks', url: '/stocks/penny', icon: Coins },
@@ -39,7 +39,7 @@ const groups: NavGroup[] = [
     { title: 'Quality Screen', url: '/value-radar', icon: Gem },
     { title: 'Price-to-Sales', url: '/value-radar/price-to-sales', icon: DollarSign },
     { title: 'Small-Cap Value', url: '/value-radar/small-cap', icon: Building2 },
-    { title: 'Short Candidates', url: '/value-radar/short-candidates', icon: TrendingDown },
+    { title: 'Weak Balance Sheets', url: '/value-radar/short-candidates', icon: TrendingDown },
     { title: 'Insider Activity', url: '/insider-activity', icon: Users },
     { title: 'Dividend Income', url: '/dividend-income', icon: Percent },
     { title: 'Sector Rotation', url: '/sector-rotation', icon: RotateCcw },

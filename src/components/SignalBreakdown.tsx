@@ -13,7 +13,7 @@ export const SignalBreakdown = ({ stock }: { stock: Stock }) => {
   return (
     <div className="rounded-lg border border-border bg-secondary/20 p-3 text-xs">
       <div className="mb-2 flex items-center justify-between">
-        <span className="font-semibold">Why this signal</span>
+        <span className="font-semibold">Why this reading</span>
         <SignalBadge signal={stock.signal} score={stock.signalScore} />
       </div>
 
@@ -41,7 +41,7 @@ export const SignalBreakdown = ({ stock }: { stock: Stock }) => {
         ))}
       </div>
       <p className="mt-2 text-[10px] text-muted-foreground">
-        Points add up to the score ({stock.signal === 'buy' ? '5 or more is a Buy' : stock.signal === 'sell' ? '-5 or fewer is a Sell' : 'between -5 and 5 is a Hold'}). It's a summary of these readings, not a prediction - weigh them yourself.
+        Points add up to the score ({stock.signal === 'buy' ? '5 or more reads Bullish' : stock.signal === 'sell' ? '-5 or fewer reads Bearish' : 'between -5 and 5 reads Neutral'}). It summarizes these indicators - it is not a prediction or a recommendation. Weigh them yourself.
       </p>
     </div>
   );

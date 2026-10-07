@@ -11,7 +11,7 @@ interface TrackRecord {
 }
 
 const ORDER: TrackRow['signal'][] = ['buy', 'hold', 'sell', 'all'];
-const LABEL: Record<TrackRow['signal'], string> = { buy: 'Buy', hold: 'Hold', sell: 'Sell', all: 'All stocks' };
+const LABEL: Record<TrackRow['signal'], string> = { buy: 'Bullish', hold: 'Neutral', sell: 'Bearish', all: 'All stocks' };
 const pct = (v: number | null) => (v == null ? '-' : `${v > 0 ? '+' : ''}${v.toFixed(2)}%`);
 const fmtDate = (d: string | null) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '');
 
@@ -28,10 +28,10 @@ const Table = ({ rows, source }: { rows: TrackRow[]; source: 'live' | 'replay' }
             <table className="w-full text-xs">
               <thead className="border-b text-left text-muted-foreground">
                 <tr>
-                  <th className="py-1.5 pr-3">Signal</th>
-                  <th className="py-1.5 pr-3 text-right">Calls</th>
+                  <th className="py-1.5 pr-3">Reading</th>
+                  <th className="py-1.5 pr-3 text-right">Readings</th>
                   <th className="py-1.5 pr-3 text-right">Avg move</th>
-                  <th className="py-1.5 text-right" title="Buy: price went up. Sell: price went down.">Moved the right way</th>
+                  <th className="py-1.5 text-right" title="Bullish: price went up. Bearish: price went down.">Moved the right way</th>
                 </tr>
               </thead>
               <tbody>
@@ -77,9 +77,9 @@ export const SignalTrackRecord = () => {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Signal Track Record</CardTitle>
+        <CardTitle className="text-sm font-semibold">Reading Track Record</CardTitle>
         <p className="text-[11px] text-muted-foreground">
-          Each day's Buy / Hold / Sell call is saved with its price, then compared with what the price did afterward. A useful Buy should beat the "All stocks" row, and a useful Sell should trail it.
+          Each day's Bullish / Neutral / Bearish reading is saved with its price, then compared with what the price did afterward. A useful Bullish reading should beat the "All stocks" row, and a useful Bearish one should trail it.
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -90,10 +90,10 @@ export const SignalTrackRecord = () => {
         ) : (
           <>
             <div>
-              <h4 className="mb-2 text-xs font-semibold">Live calls{data.liveFirstDate ? ` since ${fmtDate(data.liveFirstDate)}` : ''}</h4>
+              <h4 className="mb-2 text-xs font-semibold">Live readings{data.liveFirstDate ? ` since ${fmtDate(data.liveFirstDate)}` : ''}</h4>
               {hasLive ? <Table rows={data.rows} source="live" /> : (
                 <p className="rounded-md border border-border bg-secondary/20 p-3 text-xs text-muted-foreground">
-                  Recording started{data.liveFirstDate ? ` ${fmtDate(data.liveFirstDate)}` : ' today'} ({data.liveDays} trading day{data.liveDays === 1 ? '' : 's'} so far). The first results appear after a day or two of history - these are real, forward-looking calls, so they take real time to mature.
+                  Recording started{data.liveFirstDate ? ` ${fmtDate(data.liveFirstDate)}` : ' today'} ({data.liveDays} trading day{data.liveDays === 1 ? '' : 's'} so far). The first results appear after a day or two of history - these are real, forward-looking readings, so they take real time to mature.
                 </p>
               )}
             </div>

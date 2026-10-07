@@ -11,9 +11,9 @@ type ConversationRow = Database['public']['Tables']['chat_conversations']['Row']
 interface Msg { role: 'user' | 'assistant'; content: string }
 
 const SUGGESTIONS = [
-  'Top 3 buy signals right now',
+  'Strongest bullish readings right now',
   'Show me the news on my portfolio',
-  'What stocks would round out my portfolio?',
+  'How is my portfolio allocated?',
   'What does Sector Rotation show?',
   'Any unusual insider activity?',
   'Compare TSLA vs NVDA fundamentals',

@@ -32,7 +32,7 @@ export const MarketOverview = () => {
       },
       { label: 'Top Gainer', value: topGainer.symbol, name: topGainer.name, sub: `+${topGainer.changePercent.toFixed(2)}%`, icon: <TrendingUp className="h-4 w-4" />, color: 'text-signal-buy' },
       { label: 'Top Loser', value: topLoser.symbol, name: topLoser.name, sub: `${topLoser.changePercent.toFixed(2)}%`, icon: <TrendingDown className="h-4 w-4" />, color: 'text-signal-sell' },
-      { label: 'Watching', value: String(stocks.length), name: undefined, sub: universe === 'top50' ? 'S&P Top 50 stocks' : 'stocks', icon: <Eye className="h-4 w-4" /> },
+      { label: 'Watching', value: String(stocks.length), name: undefined, sub: universe === 'top50' ? 'largest U.S. stocks' : 'stocks', icon: <Eye className="h-4 w-4" /> },
     ];
   }, [data, filter]);
 

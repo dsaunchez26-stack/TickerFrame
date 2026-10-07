@@ -108,7 +108,7 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
   }
 
   // --- Top signals right now ---
-  if (t.indexOf("buy signal") !== -1 || t.indexOf("top pick") !== -1 || t.indexOf("top 3") !== -1 || t.indexOf("best stock") !== -1 || t.indexOf("best setup") !== -1) {
+  if (t.indexOf("buy signal") !== -1 || t.indexOf("bullish") !== -1 || t.indexOf("top pick") !== -1 || t.indexOf("top 3") !== -1 || t.indexOf("best stock") !== -1 || t.indexOf("best setup") !== -1) {
     return await topSignals(supabase);
   }
 
@@ -124,7 +124,7 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
   }
 
   // --- Portfolio fit / diversification ---
-  if ((t.indexOf("portfolio") !== -1 || t.indexOf("round out") !== -1 || t.indexOf("diversif") !== -1) && t.indexOf("news") === -1) {
+  if ((t.indexOf("portfolio") !== -1 || t.indexOf("alloc") !== -1 || t.indexOf("round out") !== -1 || t.indexOf("diversif") !== -1) && t.indexOf("news") === -1) {
     return await portfolioFit(supabase, userId);
   }
 
@@ -139,9 +139,9 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
     { test: t.indexOf("chart") !== -1 || t.indexOf("candlestick") !== -1 || t.indexOf("history") !== -1,
       reply: "Every stock's Price Chart has 1D/3D/1W views from real intraday history, plus 1M/3M/1Y as daily closes accumulate (no historical backfill exists, so those fill in for real over time). Toggle candlesticks vs. a line view and Bollinger Bands from any chart." },
     { test: t.indexOf("rsi") !== -1 || t.indexOf("relative strength") !== -1,
-      reply: "RSI measures how overbought or oversold a stock is, 0-100. Below 35 with price still above its 20-day average can flag a bounce setup here; above 68 flags overbought. It's one of two conditions (with MACD momentum) behind this site's buy/sell signal." },
+      reply: "RSI measures how overbought or oversold a stock is, 0-100. At or under 30 is generally called oversold and at or over 70 overbought. Here it's one of several inputs - alongside trend and MACD momentum - to the bullish/neutral/bearish reading, and it describes recent price action rather than predicting what comes next." },
     { test: t.indexOf("macd") !== -1,
-      reply: "MACD compares a fast and slow moving average to gauge momentum. This site checks MACD's own signal line before firing a buy or sell - RSI alone can stay 'oversold' through a real downtrend, so requiring MACD agreement cuts down on that false-positive pattern." },
+      reply: "MACD compares a fast and slow moving average to gauge momentum. This site checks whether MACD is above or below its own signal line (building or fading momentum) and counts it as one input to the bullish/neutral/bearish reading." },
     { test: t.indexOf("moving average") !== -1 || /\bsma\b/.test(t) || /\bema\b/.test(t),
       reply: "The moving average on each chart adapts its period to how much history is available, so it's meaningful even on a short intraday series instead of a fixed period that'd be blank at the start." },
     { test: t.indexOf("bollinger") !== -1,
@@ -161,7 +161,7 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
     { test: t.indexOf("small cap") !== -1 || t.indexOf("small-cap") !== -1,
       reply: "The Small-Cap Value screen filters to roughly $300M-$2B market cap and blends sector-relative valuation with Balance Sheet and Growth scores. Its Strict Value Filters toggle (on by default) goes further, requiring P/S under 2x, debt-to-equity under 0.5, and a positive net margin as hard cutoffs -- not just 'cheap and small' but 'cheap, small, profitable, and low-debt.'" },
     { test: t.indexOf("short") !== -1 && (t.indexOf("candidate") !== -1 || t.indexOf("squeeze") !== -1),
-      reply: "Short Candidates pairs a weak Balance Sheet score with an overbought technical reading. It flags the real risk up front: weak-fundamentals stocks that are heavily shorted are exactly the setups most prone to squeezes." },
+      reply: "Weak Balance Sheets pairs a weak Balance Sheet score with an overbought technical reading. It flags the real risk up front: weak-fundamentals stocks that are heavily shorted are exactly the setups most prone to squeezes." },
     { test: t.indexOf("iv rank") !== -1 || t.indexOf("iv/rv") !== -1 || t.indexOf("implied vol") !== -1,
       reply: "IV Rank shows how rich an option's current implied volatility is relative to that stock's own recent IV history. IV/RV compares it to the stock's actual realized volatility instead - above 1x means the options market is pricing in more movement than the stock has actually been making." },
     { test: t.indexOf("covered call") !== -1,
@@ -194,8 +194,8 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
       reply: "The Performance page auto-tracks every pick you've added against its target and stop, so you can see real outcomes over time." },
     { test: t.indexOf("what can you do") !== -1 || t.indexOf("what can this") !== -1 || t.indexOf("features") !== -1,
       reply: "Quite a bit: live stock signals with RSI/MACD/patterns, an options scanner and income-strategy screens, futures quotes and portfolio tracking, fundamentals-based value screens (Sector Rotation, Dividend Income), insider-activity tracking, a portfolio tracker with auto-tracked performance, a stock/option/futures risk calculator, and Slack alerts. Ask about any of those, or a specific ticker." },
-    { test: (t.indexOf("should i buy") !== -1 || t.indexOf("should i sell") !== -1 || t.indexOf("guarantee") !== -1),
-      reply: "I can show you what the data says - score, signal, valuation versus sector - but I can't tell you whether to actually buy or sell. This site is research and education only, not financial advice." },
+    { test: (t.indexOf("should i buy") !== -1 || t.indexOf("should i sell") !== -1 || t.indexOf("what should i") !== -1 || t.indexOf("what to buy") !== -1 || t.indexOf("what to sell") !== -1 || t.indexOf("recommend") !== -1 || t.indexOf("guarantee") !== -1),
+      reply: "I can show you what the data says - the bullish/bearish reading, scores, valuation versus sector - but I can't tell you what to buy or sell, and nothing here is tailored to your situation. This site is research and education only, not financial advice." },
   ];
 
   const hit = docs.find((d) => d.test);
@@ -213,7 +213,7 @@ async function tickerSnapshot(supabase: ReturnType<typeof createClient>, ticker:
 
   const parts = [
     `${ticker} is at $${Number(cache.price).toFixed(2)} (${fmtPct(cache.change_percent !== null ? Number(cache.change_percent) : null)} today).`,
-    `RSI ${cache.rsi !== null ? Number(cache.rsi).toFixed(1) : "n/a"}, MACD ${cache.macd !== null ? Number(cache.macd).toFixed(3) : "n/a"}, signal: ${cache.signal ?? "hold"}.`,
+    `RSI ${cache.rsi !== null ? Number(cache.rsi).toFixed(1) : "n/a"}, MACD ${cache.macd !== null ? Number(cache.macd).toFixed(3) : "n/a"}, reading: ${cache.signal === "buy" ? "bullish" : cache.signal === "sell" ? "bearish" : "neutral"}.`,
   ];
   if (cache.pattern && cache.pattern !== "consolidation") parts.push(`Pattern detected: ${cache.pattern}.`);
   if (fund) parts.push(`Sector: ${broadSector(ticker, fund.sector)}. Balance Sheet ${fund.balance_sheet_score}, Growth ${fund.growth_score}.`);
@@ -233,10 +233,10 @@ async function compareTickers(supabase: ReturnType<typeof createClient>, a: stri
 }
 
 async function topSignals(supabase: ReturnType<typeof createClient>): Promise<string> {
-  const { data: buys } = await supabase.from("stock_cache").select("symbol, rsi, macd, pattern").eq("signal", "buy").order("rsi", { ascending: true }).limit(3);
-  if (!buys || buys.length === 0) return "Nothing is clearing a full buy signal (RSI oversold + MACD confirmation) right now - that's normal outside of real pullbacks. Stock Signals always has the live, ranked list.";
-  const lines = buys.map((r) => `${r.symbol} (RSI ${r.rsi !== null ? Number(r.rsi).toFixed(1) : "n/a"}${r.pattern && r.pattern !== "consolidation" ? `, ${r.pattern}` : ""})`);
-  return `Live buy signals right now: ${lines.join(", ")}. Full ranked list is on Stock Signals.`;
+  const { data: bulls } = await supabase.from("stock_cache").select("symbol, rsi, signal_score, pattern").eq("signal", "buy").order("signal_score", { ascending: false }).limit(3);
+  if (!bulls || bulls.length === 0) return "No stock is reading clearly bullish right now. The Top 50 and Stocks pages show every stock's current reading and score.";
+  const lines = bulls.map((r) => `${r.symbol} (score ${r.signal_score !== null && r.signal_score > 0 ? "+" : ""}${r.signal_score ?? "n/a"}, RSI ${r.rsi !== null ? Number(r.rsi).toFixed(1) : "n/a"}${r.pattern && r.pattern !== "consolidation" ? `, ${r.pattern}` : ""})`);
+  return `Strongest bullish readings right now: ${lines.join(", ")}. That describes what the indicators show today - it's not a recommendation to buy, and the full list is on the Stocks pages.`;
 }
 
 async function insiderActivity(supabase: ReturnType<typeof createClient>, userId: string | null): Promise<string> {
@@ -280,23 +280,36 @@ async function newsForUser(supabase: ReturnType<typeof createClient>, userId: st
 }
 
 async function portfolioFit(supabase: ReturnType<typeof createClient>, userId: string | null): Promise<string> {
-  if (!userId) return "Sign in and ask again to get this scoped to your actual holdings - in general, the Quality Screen and Sector Rotation are the two screens worth cross-referencing against whatever sectors you're already concentrated in.";
+  if (!userId) return "Sign in and ask again to see how your own holdings are spread across asset classes and sectors - the Portfolio page also shows this under Asset allocation.";
 
-  const { data: positions } = await supabase.from("portfolio").select("symbol").eq("user_id", userId);
-  const heldSymbols = Array.from(new Set((positions ?? []).map((p) => p.symbol)));
-  if (heldSymbols.length === 0) return "You don't have any tracked portfolio positions yet - add some on the Portfolio page and ask again.";
+  const { data: positions } = await supabase.from("portfolio").select("symbol, quantity, buy_price").eq("user_id", userId);
+  const held = positions ?? [];
+  if (held.length === 0) return "You don't have any tracked portfolio positions yet - add some on the Portfolio page and ask again.";
 
-  const { data: allFund } = await supabase.from("stock_fundamentals").select("symbol, sector, balance_sheet_score, growth_score");
-  const rows = allFund ?? [];
-  const heldSectors = new Set(rows.filter((r) => heldSymbols.includes(r.symbol)).map((r) => broadSector(r.symbol, r.sector)));
+  const symbols = Array.from(new Set(held.map((p) => p.symbol)));
+  const [{ data: cache }, { data: fund }] = await Promise.all([
+    supabase.from("stock_cache").select("symbol, price, asset_class").in("symbol", symbols),
+    supabase.from("stock_fundamentals").select("symbol, sector").in("symbol", symbols),
+  ]);
+  const priceBy = new Map((cache ?? []).map((r) => [r.symbol, Number(r.price)]));
+  const classBy = new Map((cache ?? []).map((r) => [r.symbol, r.asset_class as string]));
+  const sectorRaw = new Map((fund ?? []).map((r) => [r.symbol, r.sector as string | null]));
 
-  const candidates = rows
-    .filter((r) => !heldSymbols.includes(r.symbol) && !heldSectors.has(broadSector(r.symbol, r.sector)))
-    .filter((r) => r.balance_sheet_score >= 60 && r.growth_score >= 55)
-    .sort((a, b) => (b.balance_sheet_score + b.growth_score) - (a.balance_sheet_score + a.growth_score))
-    .slice(0, 3);
-
-  if (candidates.length === 0) return "Your tracked holdings already span most of the sectors with strong-scoring names right now, so nothing obviously underrepresented stood out.";
-  const lines = candidates.map((c) => `${c.symbol} (${broadSector(c.symbol, c.sector)}, Balance Sheet ${c.balance_sheet_score}, Growth ${c.growth_score})`);
-  return `Your holdings don't currently touch ${Array.from(heldSectors).length ? "some sectors that" : "sectors that"} score well elsewhere. A few names outside your existing sector exposure that screen well: ${lines.join(", ")}.`;
+  let total = 0;
+  const byClass = new Map<string, number>();
+  const bySector = new Map<string, number>();
+  for (const p of held) {
+    const value = (priceBy.get(p.symbol) ?? Number(p.buy_price)) * Number(p.quantity);
+    total += value;
+    const cls = classBy.get(p.symbol) ?? "Equity";
+    byClass.set(cls, (byClass.get(cls) ?? 0) + value);
+    if (cls === "Equity") {
+      const sec = broadSector(p.symbol, sectorRaw.get(p.symbol) ?? null);
+      bySector.set(sec, (bySector.get(sec) ?? 0) + value);
+    }
+  }
+  if (total <= 0) return "I couldn't price your holdings right now - try again after the next price refresh.";
+  const fmt = (m: Map<string, number>) => [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k === "Equity" ? "individual stocks" : k} ${((v / total) * 100).toFixed(0)}%`).join(", ");
+  const sectors = [...bySector.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k} ${((v / total) * 100).toFixed(0)}%`).join(", ");
+  return `By value, your tracked holdings are: ${fmt(byClass)}.${sectors ? ` Largest stock sectors: ${sectors}.` : ""} This just describes your current mix - it isn't a suggestion about what to hold. The Portfolio page's Asset allocation card shows the same breakdown.`;
 }
