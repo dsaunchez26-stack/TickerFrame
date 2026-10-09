@@ -138,7 +138,7 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
   if (apiKey && userId) {
     const ai = await askAssistant({
       db: supabase, userId, history: messages, helpers: { portfolioFit, insiderActivity }, apiKey,
-      model: Deno.env.get("ASSISTANT_MODEL") ?? "claude-opus-5-5",
+      model: Deno.env.get("ASSISTANT_MODEL") ?? "claude-haiku-5-5",
     });
     if (ai) return ai;
   }

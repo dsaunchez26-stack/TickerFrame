@@ -234,7 +234,8 @@ export async function askAssistant(args: {
   };
 
   try {
-    let useFallback = true;
+    // Server-side refusal fallback exists for the larger models; Haiku has none.
+    let useFallback = !/haiku/i.test(model);
     for (let round = 0; round < 5; round++) {
       let response: Anthropic.Beta.BetaMessage;
       try {
