@@ -13,7 +13,8 @@ interface Msg { role: 'user' | 'assistant'; content: string }
 const SUGGESTIONS = [
   'Strongest bullish readings right now',
   'Show me the news on my portfolio',
-  'How is my portfolio allocated?',
+  'How do the bond ETFs the site tracks compare?',
+  'Explain what the put/call ratio says today',
   'What does Sector Rotation show?',
   'Any unusual insider activity?',
   'Compare TSLA vs NVDA fundamentals',

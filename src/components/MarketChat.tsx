@@ -11,6 +11,7 @@ interface Msg { role: 'user' | 'assistant'; content: string }
 
 const DEFAULT_SUGGESTIONS = [
   'Strongest bullish readings right now',
+  'Compare the bond ETFs the site tracks',
   'How is AAPL performing?',
   'Any unusual insider activity?',
   'Compare TSLA vs NVDA fundamentals',

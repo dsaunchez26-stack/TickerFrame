@@ -44,7 +44,7 @@ const Terms = () => (
     </S>
 
     <S title="8. Automated assistant">
-      <p>The in-app assistant answers questions using fixed rules and the same data shown elsewhere on the Service. It can be wrong or incomplete, it does not know your situation, and it is not advice. It declines to tell you what to buy or sell.</p>
+      <p>The in-app assistant is powered by an artificial-intelligence language model that is given the same data shown elsewhere on the Service. It can be wrong, incomplete or out of date, it does not know your situation, and its answers are general information, not advice. It is instructed not to recommend what to buy or sell, and every answer carries a not-financial-advice notice - but you should not rely on it for any financial decision. Questions are limited per day.</p>
     </S>
 
     <S title="9. Intellectual property and third-party names">

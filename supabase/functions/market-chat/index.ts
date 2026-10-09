@@ -2,16 +2,16 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { TRACKED_TICKERS } from "../_shared/symbols.ts";
 import { broadSector } from "../_shared/sectorMapping.ts";
+import { askAssistant } from "./assistant.ts";
 
-// A real, working replacement for a "market-chat" function that never
-// existed at all -- MarketChat.tsx (the floating widget) has called this
-// endpoint since it was written, and every message has failed with a 404
-// the whole time. There's no LLM API key configured anywhere in this
-// project, so this deliberately isn't a general-purpose language model:
-// it's a rule-based assistant that recognizes a fixed set of intents
-// (a tracked ticker's current reading, portfolio questions, feature
-// explanations) and answers from this site's own real, live data -- never
-// fabricated numbers, never a guess at what an LLM might have said.
+// Two layers. When ANTHROPIC_API_KEY is set (and the caller is signed in) an AI
+// model answers free-form questions, using tools that read this site's own
+// live data, a strict system prompt that forbids recommendations, a regex
+// backstop on every answer, and a per-user daily limit (see assistant.ts).
+// Without a key -- or if the model errors or refuses -- the original
+// rule-based layer below answers from a fixed set of intents instead, never
+// with fabricated numbers. Every reply, from either layer, ends with a
+// not-financial-advice line.
 
 interface Msg { role: string; content: string }
 
@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
 
   let reply: string;
   try {
-    reply = await buildReply(supabase, userId, text, t);
+    reply = appendDisclaimer(await buildReply(supabase, userId, text, t, messages));
   } catch (e) {
     reply = `Something went wrong looking that up: ${e instanceof Error ? e.message : String(e)}`;
   }
@@ -96,11 +96,19 @@ Deno.serve(async (req) => {
 // readings are. Kept in sync with the Terms, Privacy and Disclaimers pages and
 // checked before every other rule so a question like "delete my portfolio data"
 // reaches the privacy answer instead of the portfolio-allocation one.
+const DISCLAIMER = "Not financial advice - research and education only. Data may be delayed or incomplete.";
+const ALREADY_SAYS_NOT_ADVICE = /not (an? )?(financial|investment) advice|isn't investment advice|nothing on tickerframe is investment advice|nothing here is tailored/i;
+
+// Every reply ends with the disclaimer, unless it already says so itself.
+function appendDisclaimer(reply: string): string {
+  return ALREADY_SAYS_NOT_ADVICE.test(reply) ? reply : `${reply}\n\n${DISCLAIMER}`;
+}
+
 function policyReply(t: string): string | null {
   const has = (...words: string[]) => words.some((w) => t.indexOf(w) !== -1);
 
   if (has("privacy", "my data", "personal data", "personal information", "delete my", "delete account", "delete data", "remove my data", "my portfolio data", "what data", "data do you", "cookie", "do you track", "do you sell", "slack webhook")) {
-    return "Privacy in short: we store your email and (hashed) password, the holdings and alert settings you enter, your Slack webhook URL if you add one, and your assistant history. If the app errors we log the error, page and browser type, and delete those logs after 30 days. There are no ad or analytics trackers, and we don't sell personal information. You can edit or remove holdings and your webhook yourself, and you can permanently delete your whole account and its data under Settings, then Delete account. Full details are on the Privacy Policy page (/privacy).";
+    return "Privacy in short: we store your email and (hashed) password, the holdings and alert settings you enter, your Slack webhook URL if you add one, and your assistant history. Questions you ask me are sent to our AI provider, Anthropic, to generate answers. If the app errors we log the error, page and browser type, and delete those logs after 30 days. There are no ad or analytics trackers, and we don't sell personal information. You can edit or remove holdings and your webhook yourself, and you can permanently delete your whole account and its data under Settings, then Delete account. Full details are on the Privacy Policy page (/privacy).";
   }
   if (has("terms of use", "terms of service", "terms and conditions", "the terms", "your terms") || (has("terms") && has("agree", "accept", "legal"))) {
     return "The Terms of Use (/terms) say, in short: Tickerframe is a research and education tool, not a registered investment adviser or broker, and nothing here is personal advice; data comes from third parties and can be delayed or wrong; you're responsible for your account and decisions; and you agree not to scrape or redistribute the data or present it to others as advice. The Disclaimers page (/legal) covers the risk of loss in more detail.";
@@ -120,9 +128,20 @@ function policyReply(t: string): string | null {
   return null;
 }
 
-async function buildReply(supabase: ReturnType<typeof createClient>, userId: string | null, text: string, t: string): Promise<string> {
+async function buildReply(supabase: ReturnType<typeof createClient>, userId: string | null, text: string, t: string, messages: Msg[]): Promise<string> {
   const policy = policyReply(t);
   if (policy) return policy;
+
+  // Free-form questions go to the AI assistant when it's configured; any
+  // failure (null) falls through to the keyword rules below.
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  if (apiKey && userId) {
+    const ai = await askAssistant({
+      db: supabase, userId, history: messages, helpers: { portfolioFit, insiderActivity }, apiKey,
+      model: Deno.env.get("ASSISTANT_MODEL") ?? "claude-opus-5-5",
+    });
+    if (ai) return ai;
+  }
 
   const tickersMentioned = extractTickers(text);
 
