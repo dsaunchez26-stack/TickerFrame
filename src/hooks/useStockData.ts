@@ -37,6 +37,7 @@ export const useStockData = (category: Category = 'core', scope: Scope = 'equity
           volume: Number(row.volume),
           signal: row.signal as Stock['signal'],
           signalScore: row.signal_score ?? null,
+          hasReading: row.signal_score != null,
           assetClass: row.asset_class ?? 'Equity',
           entry: Number(row.entry),
           exit: Number(row.exit_price),

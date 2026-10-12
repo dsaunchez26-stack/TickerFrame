@@ -94,7 +94,7 @@ export const Top50Table = () => {
                   ) : '-'}
                 </td>
                 <td className="py-2 pr-3 text-right text-muted-foreground">{fmtCap(r.cap)}</td>
-                <td className="py-2 pr-3 text-right">{r.stock ? r.stock.rsi.toFixed(0) : '-'}</td>
+                <td className="py-2 pr-3 text-right">{r.stock?.hasReading ? r.stock.rsi.toFixed(0) : '-'}</td>
                 <td className="py-2 pr-4">{r.stock ? <SignalBadge signal={r.stock.signal} score={r.stock.signalScore} /> : <span className="text-muted-foreground">loading</span>}</td>
               </tr>
             ))}

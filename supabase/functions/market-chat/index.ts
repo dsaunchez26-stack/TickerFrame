@@ -257,15 +257,18 @@ async function buildReply(supabase: ReturnType<typeof createClient>, userId: str
 
 async function tickerSnapshot(supabase: ReturnType<typeof createClient>, ticker: string): Promise<string> {
   const [{ data: cache }, { data: fund }] = await Promise.all([
-    supabase.from("stock_cache").select("price, change_percent, rsi, macd, signal, pattern").eq("symbol", ticker).maybeSingle(),
+    supabase.from("stock_cache").select("price, change_percent, rsi, macd, signal, signal_score, pattern").eq("symbol", ticker).maybeSingle(),
     supabase.from("stock_fundamentals").select("sector, balance_sheet_score, growth_score").eq("symbol", ticker).maybeSingle(),
   ]);
   if (!cache) return `${ticker} hasn't been scanned yet - it may have just been added to the tracked list.`;
 
-  const parts = [
-    `${ticker} is at $${Number(cache.price).toFixed(2)} (${fmtPct(cache.change_percent !== null ? Number(cache.change_percent) : null)} today).`,
-    `RSI ${cache.rsi !== null ? Number(cache.rsi).toFixed(1) : "n/a"}, MACD ${cache.macd !== null ? Number(cache.macd).toFixed(3) : "n/a"}, reading: ${cache.signal === "buy" ? "bullish" : cache.signal === "sell" ? "bearish" : "neutral"}.`,
-  ];
+  const parts = [`${ticker} is at $${Number(cache.price).toFixed(2)} (${fmtPct(cache.change_percent !== null ? Number(cache.change_percent) : null)} today).`];
+  if (cache.signal_score === null || cache.signal_score === undefined) {
+    // Stored RSI/MACD are placeholders until enough price history exists.
+    parts.push("No reading yet - the site is still collecting price history for it (a reading needs about 27 market-hours samples).");
+  } else {
+    parts.push(`RSI ${cache.rsi !== null ? Number(cache.rsi).toFixed(1) : "n/a"}, MACD ${cache.macd !== null ? Number(cache.macd).toFixed(3) : "n/a"}, reading: ${cache.signal === "buy" ? "bullish" : cache.signal === "sell" ? "bearish" : "neutral"} (score ${cache.signal_score}).`);
+  }
   if (cache.pattern && cache.pattern !== "consolidation") parts.push(`Pattern detected: ${cache.pattern}.`);
   if (fund) parts.push(`Sector: ${broadSector(ticker, fund.sector)}. Balance Sheet ${fund.balance_sheet_score}, Growth ${fund.growth_score}.`);
   return parts.join(" ");
@@ -285,7 +288,11 @@ async function compareTickers(supabase: ReturnType<typeof createClient>, a: stri
 
 async function topSignals(supabase: ReturnType<typeof createClient>): Promise<string> {
   const { data: bulls } = await supabase.from("stock_cache").select("symbol, rsi, signal_score, pattern").eq("signal", "buy").order("signal_score", { ascending: false }).limit(3);
-  if (!bulls || bulls.length === 0) return "No stock is reading clearly bullish right now. The Top 50 and Stocks pages show every stock's current reading and score.";
+  if (!bulls || bulls.length === 0) {
+    const { count } = await supabase.from("stock_cache").select("symbol", { count: "exact", head: true }).not("signal_score", "is", null);
+    if (!count) return "Readings are still being rebuilt - they need about 27 market-hours price samples per stock, which accumulate over the first few trading days after downtime or a new listing.";
+    return "No stock is reading clearly bullish right now. The Top 50 and Stocks pages show every stock's current reading and score.";
+  }
   const lines = bulls.map((r) => `${r.symbol} (score ${r.signal_score !== null && r.signal_score > 0 ? "+" : ""}${r.signal_score ?? "n/a"}, RSI ${r.rsi !== null ? Number(r.rsi).toFixed(1) : "n/a"}${r.pattern && r.pattern !== "consolidation" ? `, ${r.pattern}` : ""})`);
   return `Strongest bullish readings right now: ${lines.join(", ")}. That describes what the indicators show today - it's not a recommendation to buy, and the full list is on the Stocks pages.`;
 }

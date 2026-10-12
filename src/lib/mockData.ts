@@ -7,6 +7,8 @@ export interface Stock {
   volume: number;
   signal: 'buy' | 'sell' | 'hold';
   signalScore?: number | null;
+  // false until the stock has enough price history for a real reading; its stored RSI/MACD are meaningless until then.
+  hasReading?: boolean;
   assetClass?: string;
   entry: number;
   exit: number;

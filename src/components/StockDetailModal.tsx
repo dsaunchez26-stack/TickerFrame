@@ -142,7 +142,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
             </div>
             <SignalBreakdown stock={stock} />
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div><div className="text-muted-foreground">MACD</div><div className="font-semibold">{stock.macd.toFixed(3)}</div></div>
+              <div><div className="text-muted-foreground">MACD</div><div className="font-semibold">{stock.hasReading ? stock.macd.toFixed(3) : '-'}</div></div>
               <div><div className="text-muted-foreground">Volume</div><div className="font-semibold">{stock.volume > 0 ? `${(stock.volume / 1e6).toFixed(1)}M` : 'N/A'}</div></div>
             </div>
           </div>

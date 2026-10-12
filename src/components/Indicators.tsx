@@ -18,20 +18,23 @@ export const Indicators = ({ symbol }: Props = {}) => {
     const featured = (symbol ? stocks.find(s => s.symbol === symbol) : null)
       ?? stocks.reduce((a, b) => Math.abs(a.changePercent) > Math.abs(b.changePercent) ? a : b);
 
+    // Before a stock has enough price history for a real reading, its stored
+    // RSI/MACD are meaningless placeholders - show that instead of fake numbers.
+    const ready = featured.hasReading !== false;
     return [
       {
         label: 'RSI (14)',
-        value: featured.rsi.toFixed(1),
-        sub: featured.rsi > 70 ? 'Overbought - caution' : featured.rsi < 30 ? 'Oversold - opportunity' : 'Neutral range',
+        value: ready ? featured.rsi.toFixed(1) : '-',
+        sub: !ready ? 'Collecting price history' : featured.rsi > 70 ? 'Overbought range' : featured.rsi < 30 ? 'Oversold range' : 'Neutral range',
         icon: <TrendingUp className="h-4 w-4" />,
-        status: featured.rsi > 50 ? 'buy' : featured.rsi < 30 ? 'sell' : 'neutral' as const,
+        status: !ready ? 'neutral' : featured.rsi > 50 ? 'buy' : featured.rsi < 30 ? 'sell' : 'neutral' as const,
       },
       {
         label: 'MACD',
-        value: (featured.macd >= 0 ? '+' : '') + featured.macd.toFixed(3),
-        sub: featured.macd > 0 ? 'Bullish crossover' : 'Bearish signal',
+        value: ready ? (featured.macd >= 0 ? '+' : '') + featured.macd.toFixed(3) : '-',
+        sub: !ready ? 'Collecting price history' : featured.macd > 0 ? 'Above zero' : 'Below zero',
         icon: featured.macd > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />,
-        status: featured.macd > 0 ? 'buy' : 'sell' as const,
+        status: !ready ? 'neutral' : featured.macd > 0 ? 'buy' : 'sell' as const,
       },
       {
         label: 'Volume',

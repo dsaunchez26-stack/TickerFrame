@@ -32,7 +32,7 @@ export const TopMovers = () => {
     return [...filter(data.stocks)].sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)).slice(0, 4).map((s) => {
       const isBullish = s.changePercent > 0;
       const swing = Math.abs(s.changePercent) > 5 ? 'Large' : Math.abs(s.changePercent) > 2 ? 'Moderate' : 'Small';
-      return { symbol: s.symbol, name: s.name, price: s.price, changePercent: s.changePercent, direction: isBullish ? 'Long' as const : 'Short' as const, entry: s.price, rsi: s.rsi, swing, volume: s.volume, signal: s.signal, signalScore: s.signalScore, holdDuration: s.holdDuration || 'Swing' };
+      return { symbol: s.symbol, name: s.name, price: s.price, changePercent: s.changePercent, direction: isBullish ? 'Long' as const : 'Short' as const, entry: s.price, rsi: s.hasReading ? s.rsi : null, swing, volume: s.volume, signal: s.signal, signalScore: s.signalScore, holdDuration: s.holdDuration || 'Swing' };
     });
   }, [data, filter]);
 
@@ -92,7 +92,7 @@ export const TopMovers = () => {
 
               <div className="grid grid-cols-3 gap-2 mb-3 text-[10px] cursor-pointer" onClick={() => open(m.symbol)}>
                 <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">Price</span><p className="font-heading font-semibold text-foreground">${m.price.toFixed(2)}</p></div>
-                <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">RSI (14)</span><p className="font-heading font-semibold text-foreground">{m.rsi.toFixed(0)}</p></div>
+                <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">RSI (14)</span><p className="font-heading font-semibold text-foreground">{m.rsi != null ? m.rsi.toFixed(0) : '-'}</p></div>
                 <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">Reading</span><div className="mt-0.5"><SignalBadge signal={m.signal} score={m.signalScore} /></div></div>
               </div>
 

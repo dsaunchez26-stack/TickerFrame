@@ -89,7 +89,7 @@ export const Watchlist = () => {
                         {isBigMover && <Flame className="h-3 w-3 text-orange-400" />}
                         <span className="font-heading text-xs font-semibold text-foreground">{s.symbol}</span>
                         <SignalBadge signal={s.signal} score={s.signalScore} />
-                        <span className="text-[9px] text-muted-foreground" title="14-period RSI: under 30 oversold, over 70 overbought">RSI {s.rsi.toFixed(0)}</span>
+                        {s.hasReading && <span className="text-[9px] text-muted-foreground" title="14-period RSI: under 30 oversold, over 70 overbought">RSI {s.rsi.toFixed(0)}</span>}
                         {isOwned && <span className="rounded-full bg-signal-buy/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-signal-buy">✓</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
