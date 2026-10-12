@@ -172,8 +172,30 @@ function detectPattern(closes: number[]): { pattern: string | null; confidence: 
   return { pattern: null, confidence: 0 };
 }
 
+// US regular session in New York time (9:30-16:00, Mon-Fri), plus a few
+// minutes after the bell so the closing print is captured. Outside it prices
+// don't move, so storing a sample every run just fills the indicator window
+// with identical values -- which flattened every RSI/MACD/SMA reading to zero
+// over a single weekend.
+function nyClock() {
+  const ny = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const minutes = ny.getHours() * 60 + ny.getMinutes();
+  const weekday = ny.getDay() >= 1 && ny.getDay() <= 5;
+  const date = `${ny.getFullYear()}-${String(ny.getMonth() + 1).padStart(2, "0")}-${String(ny.getDate()).padStart(2, "0")}`;
+  return { date, sessionOpen: weekday && minutes >= 9 * 60 + 30 && minutes < 16 * 60 + 5 };
+}
+
+// A reading needs enough history for the 26-period MACD and 14-period RSI to
+// mean anything; below this a stock shows Neutral with no score instead of a
+// fake 0 computed from a handful of identical prices.
+const MIN_SAMPLES_FOR_READING = 27;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const { date: tradeDate, sessionOpen } = nyClock();
+  let force = false;
+  try { force = Boolean((await req.clone().json())?.force); } catch { /* no body */ }
 
   const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
   if (!FINNHUB_API_KEY) {
@@ -187,6 +209,11 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  if (!sessionOpen && !force) {
+    await logCronRun(supabase, "fetch-stock-data", true, 0, "market closed, skipped");
+    return new Response(JSON.stringify({ skipped: "market closed" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
 
   const errors: Array<{ symbol: string; message: string }> = [];
 
@@ -282,9 +309,10 @@ Deno.serve(async (req) => {
     const macdHist = macdHistogram(closes);
 
     const pctB = bollingerPctB(closes);
+    const enoughHistory = closes.length >= MIN_SAMPLES_FOR_READING;
     const points = signalPoints(price, sma20, ema9, rsiVal, macdHist, pctB);
-    const signal = points >= SIGNAL_THRESHOLD_POINTS ? "buy" : points <= -SIGNAL_THRESHOLD_POINTS ? "sell" : "hold";
-    const signalScore = Math.round((points / SIGNAL_MAX_POINTS) * 100);
+    const signal = !enoughHistory ? "hold" : points >= SIGNAL_THRESHOLD_POINTS ? "buy" : points <= -SIGNAL_THRESHOLD_POINTS ? "sell" : "hold";
+    const signalScore = enoughHistory ? Math.round((points / SIGNAL_MAX_POINTS) * 100) : null;
     const entry = signal === "buy" ? price * 0.99 : price;
     const exitPrice = signal === "buy" ? price * 1.08 : price * 0.95;
     const { pattern, confidence: patternConfidence } = detectPattern(closes);
@@ -357,45 +385,44 @@ Deno.serve(async (req) => {
       });
     }
 
-    // One batched insert for every symbol's new sample instead of N separate ones.
-    await supabase.from("stock_price_history").insert(
-      results.map((r) => ({ symbol: r.symbol, price: r.price, volume: r.volume })),
-    );
+    // History, the daily signal log and daily closes are only recorded during
+    // the regular session (a forced after-hours run still refreshes the quotes
+    // above, but must not pollute these with flat, unchanging prices).
+    if (sessionOpen) {
+      // One batched insert for every symbol's new sample instead of N separate ones.
+      await supabase.from("stock_price_history").insert(
+        results.map((r) => ({ symbol: r.symbol, price: r.price, volume: r.volume })),
+      );
 
-    // Daily signal log: today's buy/sell/hold call and the price it was made
-    // at, one row per symbol per weekday (the day's last run wins). Compared
-    // with later prices by signal_track_record() to measure whether the
-    // signal actually predicts anything. Weekends are skipped -- no new
-    // prices, so a row would only duplicate Friday's.
-    const nyNow = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
-    const nyDate = new Date(nyNow);
-    const nyDay = nyDate.getDay();
-    if (nyDay !== 0 && nyDay !== 6) {
-      const tradeDate = `${nyDate.getFullYear()}-${String(nyDate.getMonth() + 1).padStart(2, "0")}-${String(nyDate.getDate()).padStart(2, "0")}`;
-      await supabase.from("signal_history").upsert(
-        results.map((r) => ({ symbol: r.symbol, trade_date: tradeDate, signal: r.signal, signal_score: r.signal_score, price: r.price, source: "live" })),
-        { onConflict: "symbol,trade_date,source" },
+      // Daily signal log: the day's reading and the price it was made at, one
+      // row per symbol per trading day (the day's last run wins), compared with
+      // later prices by signal_track_record(). Stocks without enough history
+      // yet have no real reading, so they're not logged.
+      const logged = results.filter((r) => r.signal_score !== null);
+      if (logged.length > 0) {
+        await supabase.from("signal_history").upsert(
+          logged.map((r) => ({ symbol: r.symbol, trade_date: tradeDate, signal: r.signal, signal_score: r.signal_score, price: r.price, source: "live" })),
+          { onConflict: "symbol,trade_date,source" },
+        );
+      }
+
+      // One row per symbol per trading day, upserted on every run -- the last
+      // run of the day leaves roughly the closing price, which is what the
+      // 1M+ charts use (Finnhub's free tier has no historical daily candles,
+      // so this only accumulates going forward). Keyed by the New York date,
+      // not UTC, so evening runs don't create a phantom next-day row.
+      await supabase.from("daily_closes").upsert(
+        results.map((r) => ({ symbol: r.symbol, trade_date: tradeDate, close_price: r.price, volume: r.volume, updated_at: new Date().toISOString() })),
+        { onConflict: "symbol,trade_date" },
       );
     }
-
-    // One row per symbol per trading day, upserted on every run -- by the
-    // time a given day's cron runs stop (market closes), whatever was the
-    // last price fetched that day is left sitting in the row, which
-    // approximates a real closing price closely enough for a daily chart.
-    // This is the only way longer-horizon (1M+) charts can ever show real
-    // data: Finnhub's free tier doesn't include historical daily candles,
-    // so there's nothing to backfill with -- this starts accumulating
-    // today and the frontend hides those views until there's enough of it.
-    const today = new Date().toISOString().slice(0, 10);
-    await supabase.from("daily_closes").upsert(
-      results.map((r) => ({ symbol: r.symbol, trade_date: today, close_price: r.price, volume: r.volume, updated_at: new Date().toISOString() })),
-      { onConflict: "symbol,trade_date" },
-    );
   }
 
   // Keep price history bounded: we only ever read the most recent 60 samples
-  // per symbol, so anything older than 7 days is pure dead weight.
-  const cutoff = new Date(Date.now() - 7 * 86400_000).toISOString();
+  // per symbol. Samples are only recorded during market hours (~8-13 a day), so
+  // 60 of them span about a week of trading; 21 days leaves room to survive an
+  // outage (a 7-day cutoff wiped the whole window after an 8-day one).
+  const cutoff = new Date(Date.now() - 21 * 86400_000).toISOString();
   await supabase.from("stock_price_history").delete().lt("recorded_at", cutoff);
 
   await logCronRun(supabase, "fetch-stock-data", true, results.length, errors.length ? `${errors.length} symbol errors` : null);

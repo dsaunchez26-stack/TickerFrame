@@ -7,6 +7,22 @@ const pointColor = (p: number | null) => (p === null ? 'text-muted-foreground' :
 // The algorithm's call next to the evidence behind it: the user sees the same
 // RSI, trend and momentum readings the score is built from and can overrule it.
 export const SignalBreakdown = ({ stock }: { stock: Stock }) => {
+  // No score means the stock hasn't collected enough price history yet (newly
+  // added, or history was rebuilt after an outage) - showing five zero-point
+  // factors would look like a real reading when it isn't one.
+  if (stock.signalScore == null) {
+    return (
+      <div className="rounded-lg border border-border bg-secondary/20 p-3 text-xs">
+        <div className="mb-1 flex items-center justify-between">
+          <span className="font-semibold">Why this reading</span>
+          <SignalBadge signal={stock.signal} />
+        </div>
+        <p className="text-muted-foreground">
+          Not enough price history yet to compute a reading for {stock.symbol}. Readings appear once about 27 market-hours price samples have been collected, so this fills in over the first few trading days. Until then it shows as Neutral.
+        </p>
+      </div>
+    );
+  }
   const factors = signalFactors(stock);
   const rsiPct = Math.min(Math.max(stock.rsi, 0), 100);
 

@@ -158,7 +158,6 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   { symbol: "DOCU", name: "DocuSign Inc" },
   { symbol: "ZM", name: "Zoom Communications Inc" },
   { symbol: "RBLX", name: "Roblox Corp" },
-  { symbol: "EA", name: "Electronic Arts Inc" },
   { symbol: "TTWO", name: "Take-Two Interactive Software" },
   { symbol: "APP", name: "AppLovin Corp" },
   { symbol: "ANET", name: "Arista Networks Inc" },
@@ -307,7 +306,6 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   { symbol: "SPG", name: "Simon Property Group Inc" },
   { symbol: "DLR", name: "Digital Realty Trust Inc" },
   { symbol: "WELL", name: "Welltower Inc" },
-  { symbol: "AVB", name: "AvalonBay Communities Inc" },
   { symbol: "EQR", name: "Equity Residential" },
   { symbol: "VTR", name: "Ventas Inc" },
   // Communication services / media
@@ -649,7 +647,6 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   { symbol: "BRO", name: "Brown & Brown Inc" },
   { symbol: "ERIE", name: "Erie Indemnity Co" },
   { symbol: "WRB", name: "W.R. Berkley Corp" },
-  { symbol: "RE", name: "Everest Group Ltd" },
   { symbol: "MKL", name: "Markel Group Inc" },
   // Industrials
   { symbol: "WAB", name: "Westinghouse Air Brake Technologies" },
@@ -733,7 +730,6 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   { symbol: "CHRD", name: "Chord Energy Corp" },
   { symbol: "CLF", name: "Cleveland-Cliffs Inc" },
   { symbol: "CLSK", name: "CleanSpark Inc" },
-  { symbol: "CMA", name: "Comerica Inc" },
   { symbol: "CMC", name: "Commercial Metals Co" },
   { symbol: "COLM", name: "Columbia Sportswear Co" },
   { symbol: "CRDO", name: "Credo Technology Group Holding Ltd" },
@@ -778,7 +774,6 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   { symbol: "INSP", name: "Inspire Medical Systems Inc" },
   { symbol: "IONS", name: "Ionis Pharmaceuticals Inc" },
   { symbol: "JBLU", name: "JetBlue Airways Corp" },
-  { symbol: "JHG", name: "Janus Henderson Group plc" },
   { symbol: "JOBY", name: "Joby Aviation Inc" },
   { symbol: "KGC", name: "Kinross Gold Corp" },
   { symbol: "KKR", name: "KKR & Co Inc" },
@@ -834,7 +829,6 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   { symbol: "SF", name: "Stifel Financial Corp" },
   { symbol: "SM", name: "SM Energy Co" },
   { symbol: "SMCI", name: "Super Micro Computer Inc" },
-  { symbol: "SNV", name: "Synovus Financial Corp" },
   { symbol: "SOUN", name: "SoundHound AI Inc" },
   { symbol: "SQM", name: "Sociedad Quimica y Minera de Chile SA" },
   { symbol: "SSB", name: "South State Corp" },
@@ -863,7 +857,6 @@ export const TRACKED_SYMBOLS: TrackedSymbol[] = [
   { symbol: "WWD", name: "Woodward Inc" },
   { symbol: "WY", name: "Weyerhaeuser Co" },
   { symbol: "XPO", name: "XPO Inc" },
-  { symbol: "ZI", name: "ZoomInfo Technologies Inc" },
   // Berkshire Hathaway: ~14th-largest S&P 500 company by market cap and
   // previously the one top-50 name missing from the universe. Finnhub
   // quotes the B shares as "BRK.B".
