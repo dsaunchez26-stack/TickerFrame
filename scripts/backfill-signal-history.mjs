@@ -33,7 +33,7 @@ for (const { symbol, p } of rows) {
     const closes = [...prior, price];
     const s20 = sma(closes, 20) || price, e9 = ema(closes, 9) || price;
     const pts = points(price, s20, e9, rsi(closes), macdHist(closes), pctB(closes));
-    out.push({ symbol, date, signal: pts >= 5 ? 'buy' : pts <= -5 ? 'sell' : 'hold', score: Math.round((pts / 9) * 100), price });
+    out.push({ symbol, date, signal: pts >= 5 ? 'buy' : pts <= -5 ? 'sell' : 'hold', score: Math.round((pts / 8) * 100), price });
   }
 }
 

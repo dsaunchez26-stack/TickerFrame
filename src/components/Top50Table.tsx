@@ -71,8 +71,8 @@ export const Top50Table = () => {
               <th className="py-2 pr-3">Company</th>
               <th className="py-2 pr-3 text-right">Price</th>
               <th className="py-2 pr-3 text-right">Today</th>
-              <th className="py-2 pr-3 text-right">Market cap</th>
-              <th className="py-2 pr-3 text-right">RSI</th>
+              <th className="hidden py-2 pr-3 text-right sm:table-cell">Market cap</th>
+              <th className="hidden py-2 pr-3 text-right sm:table-cell">RSI</th>
               <th className="py-2 pr-4">Reading</th>
             </tr>
           </thead>
@@ -93,8 +93,8 @@ export const Top50Table = () => {
                     </span>
                   ) : '-'}
                 </td>
-                <td className="py-2 pr-3 text-right text-muted-foreground">{fmtCap(r.cap)}</td>
-                <td className="py-2 pr-3 text-right">{r.stock?.hasReading ? r.stock.rsi.toFixed(0) : '-'}</td>
+                <td className="hidden py-2 pr-3 text-right text-muted-foreground sm:table-cell">{fmtCap(r.cap)}</td>
+                <td className="hidden py-2 pr-3 text-right sm:table-cell">{r.stock?.hasReading ? r.stock.rsi.toFixed(0) : '-'}</td>
                 <td className="py-2 pr-4">{r.stock ? <SignalBadge signal={r.stock.signal} score={r.stock.signalScore} /> : <span className="text-muted-foreground">loading</span>}</td>
               </tr>
             ))}

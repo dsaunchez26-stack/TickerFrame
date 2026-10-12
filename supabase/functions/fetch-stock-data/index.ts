@@ -95,7 +95,7 @@ function bollingerPctB(values: number[], period = 20, numStdDev = 2): number | n
   return (slice[slice.length - 1] - lower) / (upper - lower);
 }
 
-// Composite technical score, in points (max +/-9), mapped to buy/sell/hold.
+// Composite technical score, in points (max +/-8), mapped to buy/sell/hold.
 // The previous rule required RSI < 35 AND price >= its 20-SMA AND positive
 // MACD momentum for a buy -- oversold and above-trend are close to mutually
 // exclusive, so in practice no stock ever qualified (live: 0 buys of 783, 773
@@ -108,7 +108,8 @@ function bollingerPctB(values: number[], period = 20, numStdDev = 2): number | n
 // Points >= BUY_POINTS is a buy, <= -BUY_POINTS a sell, otherwise hold. The
 // threshold of 5 was chosen so roughly a fifth of the universe reads buy and
 // a fifth sell on live data, instead of ~99% hold.
-const SIGNAL_MAX_POINTS = 9;
+// 2 + 1 + 2 + 2 + 1: the most any one stock can earn, so the score spans -100..+100.
+const SIGNAL_MAX_POINTS = 8;
 const SIGNAL_THRESHOLD_POINTS = 5;
 
 function signalPoints(price: number, sma20: number, ema9: number, rsiVal: number, macdHist: number, pctB: number | null): number {

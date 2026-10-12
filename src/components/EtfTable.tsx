@@ -50,7 +50,7 @@ export const EtfTable = () => {
                   <th className="px-4 py-2">Fund</th>
                   <th className="py-2 pr-3 text-right">Price</th>
                   <th className="py-2 pr-3 text-right">Today</th>
-                  <th className="py-2 pr-3 text-right">RSI</th>
+                  <th className="hidden py-2 pr-3 text-right sm:table-cell">RSI</th>
                   <th className="py-2 pr-4">Signal</th>
                 </tr>
               </thead>
@@ -68,7 +68,7 @@ export const EtfTable = () => {
                         {s.changePercent > 0 ? '+' : ''}{s.changePercent.toFixed(2)}%
                       </span>
                     </td>
-                    <td className="py-2 pr-3 text-right">{s.hasReading ? s.rsi.toFixed(0) : '-'}</td>
+                    <td className="hidden py-2 pr-3 text-right sm:table-cell">{s.hasReading ? s.rsi.toFixed(0) : '-'}</td>
                     <td className="py-2 pr-4"><SignalBadge signal={s.signal} score={s.signalScore} /></td>
                   </tr>
                 ))}

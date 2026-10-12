@@ -33,7 +33,7 @@ const indicators = (closesIn, price) => {
   const s20 = sma(closes, 20) || price, e9 = ema(closes, 9) || price, r = rsi(closes), h = macdHist(closes), b = pctB(closes);
   const pts = points(price, s20, e9, r, h, b);
   const signal = pts >= 5 ? 'buy' : pts <= -5 ? 'sell' : 'hold';
-  return { signal, signal_score: Math.round((pts / 9) * 100), rsi: r, macd: ema(closes, 12) - ema(closes, 26), macd_histogram: h, sma20: s20, ema9: e9, bollinger_pct_b: b };
+  return { signal, signal_score: Math.round((pts / 8) * 100), rsi: r, macd: ema(closes, 12) - ema(closes, 26), macd_histogram: h, sma20: s20, ema9: e9, bollinger_pct_b: b };
 };
 
 const yahoo = async (sym, range, interval) => {

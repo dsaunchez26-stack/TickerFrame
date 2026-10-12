@@ -42,7 +42,7 @@ const Methodology = () => (
         <CardTitle className="text-base">How the bullish / bearish reading works</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
-        <p>Each stock gets a composite technical score built from points, not a single all-or-nothing rule. Every condition below adds or subtracts points, up to +9 or -9 in total, shown on the badge as a score from -100 to +100:</p>
+        <p>Each stock gets a composite technical score built from points, not a single all-or-nothing rule. Every condition below adds or subtracts points, up to +8 or -8 in total, shown on the badge as a score from -100 to +100:</p>
         <ul className="ml-4 list-disc space-y-1">
           <li><strong className="text-foreground">Trend:</strong> price above (+2) or below (-2) its 20-period SMA, and its 9-period EMA above (+1) or below (-1) that SMA.</li>
           <li><strong className="text-foreground">Momentum:</strong> MACD above (+2) or below (-2) its own signal line.</li>
