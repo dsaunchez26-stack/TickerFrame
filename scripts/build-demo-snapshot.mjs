@@ -69,7 +69,8 @@ for (const e of extra) {
   const ind = indicators(closes.slice(0, -1), price);
   const row = {
     symbol: e.symbol, name: e.name, price, change: price - prev, change_percent: ((price - prev) / prev) * 100,
-    volume: pairs[pairs.length - 1].v ?? 0, entry: ind.signal === 'buy' ? price * 0.99 : price, exit_price: ind.signal === 'buy' ? price * 1.08 : price * 0.95,
+    volume: 0, // the live feed (Finnhub free tier) reports no volume; match it so the dashboard doesn't treat these rows as the only ones with volume data
+     entry: ind.signal === 'buy' ? price * 0.99 : price, exit_price: ind.signal === 'buy' ? price * 1.08 : price * 0.95,
     pattern: null, pattern_confidence: null, prev_close: prev, category: 'core', asset_class: e.assetClass, hold_duration: 'Swing', fetched_at: nowIso, ...ind,
   };
   const i = stock_cache.findIndex((r) => r.symbol === e.symbol);
