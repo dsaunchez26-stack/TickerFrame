@@ -12,7 +12,9 @@ export const useSymbolNames = () => {
     queryKey: ['symbol-names'],
     queryFn: async () => {
       const { data } = await supabase.from('stock_cache').select('symbol, name');
-      return new Map((data ?? []).map(r => [r.symbol, r.name as string]).filter(([, name]) => !!name));
+      const entries: [string, string][] = [];
+      for (const r of data ?? []) if (r.name) entries.push([r.symbol, r.name as string]);
+      return new Map(entries);
     },
     staleTime: 30 * 60_000,
     gcTime: 60 * 60_000,

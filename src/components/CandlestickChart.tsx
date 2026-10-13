@@ -17,6 +17,9 @@ const BAND_COLOR = '#8b5cf6';
 type ChartType = 'candlestick' | 'line';
 
 interface RowData extends Candle {
+  wickRange: [number, number];
+  bodyRange: [number, number];
+  up: boolean;
   ma: number | null;
   bbUpper: number | null;
   bbLower: number | null;
