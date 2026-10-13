@@ -4,6 +4,7 @@
 //   node scripts/build-demo-snapshot.mjs
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import { trimSnapshot } from './trim-demo-snapshot.mjs';
 
 const q = (sql) => {
   const out = execFileSync('npx', ['supabase', 'db', 'query', '--linked', sql], { maxBuffer: 1 << 30, encoding: 'utf8' });
@@ -125,6 +126,6 @@ const snapshot = {
   optionsAggregate, bestPuts, signalTrackRecord,
   futures: { rows: futureRows, quotesError: null, missingProducts: [], source: 'demo-snapshot', fetchedAt: nowIso },
 };
-fs.writeFileSync('src/demo/snapshot.json', JSON.stringify(snapshot));
+fs.writeFileSync('src/demo/snapshot.json', JSON.stringify(trimSnapshot(snapshot)));
 const dist = {}; for (const r of stock_cache) dist[r.signal] = (dist[r.signal] ?? 0) + 1;
 console.log('wrote src/demo/snapshot.json', (fs.statSync('src/demo/snapshot.json').size / 1e6).toFixed(2), 'MB; signals', JSON.stringify(dist), '; stock_cache rows', stock_cache.length);
