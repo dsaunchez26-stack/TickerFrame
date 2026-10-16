@@ -39,13 +39,18 @@ export const StockSearchBar = () => {
         ref={inputRef}
         value={value}
         onChange={e => setValue(e.target.value.toUpperCase())}
-        // e.key alone has been observed to come through empty/unset for
-        // this exact keypress in at least one real environment (confirmed
-        // via a direct listener: key/code/keyCode/which all blank on a
-        // trusted, correctly-targeted keydown) -- keyCode 13 as a fallback
-        // catches Enter even when the browser/input method doesn't
-        // populate .key the normal way.
-        onKeyDown={e => (e.key === 'Enter' || e.keyCode === 13) && submit()}
+        // preventDefault matters: opening the dialog moves focus onto its Close
+        // button during this very keydown, and the browser then delivers the
+        // same Enter's keypress to that button -- "clicking" Close, so the
+        // popup opens and vanishes. Cancelling the keydown suppresses that
+        // keypress. keyCode 13 stays as a fallback for input methods that
+        // leave .key unset.
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.keyCode === 13) {
+            e.preventDefault();
+            submit();
+          }
+        }}
         placeholder="Look up a ticker…"
         autoComplete="off"
         className="h-8 pl-8 text-xs"
