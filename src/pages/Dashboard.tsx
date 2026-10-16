@@ -3,6 +3,7 @@ import { TopMovers } from '@/components/TopMovers';
 import { AssetClassPanel } from '@/components/AssetClassPanel';
 import { UniverseToggle } from '@/components/UniverseToggle';
 import { Disclaimer } from '@/components/Disclaimer';
+import { NewsFeed } from '@/components/options/NewsFeed';
 
 // Deliberately lean: this used to also carry a 10-tile navigation grid
 // (redundant with the top-nav dropdowns, which already reach every one of
@@ -24,6 +25,7 @@ const Dashboard = () => (
     <MarketOverview />
     <AssetClassPanel />
     <TopMovers />
+    <NewsFeed />
   </div>
 );
 

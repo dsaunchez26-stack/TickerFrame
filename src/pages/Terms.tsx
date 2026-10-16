@@ -52,7 +52,7 @@ const Terms = () => (
     </S>
 
     <S title="10. Third-party services">
-      <p>If you connect a third-party service, such as a Slack webhook for alerts, that service's terms and privacy practices apply to it. We are not responsible for third-party services or for links to them.</p>
+      <p>If you connect a third-party service, such as a Slack webhook for alerts, that service's terms and privacy practices apply to it. We are not responsible for third-party services or for links to them. News headlines link to outside publishers; we do not control or endorse their content.</p>
     </S>
 
     <S title="11. Disclaimer of warranties">

@@ -4,6 +4,9 @@ import { useStockData } from '@/hooks/useStockData';
 import { supabase } from '@/integrations/supabase/client';
 import { PatternBadge } from '@/components/PatternBadge';
 import { CandlestickChart } from '@/components/CandlestickChart';
+import { ReadingStory } from '@/components/ReadingStory';
+import { NewsList } from '@/components/NewsList';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStockCandles, TIMEFRAMES, type Timeframe } from '@/hooks/useStockCandles';
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
@@ -32,7 +35,9 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
   const { data } = useStockData('core', 'all');
   const stock = useMemo(() => data?.stocks.find(s => s.symbol === symbol) ?? null, [data, symbol]);
   const [timeframe, setTimeframe] = useState<Timeframe>('1D');
-  const { candles, loading: loadingHistory } = useStockCandles(symbol, timeframe);
+  const [tab, setTab] = useState('overview');
+  useEffect(() => { setTab('overview'); }, [symbol]);
+  const { candles, loading: loadingHistory, source: candleSource } = useStockCandles(symbol, timeframe);
 
   // For a ticker outside the ~114 we actively track, there's no cached
   // price/history to fall back on -- reuse the same on-demand Finnhub quote
@@ -87,6 +92,108 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
     return () => { cancelled = true; };
   }, [symbol]);
 
+  const companyBlock = (
+    <>
+    {loadingFundamentals && (
+      <div className="flex h-16 items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+    )}
+
+    {!loadingFundamentals && fundamentals && (
+      <div className="space-y-4 border-t border-border pt-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg border border-border p-3 text-center">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Balance Sheet Strength</div>
+            <div className={`font-heading text-2xl font-bold ${scoreColor(fundamentals.balance_sheet_score)}`}>
+              {fundamentals.balance_sheet_score}<span className="text-xs text-muted-foreground">/100</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border p-3 text-center">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Growth & Momentum</div>
+            <div className={`font-heading text-2xl font-bold ${scoreColor(fundamentals.growth_score)}`}>
+              {fundamentals.growth_score}<span className="text-xs text-muted-foreground">/100</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Valuation</div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div><div className="text-muted-foreground">P/E</div><div className="font-semibold">{fmtNum(fundamentals.pe_ratio, 1)}</div></div>
+            <div><div className="text-muted-foreground">P/B</div><div className="font-semibold">{fmtNum(fundamentals.pb_ratio)}</div></div>
+            <div><div className="text-muted-foreground">P/S</div><div className="font-semibold">{fundamentals.ps_ratio !== null ? `${fundamentals.ps_ratio.toFixed(2)}x` : 'not reported'}</div></div>
+            <div><div className="text-muted-foreground">Market Cap</div><div className="font-semibold">{fmtMarketCap(fundamentals.market_cap)}</div></div>
+            <div><div className="text-muted-foreground">Dividend Yield</div><div className="font-semibold">{fundamentals.dividend_yield !== null ? `${fundamentals.dividend_yield.toFixed(2)}%` : 'none'}</div></div>
+            <div><div className="text-muted-foreground">52-Week Range</div><div className="font-semibold">{fundamentals.week52_low !== null && fundamentals.week52_high !== null ? `$${fundamentals.week52_low.toFixed(2)}–$${fundamentals.week52_high.toFixed(2)}` : 'not reported'}</div></div>
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Balance Sheet</div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div><div className="text-muted-foreground">Debt / Equity</div><div className="font-semibold">{fmtNum(fundamentals.debt_to_equity)}</div></div>
+            <div><div className="text-muted-foreground">Current Ratio</div><div className="font-semibold">{fmtNum(fundamentals.current_ratio)}</div></div>
+            <div><div className="text-muted-foreground">Net Margin</div><div className="font-semibold">{fmtPct(fundamentals.net_margin)}</div></div>
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Growth</div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div><div className="text-muted-foreground">Revenue Growth YoY</div><div className="font-semibold">{fmtPct(fundamentals.revenue_growth_yoy)}</div></div>
+            <div><div className="text-muted-foreground">EPS Growth YoY</div><div className="font-semibold">{fmtPct(fundamentals.eps_growth_yoy)}</div></div>
+          </div>
+        </div>
+
+        {insiderRows.length > 0 && (
+          <div>
+            <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Recent Insider Activity</div>
+            <div className="space-y-1.5">
+              {insiderRows.map(r => {
+                const isBuy = r.transaction_code === 'P';
+                const isHolder = r.filer_title === '5%+ Holder';
+                return (
+                  <div key={r.id} className="flex items-center justify-between rounded-md border border-border/40 px-3 py-1.5 text-xs">
+                    <div>
+                      <div className="font-semibold">{r.filer_name}</div>
+                      <div className="text-muted-foreground">{r.filer_title ?? 'Filer'} · {r.filing_date}</div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-right">
+                      {isBuy ? <TrendingUp className="h-3 w-3 text-signal-buy" /> : isHolder ? <Minus className="h-3 w-3 text-muted-foreground" /> : <TrendingDown className="h-3 w-3 text-signal-sell" />}
+                      <div>
+                        {r.shares !== null && r.price_per_share !== null ? (
+                          <>
+                            <div className={`font-semibold ${isBuy ? 'text-signal-buy' : 'text-foreground'}`}>
+                              {r.shares.toLocaleString()} sh @ ${r.price_per_share.toFixed(2)}
+                            </div>
+                            {r.total_value !== null && <div className="text-muted-foreground">${(r.total_value / 1000).toFixed(0)}K</div>}
+                          </>
+                        ) : (
+                          <div className="text-muted-foreground">{r.form_type} filing</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <p className="text-[10px] italic text-muted-foreground/70">
+          Fundamentals reflect {fundamentals.name}'s most recently reported financials - not a projection, and not a
+          recommendation to buy or sell. A missing figure means it wasn't reported, not zero.
+        </p>
+      </div>
+    )}
+
+    {!loadingFundamentals && !fundamentals && (stock || liveQuote) && (
+      <p className="border-t border-border pt-4 text-center text-[11px] text-muted-foreground">
+        No fundamentals or insider activity on file yet for {symbol}.
+      </p>
+    )}
+    </>
+  );
+
   return (
     <Dialog open={!!symbol} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -107,44 +214,67 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
                 {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} ({stock.changePercent.toFixed(2)}%)
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              {!loadingHistory && candles.length >= 2 ? (
-                <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#f0b429' }} />moving average</span>
-                  <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 border-t border-dashed border-muted-foreground" />last close</span>
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="reading">Reading</TabsTrigger>
+                <TabsTrigger value="company">Company</TabsTrigger>
+                <TabsTrigger value="news">News</TabsTrigger>
+              </TabsList>
+              <TabsContent value="overview" className="mt-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  {!loadingHistory && candles.length >= 2 ? (
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#f0b429' }} />moving average</span>
+                      <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 border-t border-dashed border-muted-foreground" />last close</span>
+                    </div>
+                  ) : <span />}
+                  <div className="flex items-center gap-0.5 rounded-md border border-border p-0.5 text-[10px]">
+                    {TIMEFRAMES.map(tf => (
+                      <button
+                        key={tf.key}
+                        onClick={() => setTimeframe(tf.key)}
+                        className={`rounded px-1.5 py-0.5 ${timeframe === tf.key ? 'bg-secondary font-semibold' : 'text-muted-foreground'}`}
+                      >
+                        {tf.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              ) : <span />}
-              <div className="flex items-center gap-0.5 rounded-md border border-border p-0.5 text-[10px]">
-                {TIMEFRAMES.map(tf => (
-                  <button
-                    key={tf.key}
-                    onClick={() => setTimeframe(tf.key)}
-                    className={`rounded px-1.5 py-0.5 ${timeframe === tf.key ? 'bg-secondary font-semibold' : 'text-muted-foreground'}`}
-                  >
-                    {tf.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="h-48">
-              {loadingHistory ? (
-                <div className="flex h-full items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-              ) : candles.length < 2 ? (
-                <div className="flex h-full flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
-                  <span>Not enough price history yet for this range.</span>
-                  {(timeframe === '1M' || timeframe === '3M' || timeframe === '1Y') && (
-                    <span className="text-[10px] text-muted-foreground/70">Longer views fill in as more days of data are collected - try 1D/3D/1W for now.</span>
+                <div className="h-52">
+                  {loadingHistory ? (
+                    <div className="flex h-full items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+                  ) : candles.length < 2 ? (
+                    <div className="flex h-full flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
+                      <span>Not enough price history yet for this range.</span>
+                      <span className="text-[10px] text-muted-foreground/70">Try another range.</span>
+                    </div>
+                  ) : (
+                    <CandlestickChart candles={candles} height={208} tickInterval={Math.ceil(candles.length / 6)} />
                   )}
                 </div>
-              ) : (
-                <CandlestickChart candles={candles} height={192} tickInterval={Math.ceil(candles.length / 6)} />
-              )}
-            </div>
-            <SignalBreakdown stock={stock} />
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div><div className="text-muted-foreground">MACD</div><div className="font-semibold">{stock.hasReading ? stock.macd.toFixed(3) : '-'}</div></div>
-              <div><div className="text-muted-foreground">Volume</div><div className="font-semibold">{stock.volume > 0 ? `${(stock.volume / 1e6).toFixed(1)}M` : 'N/A'}</div></div>
-            </div>
+                {!loadingHistory && candles.length >= 2 && (
+                  <p className="text-[10px] text-muted-foreground/70">
+                    {candleSource === 'exchange'
+                      ? 'Candles are real open/high/low/close bars from the IEX exchange feed, which covers IEX trading only, so highs and lows can differ slightly from consolidated figures.'
+                      : 'Built from this site\'s own price snapshots (no exchange open/high/low), so this view is approximate.'}
+                  </p>
+                )}
+                <ReadingStory stock={stock} fundamentals={fundamentals} compact onMore={() => setTab('reading')} />
+              </TabsContent>
+              <TabsContent value="reading" className="mt-3 space-y-3">
+                <ReadingStory stock={stock} fundamentals={fundamentals} />
+                <SignalBreakdown stock={stock} />
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div><div className="text-muted-foreground">MACD</div><div className="font-semibold">{stock.hasReading ? stock.macd.toFixed(3) : '-'}</div></div>
+                  <div><div className="text-muted-foreground">Volume</div><div className="font-semibold">{stock.volume > 0 ? `${(stock.volume / 1e6).toFixed(1)}M` : 'N/A'}</div></div>
+                </div>
+              </TabsContent>
+              <TabsContent value="company" className="mt-3">{companyBlock}</TabsContent>
+              <TabsContent value="news" className="mt-3">
+                <NewsList symbol={stock.symbol} limit={10} emptyText={`No recent headlines found for ${stock.symbol}.`} />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
         {!stock && loadingQuote && (
@@ -167,103 +297,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
           </div>
         )}
 
-        {loadingFundamentals && (
-          <div className="flex h-16 items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
-        )}
-
-        {!loadingFundamentals && fundamentals && (
-          <div className="space-y-4 border-t border-border pt-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-border p-3 text-center">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Balance Sheet Strength</div>
-                <div className={`font-heading text-2xl font-bold ${scoreColor(fundamentals.balance_sheet_score)}`}>
-                  {fundamentals.balance_sheet_score}<span className="text-xs text-muted-foreground">/100</span>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border p-3 text-center">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Growth & Momentum</div>
-                <div className={`font-heading text-2xl font-bold ${scoreColor(fundamentals.growth_score)}`}>
-                  {fundamentals.growth_score}<span className="text-xs text-muted-foreground">/100</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Valuation</div>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div><div className="text-muted-foreground">P/E</div><div className="font-semibold">{fmtNum(fundamentals.pe_ratio, 1)}</div></div>
-                <div><div className="text-muted-foreground">P/B</div><div className="font-semibold">{fmtNum(fundamentals.pb_ratio)}</div></div>
-                <div><div className="text-muted-foreground">P/S</div><div className="font-semibold">{fundamentals.ps_ratio !== null ? `${fundamentals.ps_ratio.toFixed(2)}x` : 'not reported'}</div></div>
-                <div><div className="text-muted-foreground">Market Cap</div><div className="font-semibold">{fmtMarketCap(fundamentals.market_cap)}</div></div>
-                <div><div className="text-muted-foreground">Dividend Yield</div><div className="font-semibold">{fundamentals.dividend_yield !== null ? `${fundamentals.dividend_yield.toFixed(2)}%` : 'none'}</div></div>
-                <div><div className="text-muted-foreground">52-Week Range</div><div className="font-semibold">{fundamentals.week52_low !== null && fundamentals.week52_high !== null ? `$${fundamentals.week52_low.toFixed(2)}–$${fundamentals.week52_high.toFixed(2)}` : 'not reported'}</div></div>
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Balance Sheet</div>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div><div className="text-muted-foreground">Debt / Equity</div><div className="font-semibold">{fmtNum(fundamentals.debt_to_equity)}</div></div>
-                <div><div className="text-muted-foreground">Current Ratio</div><div className="font-semibold">{fmtNum(fundamentals.current_ratio)}</div></div>
-                <div><div className="text-muted-foreground">Net Margin</div><div className="font-semibold">{fmtPct(fundamentals.net_margin)}</div></div>
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Growth</div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div><div className="text-muted-foreground">Revenue Growth YoY</div><div className="font-semibold">{fmtPct(fundamentals.revenue_growth_yoy)}</div></div>
-                <div><div className="text-muted-foreground">EPS Growth YoY</div><div className="font-semibold">{fmtPct(fundamentals.eps_growth_yoy)}</div></div>
-              </div>
-            </div>
-
-            {insiderRows.length > 0 && (
-              <div>
-                <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Recent Insider Activity</div>
-                <div className="space-y-1.5">
-                  {insiderRows.map(r => {
-                    const isBuy = r.transaction_code === 'P';
-                    const isHolder = r.filer_title === '5%+ Holder';
-                    return (
-                      <div key={r.id} className="flex items-center justify-between rounded-md border border-border/40 px-3 py-1.5 text-xs">
-                        <div>
-                          <div className="font-semibold">{r.filer_name}</div>
-                          <div className="text-muted-foreground">{r.filer_title ?? 'Filer'} · {r.filing_date}</div>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-right">
-                          {isBuy ? <TrendingUp className="h-3 w-3 text-signal-buy" /> : isHolder ? <Minus className="h-3 w-3 text-muted-foreground" /> : <TrendingDown className="h-3 w-3 text-signal-sell" />}
-                          <div>
-                            {r.shares !== null && r.price_per_share !== null ? (
-                              <>
-                                <div className={`font-semibold ${isBuy ? 'text-signal-buy' : 'text-foreground'}`}>
-                                  {r.shares.toLocaleString()} sh @ ${r.price_per_share.toFixed(2)}
-                                </div>
-                                {r.total_value !== null && <div className="text-muted-foreground">${(r.total_value / 1000).toFixed(0)}K</div>}
-                              </>
-                            ) : (
-                              <div className="text-muted-foreground">{r.form_type} filing</div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <p className="text-[10px] italic text-muted-foreground/70">
-              Fundamentals reflect {fundamentals.name}'s most recently reported financials - not a projection, and not a
-              recommendation to buy or sell. A missing figure means it wasn't reported, not zero.
-            </p>
-          </div>
-        )}
-
-        {!loadingFundamentals && !fundamentals && (stock || liveQuote) && (
-          <p className="border-t border-border pt-4 text-center text-[11px] text-muted-foreground">
-            No fundamentals or insider activity on file yet for {symbol}.
-          </p>
-        )}
+        {!stock && companyBlock}
       </DialogContent>
     </Dialog>
   );

@@ -24,7 +24,7 @@ const Table = ({ rows, source }: { rows: TrackRow[]; source: 'live' | 'replay' }
         const set = rows.filter(r => r.source === source && r.horizon === h);
         return (
           <div key={h}>
-            <p className="mb-1 text-[11px] font-semibold text-muted-foreground">{h} trading day{h > 1 ? 's' : ''} later</p>
+            <p className="mb-1 text-[11px] font-semibold text-muted-foreground">{h} trading day{h > 1 ? 's' : ''} later{h >= 5 ? ` (about ${Math.round(h / 5)} week${h >= 10 ? 's' : ''})` : ''}</p>
             <table className="w-full text-xs">
               <thead className="border-b text-left text-muted-foreground">
                 <tr>
@@ -91,6 +91,11 @@ export const SignalTrackRecord = () => {
           <>
             <div>
               <h4 className="mb-2 text-xs font-semibold">Live readings{data.liveFirstDate ? ` since ${fmtDate(data.liveFirstDate)}` : ''}</h4>
+              {hasLive && data.liveDays < 20 && (
+                <p className="mb-3 rounded-md border border-signal-hold/40 bg-signal-hold/10 p-2 text-[11px] text-muted-foreground">
+                  Too early to judge: only {data.liveDays} trading day{data.liveDays === 1 ? '' : 's'} of live readings so far. At this size, gaps of a fraction of a percent are noise. Longer horizons (2 and 4 weeks) appear automatically as the history grows.
+                </p>
+              )}
               {hasLive ? <Table rows={data.rows} source="live" /> : (
                 <p className="rounded-md border border-border bg-secondary/20 p-3 text-xs text-muted-foreground">
                   Recording started{data.liveFirstDate ? ` ${fmtDate(data.liveFirstDate)}` : ' today'} ({data.liveDays} trading day{data.liveDays === 1 ? '' : 's'} so far). The first results appear after a day or two of history - these are real, forward-looking readings, so they take real time to mature.

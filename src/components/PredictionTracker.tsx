@@ -29,7 +29,7 @@ export const PredictionTracker = () => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-semibold">Reading Tracker</CardTitle>
+        <CardTitle className="text-sm font-semibold">Reading Check - Today</CardTitle>
         {hitRate !== null && <span className="text-xs font-semibold text-primary" title="Bullish/bearish readings only - neutral makes no directional call">{hitRate}% of bullish/bearish readings moving that way today</span>}
       </CardHeader>
       <CardContent>
@@ -42,10 +42,9 @@ export const PredictionTracker = () => {
                 <tr>
                   <th className="py-2 pr-3">Symbol</th>
                   <th className="py-2 pr-3">Reading</th>
-                  <th className="py-2 pr-3">Reference price</th>
-                  <th className="py-2 pr-3">Current</th>
-                  <th className="py-2 pr-3">Move since reading</th>
-                  <th className="py-2 pr-3">Tracking</th>
+                  <th className="py-2 pr-3">Price</th>
+                  <th className="py-2 pr-3" title="Change versus yesterday's close">Today's change</th>
+                  <th className="py-2 pr-3">Matches reading?</th>
                 </tr>
               </thead>
               <tbody>
@@ -53,10 +52,9 @@ export const PredictionTracker = () => {
                   <tr key={r.symbol} className="border-b last:border-0">
                     <td className="py-2 pr-3 font-semibold">{r.symbol}</td>
                     <td className="py-2 pr-3 uppercase">{signalLabel(r.signal)}</td>
-                    <td className="py-2 pr-3">${r.entry.toFixed(2)}</td>
                     <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                     <td className={`py-2 pr-3 ${r.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>{r.changePercent > 0 ? '+' : ''}{r.changePercent.toFixed(2)}%</td>
-                    <td className="py-2 pr-3">{r.hit === null ? '-' : r.hit ? '✅ On track' : '⚠️ Off track'}</td>
+                    <td className="py-2 pr-3">{r.hit === null ? '-' : r.hit ? '✅ Moving that way' : '⚠️ Moving the other way'}</td>
                   </tr>
                 ))}
               </tbody>

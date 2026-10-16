@@ -32,7 +32,9 @@ const Methodology = () => (
         <p><strong className="text-foreground">VIX / market regime:</strong> the real CBOE VIX close, pulled from FRED (the Federal Reserve's public data service) - typically the most recent business day's close, not an intraday tick. SPY and QQQ price/change come from Alpaca directly. The Risk-On/Risk-Off/Neutral label is a simple, disclosed rule (elevated VIX or a real down day across both ETFs means risk-off; a calm VIX with both ETFs up means risk-on) shown next to the real numbers it's computed from, not a prediction.</p>
         <p><strong className="text-foreground">Options flow tilt:</strong> real call vs. put dollar volume (contracts traded x premium x 100) per ticker, aggregated from the same options scan data shown elsewhere on the site - not a separate live trade-by-trade feed.</p>
         <p><strong className="text-foreground">Put/Call Ratio:</strong> total put contract volume divided by total call contract volume, summed across every contract currently in the rolling options scan (not just the top-80-by-score list shown elsewhere on the page) - the same convention CBOE's own published ratio uses. Below 1 (more call volume) reads bullish, above 1 (more put volume) reads bearish - it's a real volume snapshot of this site's tracked universe, not the whole market, and not a prediction.</p>
-        <p><strong className="text-foreground">Not connected:</strong> news/sentiment, government or congressional trade disclosures, a live options order-flow tape (individual prints as they happen), and an automated "index early warning" system aren't wired up anywhere on this site - the relevant pages say so directly rather than showing fabricated data.</p>
+        <p><strong className="text-foreground">News headlines:</strong> Finnhub's general-market and company news feeds - headline, outlet, link and time only, cached for 10 minutes, each linking to the publisher. Headlines are shown next to a stock for context; the site does not claim a headline caused a price move, and news does not feed into any reading.</p>
+        <p><strong className="text-foreground">Candle charts:</strong> real open/high/low/close bars from Alpaca's free IEX feed (5-minute bars for 1D, 30-minute for 3D, hourly for 1W, daily for 1M-1Y), cached for a few minutes. IEX covers only trades executed on IEX, so highs and lows can differ slightly from consolidated figures. If the feed is unavailable the chart falls back to this site's own price snapshots and says so.</p>
+        <p><strong className="text-foreground">Not connected:</strong> sentiment analysis, government or congressional trade disclosures, a live options order-flow tape (individual prints as they happen), and an automated "index early warning" system aren't wired up anywhere on this site - the relevant pages say so directly rather than showing fabricated data.</p>
       </CardContent>
     </Card>
 
@@ -50,6 +52,7 @@ const Methodology = () => (
         </ul>
         <p>A score of 5 or more points reads <strong className="text-foreground">Bullish</strong> (trend and momentum lean up), -5 or fewer reads <strong className="text-foreground">Bearish</strong> (they lean down), and anything between is <strong className="text-foreground">Neutral</strong> - the score shows how close a Neutral reading is to either side. These are descriptions of what the indicators currently show, not instructions to buy or sell. Open any stock to see a "Why this reading" panel with the real RSI, trend and momentum values and the points each contributed, so you can reach your own view.</p>
         <p>Price samples are collected only while the US market is open, and a stock needs about 27 of them before it gets a reading. Until then (a newly added stock, or after downtime) it shows as Neutral with no score - that means "no reading yet", not a neutral view.</p>
+        <p><strong className="text-foreground">Two lenses, kept separate:</strong> the reading itself is built only from recent price action (trend and momentum make up 5 of the 8 points; the stretch measures RSI and Bollinger can pull against them). Company financials - the Balance Sheet and Growth scores - are not part of it. The "Why this reading" summary shows them next to it, and says when the two disagree, so a long-term investor can weigh both.</p>
         <p>The same readings are shown to every visitor. Nothing here is tailored to an individual's finances, goals or holdings.</p>
         <p>The earlier rule required RSI under 35 and price above its 20-SMA at the same time, which almost never happen together - on live data it produced no bullish readings across ~780 stocks. Weighing the conditions together fixes that. The 5-point cutoff was picked so roughly a fifth of the universe reads Bullish and a fifth Bearish rather than nearly everything reading Neutral; it is not a statistically optimized number.</p>
         <p><strong className="text-foreground">Not validated:</strong> this is a standard technical-indicator composite computed from this site's own rolling price samples, and it has not been backtested over a long history or shown to predict returns. Treat it as a way to organize momentum and trend information, not a forecast.</p>
@@ -74,8 +77,8 @@ const Methodology = () => (
         <CardTitle className="text-base">Signal tracking</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
-        <p><strong className="text-foreground">Reading Track Record:</strong> every weekday this site saves each stock's Bullish / Neutral / Bearish reading and the price at that time. The track record then compares each reading with the price 1, 3 and 5 trading days later - the average move and how often a Bullish reading rose or a Bearish one fell - next to the average for all stocks, which is what a useful indicator has to beat. Live recording started October 2026, so those results build up slowly. A separate "replay" table re-runs today's rule over the week of price samples collected before that; it is a backtest and is labeled as one.</p>
-        <p>The Reading Tracker re-checks every current bullish/bearish reading against that stock's actual price change today, refreshed alongside the regular price update. It's a live consistency check - does the reading's direction match what the stock is actually doing right now - not a historical win/loss ledger.</p>
+        <p><strong className="text-foreground">Reading Track Record:</strong> every weekday this site saves each stock's Bullish / Neutral / Bearish reading and the price at that time. The track record then compares each reading with the price 1, 3, 5, 10 and 20 trading days later (the two- and four-week rows appear once enough days exist) - the average move and how often a Bullish reading rose or a Bearish one fell - next to the average for all stocks, which is what a useful indicator has to beat. Live recording started October 2026, so those results build up slowly. A separate "replay" table re-runs today's rule over the week of price samples collected before that; it is a backtest and is labeled as one.</p>
+        <p>The Reading Check on the Signals page compares every current bullish/bearish reading with that stock's change today versus yesterday's close. It's a same-day consistency check - is the stock moving the way the reading leans - not a historical win/loss ledger and not evidence the reading works. The track record above is the real test.</p>
         <p>See real outcomes on the <Link to="/performance" className="underline">Performance</Link> page for any option pick you've explicitly tracked.</p>
       </CardContent>
     </Card>
@@ -87,7 +90,7 @@ const Methodology = () => (
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <p>Options data rotates through the tracked universe on a schedule rather than scanning everything live on every visit - the Options Radar header shows how current the data currently shown actually is. Open Interest isn't available from this data source and is never shown or estimated.</p>
-        <p>News, government/congressional trade tracking, and SEC 8-K/13F filings are not wired up anywhere on this site - only Form 4 and Schedule 13D/13G insider filings are real.</p>
+        <p>Sentiment scoring, government/congressional trade tracking, and SEC 8-K/13F filings are not wired up anywhere on this site - only Form 4 and Schedule 13D/13G insider filings are real.</p>
         <p>The VIX shown in the Market Regime bar is the most recent daily close (via FRED), typically one business day behind - not a live intraday value.</p>
         <p>Volume isn't provided by the free-tier stock data source, so it always shows N/A rather than a fabricated number.</p>
         <p>Nothing on this site is a recommendation to buy or sell any security. See the <Link to="/legal" className="underline">full disclaimer</Link>.</p>
@@ -99,7 +102,7 @@ const Methodology = () => (
         single page load regardless of whether anything changed. */}
     <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
       <Shield className="h-3 w-3" />
-      <span>Methodology last updated 10/4/2026</span>
+      <span>Methodology last updated 10/15/2026</span>
     </div>
   </div>
 );

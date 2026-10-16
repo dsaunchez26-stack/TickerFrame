@@ -34,6 +34,7 @@ const PAGE_SIZE = 1000;
 export function useStockCandles(symbol: string | null, timeframe: Timeframe) {
   const [candles, setCandles] = useState<Candle[]>([]);
   const [loading, setLoading] = useState(false);
+  const [source, setSource] = useState<'exchange' | 'samples'>('samples');
 
   useEffect(() => {
     if (!symbol) { setCandles([]); return; }
@@ -44,6 +45,31 @@ export function useStockCandles(symbol: string | null, timeframe: Timeframe) {
     const cutoff = new Date(Date.now() - cfg.lookbackDays * 86400_000).toISOString();
 
     const run = async () => {
+      // Preferred: real exchange OHLC bars. If that function is unavailable
+      // (demo mode, provider hiccup, unsupported symbol), fall back to
+      // candles synthesized from this site's own price samples below.
+      try {
+        const { data, error } = await supabase.functions.invoke('stock-bars', { body: { symbol, range: timeframe } });
+        const bars = (data?.bars ?? []) as Array<{ t: string; o: number; h: number; l: number; c: number }>;
+        if (!error && !data?.error && bars.length >= 2) {
+          if (cancelled) return;
+          const multiDay = timeframe === '3D' || timeframe === '1W';
+          setCandles(bars.map(b => {
+            const d = new Date(b.t);
+            const time = cfg.source === 'daily'
+              ? d.toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: 'America/New_York' })
+              : multiDay
+                ? d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+                : d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            return { timestamp: d.getTime(), time, open: b.o, high: b.h, low: b.l, close: b.c };
+          }));
+          setSource('exchange');
+          setLoading(false);
+          return;
+        }
+      } catch { /* fall through to own samples */ }
+      setSource('samples');
+
       if (cfg.source === 'intraday') {
         // 7 days of 5-min samples (24/7 collection) can run past 1000 rows,
         // which PostgREST silently caps at regardless of an explicit
@@ -85,5 +111,5 @@ export function useStockCandles(symbol: string | null, timeframe: Timeframe) {
     return () => { cancelled = true; };
   }, [symbol, timeframe]);
 
-  return { candles, loading };
+  return { candles, loading, source };
 }

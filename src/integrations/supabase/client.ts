@@ -17,9 +17,16 @@ if (demo) {
   let handler: Promise<typeof import('@/demo/demoFetch')> | null = null;
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const href = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    if (href.startsWith(SUPABASE_URL)) {
+    // Headlines are public and carry no user data, so the demo shows them live.
+    if (href.startsWith(SUPABASE_URL) && !href.includes('/functions/v1/stock-news')) {
       handler ??= import('@/demo/demoFetch');
       return handler.then((m) => m.demoFetch(input, init));
+    }
+    // The demo's session token is fake, so the real gateway would reject it: send the public key instead.
+    if (href.includes('/functions/v1/stock-news')) {
+      const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+      headers.set('Authorization', `Bearer ${SUPABASE_PUBLISHABLE_KEY}`);
+      return realFetch(input, { ...init, headers });
     }
     return realFetch(input, init);
   };

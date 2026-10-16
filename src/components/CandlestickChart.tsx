@@ -91,6 +91,13 @@ export const CandlestickChart = ({ candles, height = 220, showGrid = true, tickI
       bbLower,
     };
   });
+  // This site stores point-in-time price samples, not exchange open/high/low,
+  // so longer ranges (one close per day) and sparse intraday buckets come out
+  // flat. Drawing flat ticks and calling them candles is misleading -- fall
+  // back to the line and point at the full chart instead.
+  const flatShare = candles.length ? candles.filter(c => c.high === c.low).length / candles.length : 1;
+  const hasRealCandles = flatShare < 0.5;
+  const effectiveType: ChartType = hasRealCandles ? chartType : 'line';
   const lastClose = candles.length ? candles[candles.length - 1].close : null;
 
   return (
@@ -117,6 +124,11 @@ export const CandlestickChart = ({ candles, height = 220, showGrid = true, tickI
           Bollinger Bands
         </button>
       </div>
+      {!hasRealCandles && chartType === 'candlestick' && (
+        <p className="mb-1 text-[10px] text-muted-foreground">
+          This range only has price snapshots, not open/high/low, so it's shown as a line.
+        </p>
+      )}
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart data={data} barGap="-100%" barCategoryGap="20%">
           {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.15} />}
@@ -142,7 +154,7 @@ export const CandlestickChart = ({ candles, height = 220, showGrid = true, tickI
               label={{ value: `$${lastClose.toFixed(2)}`, position: 'right', fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
             />
           )}
-          {chartType === 'candlestick' ? (
+          {effectiveType === 'candlestick' ? (
             <>
               <Bar dataKey="wickRange" barSize={1.5} isAnimationActive={false}>
                 {data.map((d, i) => <Cell key={i} fill={d.up ? UP : DOWN} />)}
