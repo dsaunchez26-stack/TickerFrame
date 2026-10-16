@@ -241,11 +241,11 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
                     ))}
                   </div>
                 </div>
-                <div className="h-52">
+                <div>
                   {loadingHistory ? (
-                    <div className="flex h-full items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+                    <div className="flex h-52 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
                   ) : candles.length < 2 ? (
-                    <div className="flex h-full flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
+                    <div className="flex h-52 flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
                       <span>Not enough price history yet for this range.</span>
                       <span className="text-[10px] text-muted-foreground/70">Try another range.</span>
                     </div>
@@ -254,7 +254,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
                   )}
                 </div>
                 {!loadingHistory && candles.length >= 2 && (
-                  <p className="text-[10px] text-muted-foreground/70">
+                  <p className="pt-2 text-[10px] leading-relaxed text-muted-foreground/70">
                     {candleSource === 'exchange'
                       ? 'Candles are real open/high/low/close bars from the IEX exchange feed, which covers IEX trading only, so highs and lows can differ slightly from consolidated figures.'
                       : 'Built from this site\'s own price snapshots (no exchange open/high/low), so this view is approximate.'}
