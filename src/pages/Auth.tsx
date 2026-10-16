@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,9 +13,10 @@ import { Activity, Loader2 } from 'lucide-react';
 export default function Auth() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
-  const from = (location.state as { from?: string } | null)?.from ?? '/';
+  // Signing in always lands on the Assistant (the home screen at '/'), even if
+  // the visitor was bounced to the login page from a deeper link.
+  const HOME = '/';
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -24,7 +25,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [resetMode, setResetMode] = useState(false);
 
-  if (!authLoading && user) return <Navigate to={from} replace />;
+  if (!authLoading && user) return <Navigate to={HOME} replace />;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,7 +45,7 @@ export default function Auth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast({ title: 'Welcome back' });
-        navigate(from, { replace: true });
+        navigate(HOME, { replace: true });
       } else {
         if (password.length < 8) throw new Error('Password must be at least 8 characters.');
         const { error } = await supabase.auth.signUp({
