@@ -9,10 +9,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
-import { setViewMode, useViewMode } from '@/hooks/useViewMode';
 
 interface NavItem { title: string; url: string; icon: typeof LineChart }
-interface NavGroup { label: string; items: NavItem[]; traderOnly?: boolean }
+interface NavGroup { label: string; items: NavItem[] }
 
 const groups: NavGroup[] = [
   { label: 'Stocks', items: [
@@ -23,7 +22,7 @@ const groups: NavGroup[] = [
     { title: 'Penny Stocks', url: '/stocks/penny', icon: Coins },
     { title: 'Signals & Track Record', url: '/stocks/signals', icon: Target },
   ]},
-  { label: 'Options', traderOnly: true, items: [
+  { label: 'Options', items: [
     { title: 'Overview', url: '/options', icon: Radar },
     { title: 'Calls', url: '/calls', icon: TrendingUp },
     { title: 'Puts', url: '/puts', icon: TrendingDown },
@@ -80,9 +79,6 @@ const groupActiveClass = (active: boolean) => cn(
 export const AppTopNav = () => {
   const { pathname } = useLocation();
   const { isAdmin } = useAuth();
-  const mode = useViewMode();
-  const trader = mode === 'trader';
-  const visibleGroups = groups.filter(g => trader || !g.traderOnly);
   const isActive = (p: string) => pathname === p;
   const isGroupActive = (g: NavGroup) => g.items.some(item => item.url === pathname);
 
@@ -91,7 +87,7 @@ export const AppTopNav = () => {
       <Link to="/dashboard" className={flatLinkClass(pathname === '/dashboard')}>
         <LayoutDashboard className="h-4 w-4" /> Dashboard
       </Link>
-      {visibleGroups.map(g => (
+      {groups.map(g => (
         <DropdownMenu key={g.label}>
           <DropdownMenuTrigger className={groupActiveClass(isGroupActive(g))}>
             {g.label} <ChevronDown className="h-3 w-3" />
@@ -108,30 +104,15 @@ export const AppTopNav = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       ))}
-      {trader && (
-        <>
-          <Link to="/futures" className={flatLinkClass(isActive('/futures'))}>
-            <Layers className="h-4 w-4" /> Futures
-          </Link>
-          <Link to="/patterns" className={flatLinkClass(isActive('/patterns'))}>
-            <Activity className="h-4 w-4" /> Patterns
-          </Link>
-        </>
-      )}
+      <Link to="/futures" className={flatLinkClass(isActive('/futures'))}>
+        <Layers className="h-4 w-4" /> Futures
+      </Link>
+      <Link to="/patterns" className={flatLinkClass(isActive('/patterns'))}>
+        <Activity className="h-4 w-4" /> Patterns
+      </Link>
       <Link to="/chat" className={flatLinkClass(isActive('/chat') || pathname === '/')}>
         <Sparkles className="h-4 w-4" /> Assistant
       </Link>
-      <div className="ml-auto flex items-center gap-0.5 rounded-md border border-border p-0.5 text-xs" title="Investor view shows stocks, ETFs, portfolio and research. Trader view adds options, futures and patterns.">
-        {(['investor', 'trader'] as const).map(m => (
-          <button
-            key={m}
-            onClick={() => setViewMode(m)}
-            className={cn('rounded px-2 py-1 capitalize', mode === m ? 'bg-secondary font-semibold' : 'text-muted-foreground hover:text-foreground')}
-          >
-            {m}
-          </button>
-        ))}
-      </div>
       {isAdmin && (
         <Link to="/health" className={flatLinkClass(isActive('/health'))}>
           <ShieldCheck className="h-4 w-4" /> System Health
