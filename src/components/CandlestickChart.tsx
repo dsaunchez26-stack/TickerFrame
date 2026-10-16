@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ComposedChart, Bar, Line, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts';
+import { ComposedChart, Bar, Line, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from 'recharts';
 import type { Candle } from '@/lib/candles';
 
 interface Props {
@@ -38,6 +38,30 @@ const CandleTooltip = ({ active, payload, showBollinger }: { active?: boolean; p
         <div style={{ color: BAND_COLOR }}>Bands {c.bbLower.toFixed(2)} – {c.bbUpper.toFixed(2)}</div>
       )}
     </div>
+  );
+};
+
+interface CandleShapeProps { x?: number; y?: number; width?: number; height?: number; payload?: RowData }
+
+// One custom bar per candle: a thin rounded wick (low to high) centered behind a
+// softly rounded body (open to close). Drawing both from a single shape keeps
+// the wick exactly centered on the body and lets the body scale with how many
+// candles are on screen instead of using a fixed pixel width.
+const CandleShape = ({ x, y, width, height, payload }: CandleShapeProps) => {
+  if (x == null || y == null || width == null || height == null || !payload) return null;
+  const { open, close, high, low, up } = payload;
+  const color = up ? UP : DOWN;
+  const range = high - low;
+  const cx = x + width / 2;
+  const bodyW = Math.max(2, Math.min(width * 0.72, 12));
+  const at = (v: number) => (range > 0 ? y + ((high - v) / range) * height : y);
+  const bodyTop = at(Math.max(open, close));
+  const bodyH = Math.max(1.5, Math.abs(at(Math.min(open, close)) - bodyTop));
+  return (
+    <g>
+      <line x1={cx} x2={cx} y1={y} y2={y + height} stroke={color} strokeWidth={1.25} strokeLinecap="round" />
+      <rect x={cx - bodyW / 2} y={bodyTop} width={bodyW} height={bodyH} rx={Math.min(1.5, bodyW / 3)} fill={color} />
+    </g>
   );
 };
 
@@ -98,6 +122,23 @@ export const CandlestickChart = ({ candles, height = 220, showGrid = true, tickI
   const flatShare = candles.length ? candles.filter(c => c.high === c.low).length / candles.length : 1;
   const hasRealCandles = flatShare < 0.5;
   const effectiveType: ChartType = hasRealCandles ? chartType : 'line';
+  // A little headroom so the first and last candles don't touch the edges.
+  const lows = data.flatMap(d => [d.low, ...(showBollinger && d.bbLower !== null ? [d.bbLower] : [])]);
+  const highs = data.flatMap(d => [d.high, ...(showBollinger && d.bbUpper !== null ? [d.bbUpper] : [])]);
+  const lo = lows.length ? Math.min(...lows) : 0;
+  const hi = highs.length ? Math.max(...highs) : 1;
+  const pad = (hi - lo) * 0.06 || hi * 0.002;
+  // Round the axis to tidy values (e.g. 342, 344, 346) rather than the odd
+  // numbers the padded range would otherwise produce.
+  const rawStep = ((hi + pad) - (lo - pad)) / 4;
+  const mag = 10 ** Math.floor(Math.log10(rawStep));
+  const norm = rawStep / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+  const yMin = Math.floor((lo - pad) / step) * step;
+  const yMax = Math.ceil((hi + pad) / step) * step;
+  const yDomain: [number, number] = [yMin, yMax];
+  const yTicks: number[] = [];
+  for (let v = yMin; v <= yMax + step / 2; v += step) yTicks.push(Number(v.toFixed(6)));
   const lastClose = candles.length ? candles[candles.length - 1].close : null;
 
   return (
@@ -129,14 +170,24 @@ export const CandlestickChart = ({ candles, height = 220, showGrid = true, tickI
           This range only has price snapshots, not open/high/low, so it's shown as a line.
         </p>
       )}
+      <div className="animate-in fade-in duration-300">
       <ResponsiveContainer width="100%" height={height}>
-        <ComposedChart data={data} barGap="-100%" barCategoryGap="20%">
-          {showGrid && <CartesianGrid strokeDasharray="3 3" opacity={0.15} />}
-          <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={tickInterval} />
+        <ComposedChart data={data} barCategoryGap="18%" margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id="lineFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.22} />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          {showGrid && <CartesianGrid vertical={false} strokeDasharray="2 4" opacity={0.18} />}
+          <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={tickInterval} axisLine={false} tickLine={false} />
           <YAxis
-            domain={['auto', 'auto']}
+            domain={yDomain}
+            ticks={yTicks}
             tick={{ fontSize: 10 }}
             width={50}
+            axisLine={false}
+            tickLine={false}
             // A near-flat series (e.g. a stock with only a couple of real
             // samples so far) can make Recharts auto-compute a domain with
             // a floating-point sliver of a range, producing garbled ticks
@@ -144,7 +195,7 @@ export const CandlestickChart = ({ candles, height = 220, showGrid = true, tickI
             // that regardless of how tight the underlying range is.
             tickFormatter={(v: number) => v.toFixed(2)}
           />
-          <Tooltip content={<CandleTooltip showBollinger={showBollinger} />} />
+          <Tooltip content={<CandleTooltip showBollinger={showBollinger} />} cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeDasharray: '3 3', strokeOpacity: 0.5 }} />
           {lastClose !== null && (
             <ReferenceLine
               y={lastClose}
@@ -155,26 +206,23 @@ export const CandlestickChart = ({ candles, height = 220, showGrid = true, tickI
             />
           )}
           {effectiveType === 'candlestick' ? (
-            <>
-              <Bar dataKey="wickRange" barSize={1.5} isAnimationActive={false}>
-                {data.map((d, i) => <Cell key={i} fill={d.up ? UP : DOWN} />)}
-              </Bar>
-              <Bar dataKey="bodyRange" barSize={7} isAnimationActive={false}>
-                {data.map((d, i) => <Cell key={i} fill={d.up ? UP : DOWN} />)}
-              </Bar>
-            </>
+            <Bar dataKey="wickRange" shape={<CandleShape />} isAnimationActive={false} />
           ) : (
-            <Line dataKey="close" stroke="hsl(var(--primary))" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+            <>
+              <Area dataKey="close" stroke="none" fill="url(#lineFill)" isAnimationActive={false} />
+              <Line dataKey="close" type="monotone" stroke="hsl(var(--primary))" strokeWidth={1.75} strokeLinecap="round" dot={false} activeDot={{ r: 3 }} isAnimationActive={false} />
+            </>
           )}
-          <Line dataKey="ma" stroke={MA_COLOR} strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls />
+          <Line dataKey="ma" type="monotone" stroke={MA_COLOR} strokeWidth={1.5} strokeLinecap="round" dot={false} isAnimationActive={false} connectNulls />
           {showBollinger && (
             <>
-              <Line dataKey="bbUpper" stroke={BAND_COLOR} strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls />
-              <Line dataKey="bbLower" stroke={BAND_COLOR} strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls />
+              <Line dataKey="bbUpper" type="monotone" stroke={BAND_COLOR} strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls />
+              <Line dataKey="bbLower" type="monotone" stroke={BAND_COLOR} strokeWidth={1} strokeDasharray="3 3" dot={false} isAnimationActive={false} connectNulls />
             </>
           )}
         </ComposedChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 };
