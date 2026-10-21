@@ -239,6 +239,15 @@ const handleFunction = async (name: string, bodyText: string | null): Promise<Re
       }
       return json({ quotes });
     }
+    case 'stock-bars': {
+      // Real candles saved for the Top 50 and ETFs; other symbols fall back to the line built from saved price samples.
+      const all = (await import('./bars.json')).default as unknown as Record<string, Record<string, number[][]>>;
+      const set = all[String(body.symbol)];
+      const range = String(body.range);
+      const rows = range === '1M' ? set?.['1Y']?.slice(-22) : range === '3M' ? set?.['1Y']?.slice(-63) : set?.[range];
+      if (!rows || rows.length < 2) return json({ error: 'No saved candles for this symbol in the demo' }, 404);
+      return json({ bars: rows.map(([t, o, h, l, c, v]) => ({ t: new Date(t * 1000).toISOString(), o, h, l, c, v })) });
+    }
     case 'option-quotes': return json({ quotes: [] });
     case 'option-chain-lookup': return json({ error: "Live option chain lookup isn't available in the demo snapshot - it works on the live site." }, 200);
     case 'fundamentals-scanner':

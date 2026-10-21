@@ -11,22 +11,24 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Demo mode (?demo=1): every request to the Supabase host is answered from a
 // bundled snapshot instead of the network. The snapshot module is loaded on
 // first use, so regular visitors never download it.
+const LIVE_FUNCTIONS = ['/functions/v1/stock-news', '/functions/v1/market-chat'];
 const demo = isDemoMode();
 if (demo) {
   const realFetch = window.fetch.bind(window);
   let handler: Promise<typeof import('@/demo/demoFetch')> | null = null;
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const href = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    // Headlines are public and carry no user data, so the demo shows them live.
-    if (href.startsWith(SUPABASE_URL) && !href.includes('/functions/v1/stock-news')) {
-      handler ??= import('@/demo/demoFetch');
-      return handler.then((m) => m.demoFetch(input, init));
-    }
-    // The demo's session token is fake, so the real gateway would reject it: send the public key instead.
-    if (href.includes('/functions/v1/stock-news')) {
+    // These two functions are public and carry no user data, so the demo calls them for real:
+    // headlines, and the assistant's keyword-answer mode (the AI model only runs for signed-in users).
+    // The demo's session token is fake, so the gateway would reject it -- send the public key instead.
+    if (LIVE_FUNCTIONS.some((f) => href.includes(f))) {
       const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
       headers.set('Authorization', `Bearer ${SUPABASE_PUBLISHABLE_KEY}`);
       return realFetch(input, { ...init, headers });
+    }
+    if (href.startsWith(SUPABASE_URL)) {
+      handler ??= import('@/demo/demoFetch');
+      return handler.then((m) => m.demoFetch(input, init));
     }
     return realFetch(input, init);
   };

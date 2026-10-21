@@ -123,7 +123,7 @@ function policyReply(t: string): string | null {
     return "Prices come from Finnhub and may lag by about 15 minutes; options data comes from Alpaca's free feed (no Open Interest - greeks and implied volatility are calculated here); futures prices come from Yahoo Finance with contract specs from tastytrade; insider filings from SEC EDGAR; the VIX from FRED. Any of it can be delayed, incomplete or wrong. The Methodology page lists every source.";
   }
   if (has("demo")) {
-    return "Demo mode runs the site on a saved snapshot of real data instead of live data - prices and readings don't update, anything you add stays in your browser tab, and the assistant and live option-chain lookup are off. A banner at the top says so, with an Exit demo button.";
+    return "Demo mode runs the site on a saved snapshot of real data instead of live data - prices and readings don't update, anything you add stays in your browser tab, and the assistant answers with simple keyword replies (no AI model) and live option-chain lookup is off. A banner at the top says so, with an Exit demo button.";
   }
   return null;
 }

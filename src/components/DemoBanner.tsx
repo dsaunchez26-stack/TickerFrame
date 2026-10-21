@@ -13,7 +13,7 @@ export const DemoBanner = () => {
   if (!demo) return null;
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[11px] text-amber-200">
-      <span><strong className="text-amber-300">Demo mode.</strong> Real data saved{date ? ` on ${date}` : ''} - prices and signals don't update, and anything you add is only kept in this browser tab. The AI assistant and live option-chain lookup are off.</span>
+      <span><strong className="text-amber-300">Demo mode.</strong> Real data saved{date ? ` on ${date}` : ''} - prices and signals don't update, and anything you add is only kept in this browser tab. The assistant answers from the site's data with simple keyword replies (no AI model), and live option-chain lookup is off.</span>
       <button onClick={exitDemo} className="underline hover:text-amber-100">Exit demo</button>
     </div>
   );
