@@ -95,31 +95,31 @@ function bollingerPctB(values: number[], period = 20, numStdDev = 2): number | n
   return (slice[slice.length - 1] - lower) / (upper - lower);
 }
 
-// Composite technical score, in points (max +/-8), mapped to buy/sell/hold.
+// Composite technical score, in points (max +/-6), mapped to buy/sell/hold.
 // The previous rule required RSI < 35 AND price >= its 20-SMA AND positive
 // MACD momentum for a buy -- oversold and above-trend are close to mutually
 // exclusive, so in practice no stock ever qualified (live: 0 buys of 783, 773
 // holds). Each condition now contributes points instead of acting as a hard
 // gate, so trend, momentum and mean-reversion extremes are weighed together:
-//   trend      price vs SMA20 (+/-2), EMA9 vs SMA20 (+/-1)
-//   momentum   MACD histogram above/below zero (+/-2)
-//   extremes   RSI <= 30 (+2, oversold) / >= 70 (-2, overbought),
-//              Bollinger %B <= 0.05 (+1) / >= 0.95 (-1)
-// Points >= BUY_POINTS is a buy, <= -BUY_POINTS a sell, otherwise hold. The
-// threshold of 5 was chosen so roughly a fifth of the universe reads buy and
-// a fifth sell on live data, instead of ~99% hold.
-// 2 + 1 + 2 + 2 + 1: the most any one stock can earn, so the score spans -100..+100.
-const SIGNAL_MAX_POINTS = 8;
-const SIGNAL_THRESHOLD_POINTS = 5;
+//   trend      price vs SMA20 (+/-1) and EMA9 vs SMA20 (+/-1)      -> -2..+2
+//   momentum   MACD histogram above/below zero (+/-2)              -> -2..+2
+//   stretch    RSI <= 30 (+1) / >= 70 (-1), Bollinger %B <= 0.05 (+1) / >= 0.95 (-1)
+//                                                                  -> -2..+2
+// Three pillars, each -2..+2, so the score spans -6..+6 (shown as -100..+100).
+// 4 or more points is a buy, -4 or fewer a sell, otherwise hold. This is the
+// same classification the earlier 8-point version produced (all 795 live
+// stocks kept their label when switched), just explainable in three lines.
+// A 5-year test found no predictive edge in any version, so the point of the
+// rule is a clear description of the current price pattern, not a forecast.
+const SIGNAL_MAX_POINTS = 6;
+const SIGNAL_THRESHOLD_POINTS = 4;
 
 function signalPoints(price: number, sma20: number, ema9: number, rsiVal: number, macdHist: number, pctB: number | null): number {
-  let pts = 0;
-  pts += price > sma20 ? 2 : price < sma20 ? -2 : 0;
-  pts += ema9 > sma20 ? 1 : ema9 < sma20 ? -1 : 0;
-  pts += macdHist > 0 ? 2 : macdHist < 0 ? -2 : 0;
-  pts += rsiVal <= 30 ? 2 : rsiVal >= 70 ? -2 : 0;
-  if (pctB !== null) pts += pctB <= 0.05 ? 1 : pctB >= 0.95 ? -1 : 0;
-  return pts;
+  const sign = (n: number) => (n > 0 ? 1 : n < 0 ? -1 : 0);
+  const trend = sign(price - sma20) + sign(ema9 - sma20);
+  const momentum = macdHist > 0 ? 2 : macdHist < 0 ? -2 : 0;
+  const stretch = (rsiVal <= 30 ? 1 : rsiVal >= 70 ? -1 : 0) + (pctB === null ? 0 : pctB <= 0.05 ? 1 : pctB >= 0.95 ? -1 : 0);
+  return trend + momentum + stretch;
 }
 
 // Rule-based detection over our own intraday 5-min-sample history. Deliberately

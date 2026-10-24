@@ -5,7 +5,7 @@ import { SignalBadge } from '@/components/SignalBadge';
 import type { Stock } from '@/lib/mockData';
 
 const stock: Stock = {
-  symbol: 'AAPL', name: 'Apple', price: 333.69, change: 3, changePercent: 1, volume: 0, signal: 'buy', signalScore: 56, entry: 330, exit: 360,
+  symbol: 'AAPL', name: 'Apple', price: 333.69, change: 3, changePercent: 1, volume: 0, signal: 'buy', signalScore: 67, entry: 330, exit: 360,
   rsi: 67.2, macd: 0.8, sma20: 332.19, ema9: 333, macdHistogram: 0.3, bollingerPctB: 0.74, hasReading: true,
 };
 
@@ -14,14 +14,16 @@ describe('SignalBreakdown', () => {
     render(<SignalBreakdown stock={stock} />);
     expect(screen.getByText('Why this reading')).toBeInTheDocument();
     expect(screen.getByText('Bullish')).toBeInTheDocument();
-    expect(screen.getByText('RSI (14)')).toBeInTheDocument();
-    expect(screen.getByText(/5 or more reads Bullish/)).toBeInTheDocument();
+    expect(screen.getByText('Trend')).toBeInTheDocument();
+    expect(screen.getByText('Momentum')).toBeInTheDocument();
+    expect(screen.getByText('Stretch')).toBeInTheDocument();
+    expect(screen.getByText(/4 or more reads Bullish/)).toBeInTheDocument();
   });
 
   it('says there is no reading yet instead of showing zero-point factors', () => {
     render(<SignalBreakdown stock={{ ...stock, signal: 'hold', signalScore: null, hasReading: false, rsi: 50, macd: 0, macdHistogram: 0 }} />);
     expect(screen.getByText(/Not enough price history yet to compute a reading for AAPL/)).toBeInTheDocument();
-    expect(screen.queryByText('RSI (14)')).not.toBeInTheDocument();
+    expect(screen.queryByText('Momentum')).not.toBeInTheDocument();
   });
 });
 

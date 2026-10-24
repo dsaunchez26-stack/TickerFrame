@@ -1,5 +1,6 @@
 import type { Stock } from '@/lib/mockData';
-import { signalFactors, type SignalFactor } from '@/lib/signalBreakdown';
+import { BULLISH_AT, pillarPoints, totalPoints } from '@/lib/signalBreakdown';
+import type { LongTermContext } from '@/lib/longTerm';
 
 // Turns the indicator points behind a reading into plain sentences. Pure and
 // deterministic -- no model call, so it costs nothing, can't drift from the
@@ -21,28 +22,25 @@ export interface ReadingStory {
   tone: 'bullish' | 'bearish' | 'neutral';
   headline: string;
   shortTerm: string[];
+  pastYear: string[] | null;
   longTerm: string[] | null;
   conflict: string | null;
   flips: string[];
 }
 
-const BUY_AT = 5;
 const labelFor = (points: number): 'bullish' | 'bearish' | 'neutral' =>
-  points >= BUY_AT ? 'bullish' : points <= -BUY_AT ? 'bearish' : 'neutral';
+  points >= BULLISH_AT ? 'bullish' : points <= -BULLISH_AT ? 'bearish' : 'neutral';
 const money = (n: number) => `$${n.toFixed(2)}`;
 const strength = (score: number) => (score >= 65 ? 'strong' : score >= 40 ? 'about average' : 'weak');
 
-const total = (factors: SignalFactor[]) => factors.reduce((sum, f) => sum + (f.points ?? 0), 0);
-
-export function buildReadingStory(s: Stock, f?: FundamentalsInput | null): ReadingStory | null {
+export function buildReadingStory(s: Stock, f?: FundamentalsInput | null, lt?: LongTermContext | null): ReadingStory | null {
   if (s.signalScore == null) return null;
-  const factors = signalFactors(s);
-  const pts = (key: string) => factors.find((x) => x.key === key)?.points ?? 0;
-  const points = total(factors);
+  const pil = pillarPoints(s);
+  const points = totalPoints(s);
   const tone = labelFor(points);
 
-  const trendUp = pts('trend') > 0;
-  const trendDown = pts('trend') < 0;
+  const trendUp = pil.trend > 0;
+  const trendDown = pil.trend < 0;
   const momUp = (s.macdHistogram ?? 0) > 0;
   const momDown = (s.macdHistogram ?? 0) < 0;
   const hot = s.rsi >= 70;
@@ -75,12 +73,12 @@ export function buildReadingStory(s: Stock, f?: FundamentalsInput | null): Readi
   // ---- short-term (price action) ----
   const shortTerm: string[] = [];
   const gap = s.sma20 > 0 ? ((s.price / s.sma20 - 1) * 100) : 0;
-  if (trendUp) shortTerm.push(`The price (${money(s.price)}) is ${Math.abs(gap).toFixed(1)}% above its recent average (${money(s.sma20)}), so the short-term trend is up.`);
-  else if (trendDown) shortTerm.push(`The price (${money(s.price)}) is ${Math.abs(gap).toFixed(1)}% below its recent average (${money(s.sma20)}), so the short-term trend is down.`);
-  else shortTerm.push(`The price is right at its recent average (${money(s.sma20)}), so there's no trend either way.`);
+  if (s.price > s.sma20) shortTerm.push(`The price (${money(s.price)}) is ${Math.abs(gap).toFixed(1)}% above its recent average (${money(s.sma20)}).`);
+  else if (s.price < s.sma20) shortTerm.push(`The price (${money(s.price)}) is ${Math.abs(gap).toFixed(1)}% below its recent average (${money(s.sma20)}).`);
+  else shortTerm.push(`The price is right at its recent average (${money(s.sma20)}).`);
 
-  if (pts('ema') > 0) shortTerm.push('The very latest prices are running above the slightly older ones, which means the move is recent and still going.');
-  else if (pts('ema') < 0) shortTerm.push('The very latest prices are running below the slightly older ones, which means the weakness is recent.');
+  if (s.ema9 > s.sma20) shortTerm.push(s.price > s.sma20 ? 'The very latest prices are running above the slightly older ones, so the move is recent and still going.' : 'The very latest prices are running above the slightly older ones, a first sign of a turn upward.');
+  else if (s.ema9 < s.sma20) shortTerm.push(s.price < s.sma20 ? 'The very latest prices are running below the slightly older ones, so the weakness is recent.' : 'The very latest prices are running below the slightly older ones, a first sign of a turn downward.');
 
   if (momUp) shortTerm.push('Momentum is positive: price moves have been getting stronger lately.');
   else if (momDown) shortTerm.push('Momentum is negative: price moves have been getting weaker lately.');
@@ -93,6 +91,21 @@ export function buildReadingStory(s: Stock, f?: FundamentalsInput | null): Readi
   if (b != null && b >= 0.95) shortTerm.push('The price is pressed against the top of its recent trading range.');
   else if (b != null && b <= 0.05) shortTerm.push('The price is pressed against the bottom of its recent trading range.');
 
+  // ---- past year (price context, not part of the reading) ----
+  let pastYear: string[] | null = null;
+  if (lt) {
+    pastYear = [];
+    const sgn = (n: number) => `${n >= 0 ? 'up' : 'down'} ${Math.abs(n).toFixed(1)}%`;
+    if (lt.return12m != null) {
+      const vsMarket = lt.marketReturn12m != null ? `, compared with ${lt.marketReturn12m >= 0 ? '+' : ''}${lt.marketReturn12m.toFixed(1)}% for the S&P 500 (SPY)` : '';
+      pastYear.push(`Over the past 12 months it is ${sgn(lt.return12m)}${vsMarket}.`);
+    }
+    if (lt.return3m != null) pastYear.push(`Over the past 3 months it is ${sgn(lt.return3m)}.`);
+    if (lt.fromHigh != null) pastYear.push(lt.fromHigh > -1 ? 'It is at or within 1% of its 52-week high.' : `It is ${Math.abs(lt.fromHigh).toFixed(1)}% below its 52-week high${lt.fromLow != null ? ` and ${lt.fromLow.toFixed(1)}% above its 52-week low` : ''}.`);
+    if (lt.vs200 != null) pastYear.push(`It trades ${Math.abs(lt.vs200).toFixed(1)}% ${lt.vs200 >= 0 ? 'above' : 'below'} its 200-day average, a common gauge of the long-term trend.`);
+    if (!pastYear.length) pastYear = null;
+  }
+
   // ---- long-term (company financials) ----
   let longTerm: string[] | null = null;
   let conflict: string | null = null;
@@ -101,7 +114,7 @@ export function buildReadingStory(s: Stock, f?: FundamentalsInput | null): Readi
       `Financial health is ${strength(f.balance_sheet_score)} (${f.balance_sheet_score}/100) compared with similar companies, based on debt, cash on hand and profit margin.`,
       `Growth is ${strength(f.growth_score)} (${f.growth_score}/100) compared with similar companies, based on sales and earnings growth.`,
     ];
-    if (f.week52_low != null && f.week52_high != null && f.week52_high > f.week52_low) {
+    if (!lt && f.week52_low != null && f.week52_high != null && f.week52_high > f.week52_low) {
       const pos = Math.round(((s.price - f.week52_low) / (f.week52_high - f.week52_low)) * 100);
       const clamped = Math.min(100, Math.max(0, pos));
       longTerm.push(`Over the past year it has traded between ${money(f.week52_low)} and ${money(f.week52_high)}; today it sits ${clamped}% of the way up that range.`);
@@ -120,21 +133,17 @@ export function buildReadingStory(s: Stock, f?: FundamentalsInput | null): Readi
 
   // ---- what would change it ----
   const flips: string[] = [];
-  const reading = (key: string, newPoints: number) => labelFor(points - pts(key) + newPoints);
-  const add = (key: string, newPoints: number, cond: string) => {
-    const was = pts(key);
-    if (was === newPoints) return;
-    const next = reading(key, newPoints);
+  const sign = (n: number) => (n > 0 ? 1 : n < 0 ? -1 : 0);
+  const add = (newPillarTotal: number, oldPillar: number, cond: string) => {
+    if (newPillarTotal === oldPillar) return;
+    const next = labelFor(points - oldPillar + newPillarTotal);
     if (next !== tone) flips.push(`If ${cond}, the reading would turn ${next === 'neutral' ? 'Neutral' : next === 'bullish' ? 'Bullish' : 'Bearish'}.`);
   };
-  if (trendUp) add('trend', -2, `the price falls below its recent average (${money(s.sma20)})`);
-  if (trendDown) add('trend', 2, `the price rises above its recent average (${money(s.sma20)})`);
-  if (pts('ema') > 0) add('ema', -1, 'the latest prices slip below the older ones');
-  if (pts('ema') < 0) add('ema', 1, 'the latest prices climb above the older ones');
-  if (momUp) add('macd', -2, 'momentum turns negative');
-  if (momDown) add('macd', 2, 'momentum turns positive');
-  if (hot || cold) add('rsi', 0, 'RSI moves back into its normal 30-70 range');
-  if (b != null && (b >= 0.95 || b <= 0.05)) add('bb', 0, 'the price moves back inside its recent trading range');
+  const priceSide = sign(s.price - s.sma20), fastSide = sign(s.ema9 - s.sma20);
+  if (priceSide !== 0) add(-priceSide + fastSide, pil.trend, priceSide > 0 ? `the price falls below its recent average (${money(s.sma20)})` : `the price rises above its recent average (${money(s.sma20)})`);
+  if (fastSide !== 0) add(priceSide - fastSide, pil.trend, fastSide > 0 ? 'the latest prices slip below the older ones' : 'the latest prices climb above the older ones');
+  if (pil.momentum != null && pil.momentum !== 0) add(-pil.momentum, pil.momentum, pil.momentum > 0 ? 'momentum turns negative' : 'momentum turns positive');
+  if (pil.stretch !== 0) add(0, pil.stretch, 'RSI and the price range move back to normal levels');
 
-  return { tone, headline, shortTerm, longTerm, conflict, flips: flips.slice(0, 3) };
+  return { tone, headline, shortTerm, pastYear, longTerm, conflict, flips: flips.slice(0, 3) };
 }

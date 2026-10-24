@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       alerts: {
@@ -72,6 +47,78 @@ export type Database = {
           severity?: string
           symbol?: string
           triggered_at?: string
+        }
+        Relationships: []
+      }
+      assistant_usage: {
+        Row: {
+          count: number
+          day: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          day?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          day?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      backtest_results: {
+        Row: {
+          end_date: string
+          factors: Json
+          fundamentals: Json | null
+          id: number
+          insider: Json | null
+          notes: string | null
+          run_at: string
+          start_date: string
+          universe_size: number
+        }
+        Insert: {
+          end_date: string
+          factors: Json
+          fundamentals?: Json | null
+          id?: never
+          insider?: Json | null
+          notes?: string | null
+          run_at?: string
+          start_date: string
+          universe_size: number
+        }
+        Update: {
+          end_date?: string
+          factors?: Json
+          fundamentals?: Json | null
+          id?: never
+          insider?: Json | null
+          notes?: string | null
+          run_at?: string
+          start_date?: string
+          universe_size?: number
+        }
+        Relationships: []
+      }
+      bars_cache: {
+        Row: {
+          fetched_at: string
+          key: string
+          payload: Json
+        }
+        Insert: {
+          fetched_at?: string
+          key: string
+          payload: Json
+        }
+        Update: {
+          fetched_at?: string
+          key?: string
+          payload?: Json
         }
         Relationships: []
       }
@@ -236,6 +283,57 @@ export type Database = {
         }
         Relationships: []
       }
+      fundamentals_history: {
+        Row: {
+          as_of: string
+          balance_sheet_score: number | null
+          debt_to_equity: number | null
+          dividend_yield: number | null
+          eps_growth_yoy: number | null
+          growth_score: number | null
+          market_cap: number | null
+          net_margin: number | null
+          pb_ratio: number | null
+          pe_ratio: number | null
+          price: number | null
+          ps_ratio: number | null
+          revenue_growth_yoy: number | null
+          symbol: string
+        }
+        Insert: {
+          as_of: string
+          balance_sheet_score?: number | null
+          debt_to_equity?: number | null
+          dividend_yield?: number | null
+          eps_growth_yoy?: number | null
+          growth_score?: number | null
+          market_cap?: number | null
+          net_margin?: number | null
+          pb_ratio?: number | null
+          pe_ratio?: number | null
+          price?: number | null
+          ps_ratio?: number | null
+          revenue_growth_yoy?: number | null
+          symbol: string
+        }
+        Update: {
+          as_of?: string
+          balance_sheet_score?: number | null
+          debt_to_equity?: number | null
+          dividend_yield?: number | null
+          eps_growth_yoy?: number | null
+          growth_score?: number | null
+          market_cap?: number | null
+          net_margin?: number | null
+          pb_ratio?: number | null
+          pe_ratio?: number | null
+          price?: number | null
+          ps_ratio?: number | null
+          revenue_growth_yoy?: number | null
+          symbol?: string
+        }
+        Relationships: []
+      }
       futures_positions: {
         Row: {
           contract_symbol: string
@@ -395,6 +493,24 @@ export type Database = {
         }
         Relationships: []
       }
+      news_cache: {
+        Row: {
+          fetched_at: string
+          key: string
+          payload: Json
+        }
+        Insert: {
+          fetched_at?: string
+          key: string
+          payload: Json
+        }
+        Update: {
+          fetched_at?: string
+          key?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       option_iv_history: {
         Row: {
           id: number
@@ -452,6 +568,24 @@ export type Database = {
           stop_loss_pct?: number | null
           target_gain_pct?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      options_aggregate_cache: {
+        Row: {
+          id: boolean
+          payload: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          payload: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          payload?: Json
+          updated_at?: string
         }
         Relationships: []
       }
@@ -596,6 +730,33 @@ export type Database = {
           alert_key?: string
           id?: string
           sent_at?: string
+        }
+        Relationships: []
+      }
+      signal_history: {
+        Row: {
+          price: number
+          signal: string
+          signal_score: number | null
+          source: string
+          symbol: string
+          trade_date: string
+        }
+        Insert: {
+          price: number
+          signal: string
+          signal_score?: number | null
+          source?: string
+          symbol: string
+          trade_date: string
+        }
+        Update: {
+          price?: number
+          signal?: string
+          signal_score?: number | null
+          source?: string
+          symbol?: string
+          trade_date?: string
         }
         Relationships: []
       }
@@ -919,8 +1080,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_best_puts: { Args: Record<PropertyKey, never>; Returns: Json }
-      signal_track_record: { Args: Record<PropertyKey, never>; Returns: Json }
+      compute_options_aggregate: {
+        Args: { p_regime: Json; p_scanned: number; p_source: string }
+        Returns: Json
+      }
+      get_best_puts: { Args: never; Returns: Json }
+      signal_track_record: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
@@ -1049,9 +1214,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

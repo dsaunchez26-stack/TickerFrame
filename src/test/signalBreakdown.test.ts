@@ -9,20 +9,26 @@ const base: Stock = {
 };
 const total = (s: Stock) => signalFactors(s).reduce((sum, f) => sum + (f.points ?? 0), 0);
 
-describe('signalFactors (mirrors the scanner\'s points rule)', () => {
+describe('signalFactors (mirrors the scanner\'s three-pillar rule)', () => {
   it('scores a flat stock at zero', () => {
     expect(total(base)).toBe(0);
   });
 
-  it('matches the live AAPL example: above trend, momentum building, neutral RSI = +5', () => {
+  it('matches the live AAPL example: above trend, momentum building, normal RSI = +4 (Bullish)', () => {
     const aapl: Stock = { ...base, price: 333.69, sma20: 332.19, ema9: 333, rsi: 67.2, macdHistogram: 0.3, bollingerPctB: 0.74 };
-    expect(total(aapl)).toBe(5);
-    expect(Math.round((total(aapl) / 8) * 100)).toBe(63);
+    expect(total(aapl)).toBe(4);
+    expect(Math.round((total(aapl) / 6) * 100)).toBe(67);
   });
 
-  it('maxes out at +8 and -8, so the score spans -100 to +100', () => {
-    expect(total({ ...base, price: 110, ema9: 108, sma20: 100, macdHistogram: 1, rsi: 25, bollingerPctB: 0.01 })).toBe(8);
-    expect(total({ ...base, price: 90, ema9: 92, sma20: 100, macdHistogram: -1, rsi: 75, bollingerPctB: 0.99 })).toBe(-8);
+  it('has exactly three pillars, each worth at most 2 points either way', () => {
+    const f = signalFactors({ ...base, price: 110, ema9: 108, sma20: 100, macdHistogram: 1, rsi: 25, bollingerPctB: 0.01 });
+    expect(f.map((x) => x.key)).toEqual(['trend', 'momentum', 'stretch']);
+    expect(f.every((x) => x.max === 2 && Math.abs(x.points ?? 0) <= 2)).toBe(true);
+  });
+
+  it('maxes out at +6 and -6, so the score spans -100 to +100', () => {
+    expect(total({ ...base, price: 110, ema9: 108, sma20: 100, macdHistogram: 1, rsi: 25, bollingerPctB: 0.01 })).toBe(6);
+    expect(total({ ...base, price: 90, ema9: 92, sma20: 100, macdHistogram: -1, rsi: 75, bollingerPctB: 0.99 })).toBe(-6);
   });
 
   it('treats overbought as a negative even in an uptrend', () => {
@@ -30,10 +36,15 @@ describe('signalFactors (mirrors the scanner\'s points rule)', () => {
     expect(total(hot)).toBe(2);
   });
 
-  it('leaves MACD and Bollinger unscored (null) when their inputs are missing', () => {
+  it('gives half the trend credit when price and the faster average disagree', () => {
+    expect(signalFactors({ ...base, price: 101, ema9: 99, sma20: 100 }).find((x) => x.key === 'trend')?.points).toBe(0);
+    expect(signalFactors({ ...base, price: 101, ema9: 100, sma20: 100 }).find((x) => x.key === 'trend')?.points).toBe(1);
+  });
+
+  it('leaves momentum unscored (null) when its input is missing, and ignores a missing Bollinger value', () => {
     const f = signalFactors({ ...base, macdHistogram: null, bollingerPctB: null });
-    expect(f.find((x) => x.key === 'macd')?.points).toBeNull();
-    expect(f.find((x) => x.key === 'bb')?.points).toBeNull();
+    expect(f.find((x) => x.key === 'momentum')?.points).toBeNull();
+    expect(f.find((x) => x.key === 'stretch')?.points).toBe(0);
   });
 
   it('formats points with a sign', () => {

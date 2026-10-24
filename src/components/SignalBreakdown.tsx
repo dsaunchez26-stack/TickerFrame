@@ -57,7 +57,7 @@ export const SignalBreakdown = ({ stock }: { stock: Stock }) => {
         ))}
       </div>
       <p className="mt-2 text-[10px] text-muted-foreground">
-        Points add up to the score ({stock.signal === 'buy' ? '5 or more reads Bullish' : stock.signal === 'sell' ? '-5 or fewer reads Bearish' : 'between -5 and 5 reads Neutral'}). It summarizes these indicators - it is not a prediction or a recommendation. Weigh them yourself.
+        Points add up to the score ({stock.signal === 'buy' ? '4 or more reads Bullish' : stock.signal === 'sell' ? '-4 or fewer reads Bearish' : 'between -3 and 3 reads Neutral'}). It summarizes these indicators - it is not a prediction or a recommendation. Weigh them yourself.
       </p>
     </div>
   );

@@ -5,7 +5,7 @@ import { alpacaHeaders } from "../_shared/alpaca.ts";
 // Real open/high/low/close bars for the stock popup's candle chart, from
 // Alpaca's free IEX feed (IEX trades only, so highs/lows can differ slightly
 // from consolidated figures -- the UI says so). Cached briefly per symbol+range.
-type Range = "1D" | "3D" | "1W" | "1M" | "3M" | "1Y";
+type Range = "1D" | "3D" | "1W" | "1M" | "3M" | "1Y" | "5Y";
 const CONFIG: Record<Range, { timeframe: string; lookbackDays: number; keepDays?: number; ttlMs: number }> = {
   "1D": { timeframe: "5Min", lookbackDays: 7, keepDays: 1, ttlMs: 3 * 60_000 },
   "3D": { timeframe: "30Min", lookbackDays: 9, keepDays: 3, ttlMs: 5 * 60_000 },
@@ -13,6 +13,8 @@ const CONFIG: Record<Range, { timeframe: string; lookbackDays: number; keepDays?
   "1M": { timeframe: "1Day", lookbackDays: 35, ttlMs: 30 * 60_000 },
   "3M": { timeframe: "1Day", lookbackDays: 100, ttlMs: 30 * 60_000 },
   "1Y": { timeframe: "1Day", lookbackDays: 372, ttlMs: 30 * 60_000 },
+  // Research only: the quarterly signal evaluation. Needs the service-role key (checked below), never offered to the app.
+  "5Y": { timeframe: "1Day", lookbackDays: 1830, ttlMs: 12 * 3600_000 },
 };
 
 interface Bar { t: string; o: number; h: number; l: number; c: number; v: number }
@@ -34,6 +36,9 @@ Deno.serve(async (req) => {
   } catch { /* handled below */ }
   if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(symbol) || !CONFIG[range]) return json({ error: "Invalid symbol or range" }, 400);
   const cfg = CONFIG[range];
+  if (range === "5Y" && req.headers.get("Authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
+    return json({ error: "Not available" }, 403);
+  }
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const key = `${symbol}:${range}`;

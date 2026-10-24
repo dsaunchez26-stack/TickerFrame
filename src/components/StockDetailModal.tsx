@@ -6,6 +6,7 @@ import { PatternBadge } from '@/components/PatternBadge';
 import { CandlestickChart } from '@/components/CandlestickChart';
 import { ReadingStory } from '@/components/ReadingStory';
 import { NewsList } from '@/components/NewsList';
+import { useLongTermContext } from '@/hooks/useLongTermContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStockCandles, TIMEFRAMES, type Timeframe } from '@/hooks/useStockCandles';
 import { useEffect, useMemo, useState } from 'react';
@@ -36,6 +37,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
   const stock = useMemo(() => data?.stocks.find(s => s.symbol === symbol) ?? null, [data, symbol]);
   const [timeframe, setTimeframe] = useState<Timeframe>('1D');
   const [tab, setTab] = useState('overview');
+  const { data: longTerm } = useLongTermContext(stock ? symbol : null);
   useEffect(() => { setTab('overview'); }, [symbol]);
   const { candles, loading: loadingHistory, source: candleSource } = useStockCandles(symbol, timeframe);
 
@@ -263,7 +265,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
                 <ReadingStory stock={stock} fundamentals={fundamentals} compact onMore={() => setTab('reading')} />
               </TabsContent>
               <TabsContent value="reading" className="mt-3 space-y-3">
-                <ReadingStory stock={stock} fundamentals={fundamentals} />
+                <ReadingStory stock={stock} fundamentals={fundamentals} longTerm={longTerm ?? null} />
                 <SignalBreakdown stock={stock} />
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div><div className="text-muted-foreground">MACD</div><div className="font-semibold">{stock.hasReading ? stock.macd.toFixed(3) : '-'}</div></div>

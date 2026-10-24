@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
 import type { Stock } from '@/lib/mockData';
 import { buildReadingStory, type FundamentalsInput } from '@/lib/readingStory';
+import type { LongTermContext } from '@/lib/longTerm';
 import { SignalBadge } from '@/components/SignalBadge';
 
 const dot = { bullish: 'bg-signal-buy', bearish: 'bg-signal-sell', neutral: 'bg-signal-hold' } as const;
 
 // The same reading, in sentences: what is happening, which part is short-term
 // price action versus the company's financials, and what would change it.
-export const ReadingStory = ({ stock, fundamentals, compact = false, onMore }: { stock: Stock; fundamentals: FundamentalsInput | null; compact?: boolean; onMore?: () => void }) => {
-  const story = useMemo(() => buildReadingStory(stock, fundamentals), [stock, fundamentals]);
+export const ReadingStory = ({ stock, fundamentals, longTerm = null, compact = false, onMore }: { stock: Stock; fundamentals: FundamentalsInput | null; longTerm?: LongTermContext | null; compact?: boolean; onMore?: () => void }) => {
+  const story = useMemo(() => buildReadingStory(stock, fundamentals, longTerm), [stock, fundamentals, longTerm]);
   if (!story) return null;
 
   if (compact) {
@@ -43,6 +44,15 @@ export const ReadingStory = ({ stock, fundamentals, compact = false, onMore }: {
             {story.shortTerm.map((t, i) => <li key={i}>{t}</li>)}
           </ul>
         </div>
+
+        {story.pastYear && (
+          <div>
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Past year - how the stock has traded</div>
+            <ul className="ml-4 list-disc space-y-1 text-muted-foreground">
+              {story.pastYear.map((t, i) => <li key={i}>{t}</li>)}
+            </ul>
+          </div>
+        )}
 
         {story.longTerm && (
           <div>

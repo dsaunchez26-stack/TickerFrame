@@ -82,6 +82,7 @@ const snapshot = {
     stock_cache, stock_fundamentals: agg('select * from stock_fundamentals'), realized_volatility: agg('select * from realized_volatility'),
     insider_activity: agg('select * from insider_activity'), earnings_calendar: agg('select * from earnings_calendar'),
     cron_runs: agg('select * from cron_runs order by ran_at desc limit 300'), stock_price_history, daily_closes,
+    backtest_results: agg('select * from backtest_results order by run_at desc limit 1'),
   },
   optionsAggregate, bestPuts, signalTrackRecord, futures,
 };

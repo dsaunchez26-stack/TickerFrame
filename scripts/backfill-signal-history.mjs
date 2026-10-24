@@ -16,7 +16,8 @@ const rsi = (v, p = 14) => { if (v.length < p + 1) return 50; let g = 0, l = 0; 
 const emaSeries = (v, p) => { if (!v.length) return []; const k = 2 / (p + 1); const o = [v[0]]; for (let i = 1; i < v.length; i++) o.push(v[i] * k + o[i - 1] * (1 - k)); return o; };
 const macdHist = (v) => { const a = emaSeries(v, 12), b = emaSeries(v, 26); const m = a.map((x, i) => x - b[i]); const s = emaSeries(m, 9); const l = m.length - 1; return l >= 0 ? m[l] - s[l] : 0; };
 const pctB = (v, p = 20, n = 2) => { const s = v.slice(-p); if (s.length < p) return null; const m = s.reduce((a, b) => a + b, 0) / p; const sd = Math.sqrt(s.reduce((a, b) => a + (b - m) ** 2, 0) / p); const u = m + n * sd, lo = m - n * sd; return u === lo ? null : (s[s.length - 1] - lo) / (u - lo); };
-const points = (price, s20, e9, r, h, b) => { let p = 0; p += price > s20 ? 2 : price < s20 ? -2 : 0; p += e9 > s20 ? 1 : e9 < s20 ? -1 : 0; p += h > 0 ? 2 : h < 0 ? -2 : 0; p += r <= 30 ? 2 : r >= 70 ? -2 : 0; if (b !== null) p += b <= 0.05 ? 1 : b >= 0.95 ? -1 : 0; return p; };
+const sg = (n) => (n > 0 ? 1 : n < 0 ? -1 : 0);
+const points = (price, s20, e9, r, h, b) => sg(price - s20) + sg(e9 - s20) + (h > 0 ? 2 : h < 0 ? -2 : 0) + (r <= 30 ? 1 : r >= 70 ? -1 : 0) + (b === null ? 0 : b <= 0.05 ? 1 : b >= 0.95 ? -1 : 0); // three-pillar rule, mirrors fetch-stock-data
 
 const nyDate = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 const nyDay = (ts) => new Date(new Date(ts).toLocaleString('en-US', { timeZone: 'America/New_York' })).getDay();
@@ -33,7 +34,7 @@ for (const { symbol, p } of rows) {
     const closes = [...prior, price];
     const s20 = sma(closes, 20) || price, e9 = ema(closes, 9) || price;
     const pts = points(price, s20, e9, rsi(closes), macdHist(closes), pctB(closes));
-    out.push({ symbol, date, signal: pts >= 5 ? 'buy' : pts <= -5 ? 'sell' : 'hold', score: Math.round((pts / 8) * 100), price });
+    out.push({ symbol, date, signal: pts >= 4 ? 'buy' : pts <= -4 ? 'sell' : 'hold', score: Math.round((pts / 6) * 100), price });
   }
 }
 

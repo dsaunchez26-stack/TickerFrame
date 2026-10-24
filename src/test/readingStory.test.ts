@@ -6,7 +6,7 @@ const base: Stock = {
   symbol: 'TEST', name: 'Test Co', price: 100, change: 0, changePercent: 0, volume: 0, signal: 'hold', signalScore: 0, entry: 100, exit: 100,
   rsi: 50, macd: 0, sma20: 100, ema9: 100, macdHistogram: 0, bollingerPctB: 0.5,
 };
-const strong = { ...base, price: 105, ema9: 103, sma20: 100, macdHistogram: 1, rsi: 60, bollingerPctB: 0.8, signal: 'buy' as const, signalScore: 63 };
+const strong = { ...base, price: 105, ema9: 103, sma20: 100, macdHistogram: 1, rsi: 60, bollingerPctB: 0.8, signal: 'buy' as const, signalScore: 67 };
 const fund = { balance_sheet_score: 80, growth_score: 70, pe_ratio: 25.4, week52_low: 80, week52_high: 120, dividend_yield: 1.2, revenue_growth_yoy: 10, net_margin: 20 };
 
 describe('buildReadingStory', () => {
@@ -42,7 +42,7 @@ describe('buildReadingStory', () => {
   });
 
   it('explains a conflict between weak price action and healthy financials', () => {
-    const bear = { ...base, price: 90, ema9: 92, sma20: 100, macdHistogram: -1, rsi: 45, bollingerPctB: 0.1, signal: 'sell' as const, signalScore: -88 };
+    const bear = { ...base, price: 90, ema9: 92, sma20: 100, macdHistogram: -1, rsi: 45, bollingerPctB: 0.1, signal: 'sell' as const, signalScore: -67 };
     const s = buildReadingStory(bear, fund)!;
     expect(s.conflict).toContain('financials are healthy');
     expect(s.longTerm?.[0]).toContain('strong (80/100)');
