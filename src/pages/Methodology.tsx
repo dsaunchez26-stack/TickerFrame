@@ -55,7 +55,7 @@ const Methodology = () => (
         <p><strong className="text-foreground">Two lenses, kept separate:</strong> the reading itself is built only from recent price action (trend and momentum make up 5 of the 8 points; the stretch measures RSI and Bollinger can pull against them). Company financials - the Balance Sheet and Growth scores - are not part of it. The "Why this reading" summary shows them next to it, and says when the two disagree, so a long-term investor can weigh both.</p>
         <p>The same readings are shown to every visitor. Nothing here is tailored to an individual's finances, goals or holdings.</p>
         <p>The earlier rule required RSI under 35 and price above its 20-SMA at the same time, which almost never happen together - on live data it produced no bullish readings across ~780 stocks. Weighing the conditions together fixes that. The 5-point cutoff was picked so roughly a fifth of the universe reads Bullish and a fifth Bearish rather than nearly everything reading Neutral; it is not a statistically optimized number.</p>
-        <p><strong className="text-foreground">Not validated:</strong> this is a standard technical-indicator composite computed from this site's own rolling price samples, and it has not been backtested over a long history or shown to predict returns. Treat it as a way to organize momentum and trend information, not a forecast.</p>
+        <p><strong className="text-foreground">Tested, and no proven edge:</strong> in October 2026 we ran the same five indicator rules on daily prices for about 770 U.S. stocks over five years (October 2021 to October 2026) and compared each day's scores with how every stock did relative to the rest over the next 5, 20 and 60 trading days. The relationship was effectively zero (rank correlation between -0.01 and 0.00, nowhere near statistical significance), and the same was true of the individual trend and stretch components and of common alternatives such as 6- and 12-month momentum. Caveats: the test used daily prices while the live reading uses this site's own intraday samples, it only includes stocks still listed today (which flatters long-term results), and it ignores trading costs. So treat a reading as a description of the current price pattern, not a forecast, and expect the live Track Record to look the same until it proves otherwise.</p>
         <p>Chart patterns (breakout, breakdown, bull/bear flag, consolidation) are detected separately from recent intraday price action and shown as a badge next to the reading - they don't feed into the score.</p>
       </CardContent>
     </Card>
@@ -102,7 +102,7 @@ const Methodology = () => (
         single page load regardless of whether anything changed. */}
     <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
       <Shield className="h-3 w-3" />
-      <span>Methodology last updated 10/15/2026</span>
+      <span>Methodology last updated 10/23/2026</span>
     </div>
   </div>
 );

@@ -26,7 +26,9 @@ if (!sessionStarted) {
 
 // Scheduled runs since the open (UTC window = today's New York open)
 const runs = q(`select count(*) filter (where d.status='succeeded') ok, count(*) filter (where d.status<>'succeeded') bad, count(*) n from cron.job_run_details d join cron.job j using(jobid) where j.jobname='fetch-stock-data-market-hours' and d.start_time >= (('${ny_date} 09:30')::timestamp at time zone 'America/New_York')`)[0];
-const minutes = Number(mins) - (9 * 60 + 30);
+// Cap at the session end so running this after the close (or the next morning) doesn't expect runs that never should have happened.
+const afterClose = !sim && Number(mins) > 16 * 60 + 30;
+const minutes = Math.min(Number(mins), 16 * 60 + 5) - (9 * 60 + 30);
 const expected = Math.floor(minutes / 3);
 Number(runs.bad) === 0 ? line('PASS', 'Cron fired without errors', `${runs.ok} runs`) : line('FAIL', 'Cron job errors', `${runs.bad} failed of ${runs.n}`);
 Number(runs.n) >= expected - 2 ? line('PASS', 'Run cadence (every 3 min)', `${runs.n} runs, ~${expected} expected`) : line('FAIL', 'Too few runs', `${runs.n} vs ~${expected} expected`);
@@ -37,10 +39,11 @@ const bad = resp.filter((r) => r.status_code !== 200);
 bad.length === 0 ? line('PASS', 'Function responses', resp.map((r) => `${r.status_code}x${r.n}`).join(', ')) : line('FAIL', 'Non-200 responses', JSON.stringify(bad));
 
 // The scanner's own run log
-const logRows = q(`select ok, rows, coalesce(notes,'') notes, ran_at::text from cron_runs where job_name='fetch-stock-data' and ran_at >= (('${ny_date} 09:30')::timestamp at time zone 'America/New_York') order by ran_at desc`);
+const logRows = q(`select ok, rows, coalesce(notes,'') notes, ran_at::text, (extract(hour from ran_at at time zone 'America/New_York')*60 + extract(minute from ran_at at time zone 'America/New_York'))::int as ny_mins from cron_runs where job_name='fetch-stock-data' and ran_at >= (('${ny_date} 09:30')::timestamp at time zone 'America/New_York') order by ran_at desc`);
 const failed = logRows.filter((r) => !r.ok);
 failed.length === 0 ? line('PASS', 'Scanner run log', `${logRows.length} runs, avg ${Math.round(logRows.reduce((s, r) => s + Number(r.rows), 0) / Math.max(logRows.length, 1))} symbols/run`) : line('FAIL', 'Scanner reported failures', JSON.stringify(failed.slice(0, 2)));
-const skipped = logRows.filter((r) => r.notes.includes('market closed'));
+// The 3-minute cron also fires 9:00-9:30 and after 16:05, where "market closed" is the correct answer.
+const skipped = logRows.filter((r) => r.notes.includes('market closed') && r.ny_mins >= 9 * 60 + 33 && r.ny_mins <= 16 * 60);
 skipped.length === 0 ? line('PASS', 'No runs skipped during the session') : line('WARN', 'Runs skipped as "market closed" during the session', `${skipped.length}`);
 const errs = logRows.map((r) => Number((r.notes.match(/(\d+) symbol errors/) || [0, 0])[1]));
 Math.max(0, ...errs) <= 3 ? line('PASS', 'Symbol errors per run', `max ${Math.max(0, ...errs)}`) : line('WARN', 'Symbol errors per run', `max ${Math.max(...errs)} (check for rate limits or newly delisted tickers)`);
@@ -64,7 +67,9 @@ Number(weekend) === 0 ? line('PASS', 'No weekend daily closes') : line('FAIL', '
 const readings = q(`select count(*) filter (where signal_score is not null) with_reading, count(*) total, count(*) filter (where signal='buy') bull, count(*) filter (where signal='sell') bear from stock_cache`)[0];
 const live = q(`select count(*) n, count(distinct symbol) syms from signal_history where source='live'`)[0];
 line('INFO', 'Readings', `${readings.with_reading}/${readings.total} stocks have a score (needs ~27 samples each); bullish ${readings.bull}, bearish ${readings.bear}; live signal-log rows ${live.n}`);
-if (minutes < 40 && !process.env.SIMULATE_DATE) {
+if (afterClose) {
+  line('INFO', 'Freshness check skipped', 'the market is closed, so prices are not refreshing');
+} else if (minutes < 40 && !process.env.SIMULATE_DATE) {
   line('INFO', 'Freshness check skipped', 'a full rotation over every stock takes ~27 min; run after 10:15 AM');
 } else {
   const stale = q(`select count(*) n from stock_cache where fetched_at < now() - interval '45 minutes'`)[0].n;
