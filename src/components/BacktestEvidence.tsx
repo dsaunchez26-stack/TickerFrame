@@ -5,7 +5,11 @@ interface FactorRow { name: string; ic5: number; t5: number; ic20: number; t20: 
 interface Result {
   run_at: string; universe_size: number; start_date: string; end_date: string;
   factors: { rows: FactorRow[] };
-  insider: { events: number; horizons: Record<string, { n: number; meanExcessPct?: number; t?: number; beatMarketPct?: number }> } | null;
+  insider: {
+    events: number; source?: string; newestFiling?: string;
+    groups?: Record<string, Record<string, { n: number; days?: number; meanExcessPct?: number; t?: number; beatMarketPct?: number }>>;
+    horizons?: Record<string, { n: number; meanExcessPct?: number; t?: number; beatMarketPct?: number }>;
+  } | null;
   fundamentals: { status: string; snapshots: number; firstSnapshot: string | null } | null;
 }
 
@@ -35,7 +39,9 @@ export const BacktestEvidence = () => {
   if (!data) return null;
   const rows = SHOW.map((k) => data.factors.rows.find((r) => r.name === k)).filter((r): r is FactorRow => !!r);
   const date = new Date(data.run_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-  const ins = data.insider?.horizons?.['20'];
+  const g = data.insider?.groups;
+  const all60 = g?.all?.['60'];
+  const big60 = g?.officers_directors_over_100k?.['60'];
 
   return (
     <div className="rounded-md border border-border bg-secondary/20 p-3 text-xs">
@@ -56,7 +62,7 @@ export const BacktestEvidence = () => {
         </table>
       </div>
       <p className="mt-2">
-        Insider purchases: {ins?.n ? `${ins.n} events with 20 days of follow-up, averaging ${ins.meanExcessPct}% versus the average stock (t ${ins.t}).${ins.n < 300 ? ' Too few events to rely on.' : ''}` : 'not enough events with follow-up yet.'}{' '}
+        Insider purchases: {all60?.n ? `across ${all60.n} open-market purchases (${data.insider?.source ?? 'SEC filings'}), the average stock bought by insiders gained ${all60.meanExcessPct}% more than the average stock over the next 60 trading days, but only ${all60.beatMarketPct}% of them beat the market and the result is not statistically distinguishable from luck (t ${all60.t}); purchases of $100,000 or more by officers and directors averaged ${big60?.meanExcessPct ?? 0}% (t ${big60?.t ?? 0}).` : 'not enough events with follow-up yet.'}{' '}
         Company financials: {data.fundamentals?.status === 'ok' ? 'see the Handbook for results.' : `not testable yet - weekly snapshots started ${data.fundamentals?.firstSnapshot ?? 'recently'} and need a few months to accumulate.`}
         {' '}This test re-runs every quarter and the newest result replaces this one.
       </p>

@@ -93,27 +93,61 @@ export function factorStudy(raw, H = [5, 20, 60]) {
 }
 
 // Open-market insider purchases: enter at the first close after the filing date,
-// compare the next 20 / 60 trading days with the average stock over the same days.
-export function insiderStudy(raw, events, H = [20, 60]) {
+// compare the next 20 / 60 / 120 trading days with the average stock over the same
+// days. Reported for several kinds of buyer, because "an insider bought" lumps
+// together a 10% holder topping up and a CEO writing a large cheque. t-stats average events by entry day (filings the same day move together) and then
+// count only about T/h independent windows, because a 60-day window starting Monday
+// and one starting Tuesday are nearly the same observation.
+const GROUPS = {
+  all: () => true,
+  officers_directors: (e) => !e.tenPctOnly && (e.officer || e.director),
+  ceo_cfo_president: (e) => e.ceoCfo,
+  over_100k: (e) => e.value >= 100_000,
+  officers_directors_over_100k: (e) => !e.tenPctOnly && (e.officer || e.director) && e.value >= 100_000,
+};
+
+export function insiderStudy(raw, events, H = [20, 60, 120]) {
   const { syms, dates, T, C } = alignBars(raw);
   const dayIdx = new Map(dates.map((t, i) => [isoDate(t), i]));
   const symSet = new Set(syms);
   const firstAfter = (d) => { for (let k = 1; k <= 7; k++) { const dd = new Date(Date.parse(d + 'T00:00:00Z') + k * 86400000).toISOString().slice(0, 10); if (dayIdx.has(dd)) return dayIdx.get(dd); } return null; };
-  const out = { events: events.length, horizons: {} };
-  for (const h of H) {
-    const ex = [];
-    const seen = new Set();
-    for (const e of events) {
-      if (!symSet.has(e.symbol)) continue;
-      const key = `${e.symbol}|${e.date}`; if (seen.has(key)) continue; seen.add(key); // one per stock per filing day
-      const t0 = firstAfter(e.date); if (t0 == null || t0 + h >= T) continue;
-      const own = C[e.symbol][t0 + h] / C[e.symbol][t0] - 1;
-      const mkt = mean(syms.map((s) => C[s][t0 + h] / C[s][t0] - 1));
-      ex.push(own - mkt);
+  // average-stock return from each entry day, per horizon (cached)
+  const mktCache = new Map();
+  const mkt = (t0, h) => { const k = `${t0}|${h}`; if (!mktCache.has(k)) mktCache.set(k, mean(syms.map((s) => C[s][t0 + h] / C[s][t0] - 1).filter(Number.isFinite))); return mktCache.get(k); };
+
+  const inUniverse = events.filter((e) => symSet.has(e.symbol));
+  // Cluster: 3+ different insiders buying the same stock within 30 days (flagged on the day the third appears).
+  const bySym = new Map();
+  for (const e of inUniverse) (bySym.get(e.symbol) ?? bySym.set(e.symbol, []).get(e.symbol)).push(e);
+  const clusters = [];
+  for (const list of bySym.values()) {
+    list.sort((a, b) => a.date.localeCompare(b.date));
+    let lastFlag = '';
+    for (let i = 0; i < list.length; i++) {
+      const from = Date.parse(list[i].date) - 30 * 86400000;
+      const owners = new Set(); for (let j = 0; j <= i; j++) if (Date.parse(list[j].date) >= from) (list[j].owners ?? []).forEach((o) => owners.add(o));
+      if (owners.size >= 3 && (!lastFlag || Date.parse(list[i].date) - Date.parse(lastFlag) > 60 * 86400000)) { clusters.push(list[i]); lastFlag = list[i].date; }
     }
-    out.horizons[h] = ex.length ? { n: ex.length, meanExcessPct: +(mean(ex) * 100).toFixed(2), t: +((mean(ex) / (sdv(ex) || 1)) * Math.sqrt(ex.length)).toFixed(2), beatMarketPct: +(mean(ex.map((x) => (x > 0 ? 1 : 0))) * 100).toFixed(1) } : { n: 0 };
   }
-  return out;
+  const groups = { ...Object.fromEntries(Object.entries(GROUPS).map(([k, f]) => [k, inUniverse.filter(f)])), cluster_3_insiders_30d: clusters };
+
+  const result = { events: inUniverse.length, eventsInAllSecData: events.length, horizons: {}, groups: {} };
+  for (const [name, list] of Object.entries(groups)) {
+    result.groups[name] = {};
+    for (const h of H) {
+      const byDay = new Map(); let n = 0;
+      for (const e of list) {
+        const t0 = firstAfter(e.date); if (t0 == null || t0 + h >= T) continue;
+        const ex = C[e.symbol][t0 + h] / C[e.symbol][t0] - 1 - mkt(t0, h);
+        if (!Number.isFinite(ex)) continue;
+        (byDay.get(t0) ?? byDay.set(t0, []).get(t0)).push(ex); n++;
+      }
+      const days = [...byDay.values()].map(mean); // t counts only ~T/h independent windows (overlapping windows are nearly the same observation)
+      result.groups[name][h] = n ? { n, days: days.length, meanExcessPct: +(mean(days) * 100).toFixed(2), t: +((mean(days) / (sdv(days) || 1)) * Math.sqrt(Math.min(days.length, T / h))).toFixed(2), beatMarketPct: +(mean([...byDay.values()].flat().map((x) => (x > 0 ? 1 : 0))) * 100).toFixed(1) } : { n: 0 };
+    }
+  }
+  result.horizons = Object.fromEntries(H.map((h) => [h, result.groups.all[h]]));
+  return result;
 }
 
 // snapshots: [{ symbol, as_of: 'YYYY-MM-DD', balance_sheet_score, growth_score }, ...] taken weekly.

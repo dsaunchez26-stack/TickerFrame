@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { factorStudy, insiderStudy, fundamentalsStudy } from './signal-studies.mjs';
+import { loadSecInsiderEvents } from './sec-insiders.mjs';
 
 const REF = 'xikmfhipjhabhwxtpyfn';
 const env = Object.fromEntries(fs.readFileSync('.env', 'utf8').split('\n').filter((l) => l.includes('=')).map((l) => { const i = l.indexOf('='); return [l.slice(0, i), l.slice(i + 1).replace(/^"|"$/g, '')]; }));
@@ -50,8 +51,12 @@ if (fs.existsSync(cache)) {
 console.log('factor study...');
 const factors = factorStudy(raw);
 console.log('insider study...');
-const events = sql("select ticker as symbol, filing_date::text as date from insider_activity where transaction_code = 'P' and filing_date is not null");
-const insider = insiderStudy(raw, events);
+// Five years of filings from the SEC's quarterly bulk files when they've been downloaded;
+// otherwise only the few months our own scanner has stored (far too few to conclude anything).
+const secEvents = loadSecInsiderEvents();
+const events = secEvents ?? sql("select ticker as symbol, filing_date::text as date from insider_activity where transaction_code = 'P' and filing_date is not null").map((e) => ({ ...e, value: 0, owners: [], officer: true, director: false, tenPctOnly: false, ceoCfo: false }));
+const insider = { source: secEvents ? 'SEC bulk Form 4 files' : 'own scanner (short history)', ...insiderStudy(raw, events) };
+if (secEvents) { const newest = secEvents.map((e) => e.date).sort().at(-1); insider.newestFiling = newest; if ((Date.now() - Date.parse(newest)) / 86400000 > 150) console.log(`NOTE: the SEC insider files end ${newest}; download the newer quarters from sec.gov (with the owner's OK) to refresh this test.`); }
 console.log('fundamentals study...');
 const snaps = sql('select symbol, as_of::text as as_of, balance_sheet_score, growth_score from fundamentals_history');
 const fundamentals = fundamentalsStudy(raw, snaps);
@@ -72,8 +77,12 @@ ${factors.rows.map(fmt).join('\n')}
 
 ${significant.length ? `Signals with |t| >= 2 at some horizon: ${significant.map((r) => r.name).join(', ')}.` : 'No signal reached |t| >= 2 at any horizon.'}
 
-## Insider purchases (Form 4, open-market buys)
-${Object.entries(insider.horizons).map(([h, v]) => (v.n ? `- ${h} trading days after the filing: ${v.n} events, average ${v.meanExcessPct}% versus the average stock (t ${v.t}), ${v.beatMarketPct}% beat the market.` : `- ${h} trading days after the filing: not enough events with that much follow-up yet.`)).join('\n')}
+## Insider purchases (Form 4, open-market buys of common stock)
+Source: ${insider.source}${insider.newestFiling ? `, filings through ${insider.newestFiling}` : ''}. ${insider.events} purchase days in the tracked universe. Average return versus the average stock after the filing; t averages same-day filings and counts only non-overlapping windows.
+
+| buyers | days after filing | filing days | avg vs average stock | t | beat market |
+|---|---|---|---|---|---|
+${Object.entries(insider.groups ?? {}).flatMap(([g, byH]) => Object.entries(byH).map(([h, v]) => (v.n ? `| ${g} | ${h} | ${v.days} | ${v.meanExcessPct}% | ${v.t} | ${v.beatMarketPct}% |` : null)).filter(Boolean)).join('\n')}
 
 ## Company financials (Balance Sheet and Growth scores)
 ${fundamentals.status === 'ok' ? Object.entries(fundamentals.measures).map(([m, byH]) => `- ${m}: ${Object.entries(byH).map(([h, v]) => (v.snapshotsUsed ? `${h}d IC ${v.ic} (${v.snapshotsUsed} snapshots)` : `${h}d not enough follow-up yet`)).join(', ')}`).join('\n') : `Not enough history yet: ${fundamentals.snapshots} weekly snapshot(s) so far${fundamentals.firstSnapshot ? ` (first ${fundamentals.firstSnapshot})` : ''}. Snapshots are saved every Sunday; this needs a few months of weeks before it can say anything.`}
