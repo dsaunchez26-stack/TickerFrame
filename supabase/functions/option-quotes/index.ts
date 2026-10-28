@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/requireUser.ts";
 import { alpacaHeaders, fetchSnapshots, snapshotPrice } from "../_shared/alpaca.ts";
 
 interface ContractRequest {
@@ -22,6 +23,8 @@ function occSymbol(c: ContractRequest): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const denied = await requireUser(req);
+  if (denied) return denied;
 
   let headers: Record<string, string>;
   try {

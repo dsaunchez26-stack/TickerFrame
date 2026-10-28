@@ -50,6 +50,15 @@ Deno.serve(async (req) => {
     return json({ items: cached.payload, cached: true, fetchedAt: cached.fetched_at });
   }
 
+  // The news key is shared with the price scanner (Finnhub allows ~60 calls a minute), so a burst of
+  // lookups for different tickers must not starve it: past 20 fresh provider calls in the last
+  // minute, serve what we have (even stale) or ask the caller to retry.
+  const { count: recentCalls } = await supabase.from("news_cache").select("key", { count: "exact", head: true }).gte("fetched_at", new Date(Date.now() - 60_000).toISOString());
+  if ((recentCalls ?? 0) >= 20) {
+    if (cached) return json({ items: cached.payload, cached: true, stale: true, fetchedAt: cached.fetched_at });
+    return json({ error: "Headlines are busy right now - try again in a minute" }, 429);
+  }
+
   const today = new Date();
   const from = new Date(today.getTime() - 7 * 86_400_000);
   const ymd = (d: Date) => d.toISOString().slice(0, 10);

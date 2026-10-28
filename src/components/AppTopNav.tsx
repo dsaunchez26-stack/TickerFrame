@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, LineChart, TrendingUp, TrendingDown, Activity, Briefcase, BarChart3,
   Newspaper, ShieldCheck, Gem, Radar, ListFilter, Wallet, Bookmark, Rss, Coins, Target, Layers, DollarSign, ChevronDown,
-  Calculator, Users, Building2, Percent, RotateCcw, Sparkles,
+  Calculator, Users, Building2, Percent, RotateCcw, Sparkles, Menu,
 } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -119,5 +121,44 @@ export const AppTopNav = () => {
         </Link>
       )}
     </div>
+  );
+};
+
+// Phones get one menu button instead of a three-row wrapping bar: the same
+// groups and links, listed down the side, closing itself after a tap.
+export const MobileNav = () => {
+  const { pathname } = useLocation();
+  const { isAdmin } = useAuth();
+  const [open, setOpen] = useState(false);
+  useEffect(() => { setOpen(false); }, [pathname]);
+
+  const row = (url: string, title: string, Icon: typeof LineChart) => (
+    <NavLink key={url} to={url} className={({ isActive }) => cn('flex items-center gap-3 rounded-md px-3 py-2.5 text-sm hover:bg-accent', isActive && 'bg-accent/60 font-medium text-primary')}>
+      <Icon className="h-4 w-4 shrink-0" /> {title}
+    </NavLink>
+  );
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger aria-label="Open menu" className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent">
+        <Menu className="h-5 w-5" />
+      </SheetTrigger>
+      <SheetContent side="left" className="w-72 overflow-y-auto p-3">
+        <SheetHeader className="mb-2 text-left"><SheetTitle className="font-heading text-base">Menu</SheetTitle></SheetHeader>
+        {row('/dashboard', 'Dashboard', LayoutDashboard)}
+        {row('/chat', 'Assistant', Sparkles)}
+        {groups.map(g => (
+          <div key={g.label} className="mt-3">
+            <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{g.label}</div>
+            {g.items.map(item => row(item.url, item.title, item.icon))}
+          </div>
+        ))}
+        <div className="mt-3 border-t border-border pt-2">
+          {row('/futures', 'Futures', Layers)}
+          {row('/patterns', 'Patterns', Activity)}
+          {isAdmin && row('/health', 'System Health', ShieldCheck)}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };

@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { requireUser } from "../_shared/requireUser.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { alpacaHeaders, fetchFullChain, snapshotPrice } from "../_shared/alpaca.ts";
 import { greeksFromPrice } from "../_shared/blackScholes.ts";
@@ -10,6 +11,8 @@ import { greeksFromPrice } from "../_shared/blackScholes.ts";
 // rolling cache.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const denied = await requireUser(req);
+  if (denied) return denied;
 
   let headers: Record<string, string>;
   try {

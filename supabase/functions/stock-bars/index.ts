@@ -45,6 +45,14 @@ Deno.serve(async (req) => {
   const { data: cached } = await supabase.from("bars_cache").select("payload, fetched_at").eq("key", key).maybeSingle();
   if (cached && Date.now() - Date.parse(cached.fetched_at) < cfg.ttlMs) return json({ bars: cached.payload, cached: true });
 
+  // Alpaca's free plan allows ~200 calls a minute across everything that uses the key (the options
+  // scanner included). Past 100 fresh bar fetches in the last minute, serve stale data or ask to retry.
+  const { count: recentCalls } = await supabase.from("bars_cache").select("key", { count: "exact", head: true }).gte("fetched_at", new Date(Date.now() - 60_000).toISOString());
+  if ((recentCalls ?? 0) >= 100 && range !== "5Y") {
+    if (cached) return json({ bars: cached.payload, cached: true, stale: true });
+    return json({ error: "Chart data is busy right now - try again in a minute" }, 429);
+  }
+
   try {
     const start = new Date(Date.now() - cfg.lookbackDays * 86_400_000).toISOString();
     const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(symbol)}/bars?timeframe=${cfg.timeframe}&start=${start}&limit=10000&adjustment=split&feed=iex&sort=asc`;

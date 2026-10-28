@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { AppTopNav } from '@/components/AppTopNav';
+import { AppTopNav, MobileNav } from '@/components/AppTopNav';
 import { Activity, Zap } from 'lucide-react';
 import { StockDetailProvider } from '@/context/StockDetailContext';
 import { StockSearchBar } from '@/components/StockSearchBar';
@@ -35,6 +35,7 @@ export default function AppLayout() {
         <header className="border-b border-border bg-card/40 backdrop-blur-sm">
           <div className="flex h-12 items-center justify-between px-3">
             <div className="flex items-center gap-2">
+              <div className="md:hidden"><MobileNav /></div>
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
                 <Zap className="h-4 w-4 text-primary-foreground" />
               </div>
@@ -56,7 +57,7 @@ export default function AppLayout() {
               <UserMenu />
             </div>
           </div>
-          <div className="border-t border-border/60 px-3 py-1">
+          <div className="hidden border-t border-border/60 px-3 py-1 md:block">
             <AppTopNav />
           </div>
         </header>

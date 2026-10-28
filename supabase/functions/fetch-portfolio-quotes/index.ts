@@ -1,4 +1,5 @@
 import { corsHeaders } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/requireUser.ts";
 
 // Live lookup for portfolio holdings that fall outside the ~76-symbol
 // tracked universe in stock_cache. Same Finnhub source, just fetched
@@ -6,6 +7,8 @@ import { corsHeaders } from "../_shared/cors.ts";
 // instead of silently defaulting to $0 today-change for anything untracked.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const denied = await requireUser(req);
+  if (denied) return denied;
 
   const FINNHUB_API_KEY = Deno.env.get("FINNHUB_API_KEY");
   if (!FINNHUB_API_KEY) {
