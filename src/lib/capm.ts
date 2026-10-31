@@ -96,6 +96,8 @@ export function whatIfAdd(inputs: RiskInput[], candidate: { symbol: string; beta
   return { before, after, candidate: { symbol: sym, beta: candidate.beta, amount: candidate.amount, weightAfter: row?.weight ?? 0, expectedReturn: expected(candidate.beta, rfPct, erpPct) } };
 }
 
+export const UNCLASSIFIED = 'Not classified';
+
 export interface GroupRisk { label: string; weight: number; riskShare: number | null; symbols: string[] }
 
 // Roll holdings up into groups (sectors, fund types): how much of the portfolio each group is
@@ -121,8 +123,9 @@ export function observations(summary: RiskSummary, groups: GroupRisk[]): Observa
   const out: Observation[] = [];
   if (summary.score > 65) out.push({ key: 'high', text: `This portfolio's market sensitivity (beta ${summary.beta.toFixed(2)}) is higher than the S&P 500's, so in a market decline it has tended to fall by more than the market, and in a rise to gain by more.` });
   else if (summary.score < 35) out.push({ key: 'low', text: `This portfolio's market sensitivity (beta ${summary.beta.toFixed(2)}) is lower than the S&P 500's, so it has tended to move less than the market in both directions.` });
-  const top = groups[0];
-  if (top && groups.length > 0 && top.weight >= 0.4 && top.riskShare != null) out.push({ key: 'group', text: `${Math.round(top.weight * 100)}% of the portfolio is in ${top.label}, and that part accounts for ${Math.round(top.riskShare * 100)}% of its market risk - so ${top.label} moves have an outsized effect.` });
+  // Holdings the site can't classify (funds outside its tracked list) are not a sector, so they never count as one.
+  const top = groups.find((g) => g.label !== UNCLASSIFIED);
+  if (top && top.weight >= 0.4 && top.riskShare != null) out.push({ key: 'group', text: `${Math.round(top.weight * 100)}% of the portfolio is in ${top.label}, and that part accounts for ${Math.round(top.riskShare * 100)}% of its market risk - so ${top.label} moves have an outsized effect.` });
   const big = summary.rows[0];
   if (big && summary.rows.length > 1 && big.weight >= 0.35) out.push({ key: 'single', text: `${big.symbol} alone is ${Math.round(big.weight * 100)}% of the portfolio. Company-specific events, which beta does not capture, have more room to matter when one holding is this large.` });
   return out;

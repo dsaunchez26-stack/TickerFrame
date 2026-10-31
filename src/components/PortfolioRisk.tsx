@@ -7,7 +7,7 @@ import { broadSector } from '@/lib/sectorMapping';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useBetas } from '@/hooks/useBetas';
-import { adjustBeta, analyzePortfolio, groupRisk, observations, whatIfAdd, DEFAULT_ERP_PCT, FALLBACK_RF_PCT, type RiskInput } from '@/lib/capm';
+import { adjustBeta, analyzePortfolio, groupRisk, observations, whatIfAdd, UNCLASSIFIED, DEFAULT_ERP_PCT, FALLBACK_RF_PCT, type RiskInput } from '@/lib/capm';
 
 // The same menu is shown for every portfolio, so it describes how different kinds of holdings
 // would change the numbers rather than picking anything for a particular person.
@@ -80,7 +80,9 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
     const cls = new Map((stockData?.stocks ?? []).map((x) => [x.symbol, x.assetClass ?? 'Equity']));
     return groupRisk(summary, (sym) => {
       const c = cls.get(sym) ?? 'Equity';
-      return c === 'Equity' ? broadSector(sym, sectorRows?.get(sym) ?? null) : (CLASS_LABEL[c] ?? c);
+      if (c !== 'Equity') return CLASS_LABEL[c] ?? c;
+      const sector = broadSector(sym, sectorRows?.get(sym) ?? null);
+      return sector === 'Other' ? UNCLASSIFIED : sector;
     });
   }, [summary, stockData, sectorRows]);
   const notes = useMemo(() => (summary ? observations(summary, groups) : []), [summary, groups]);
@@ -216,6 +218,7 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
                   </div>
                 ))}
               </div>
+              {groups.some((g) => g.label === UNCLASSIFIED) && <p className="mt-1 text-[10px] text-muted-foreground">"Not classified" is stocks and funds the site doesn't track closely enough to assign a sector; they still count in the score above.</p>}
               <p className="mt-1 text-[10px] text-muted-foreground">Filled bar = share of the portfolio's value; red mark = share of its market risk. When the red mark sits to the right of the bar's end, that group adds more market risk than its size alone.</p>
             </div>
           )}

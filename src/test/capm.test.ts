@@ -122,3 +122,11 @@ describe('groups and observations', () => {
     expect(observations(bal, groupRisk(bal, (x) => x))).toHaveLength(0);
   });
 });
+
+describe('unclassified holdings', () => {
+  it('are never reported as a concentrated sector', () => {
+    const s = analyzePortfolio([{ symbol: 'A', value: 9000, beta: 1.2 }, { symbol: 'B', value: 1000, beta: 1 }], 4, 5)!;
+    const groups = groupRisk(s, (x) => (x === 'A' ? 'Not classified' : 'Utilities'));
+    expect(observations(s, groups).map((o) => o.key)).not.toContain('group');
+  });
+});
