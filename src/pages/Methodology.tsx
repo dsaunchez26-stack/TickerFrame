@@ -75,6 +75,25 @@ const Methodology = () => (
 
     <Card>
       <CardHeader className="flex-row items-center gap-2 space-y-0">
+        <TrendingUp className="h-5 w-5 text-primary" />
+        <CardTitle className="text-base">Portfolio market risk (CAPM)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm text-muted-foreground">
+        <p>The Market risk section on the Portfolio page applies the Capital Asset Pricing Model to the stocks and funds in a portfolio (options and futures are not included).</p>
+        <ul className="ml-4 list-disc space-y-1">
+          <li><strong className="text-foreground">Beta:</strong> for each holding, the sensitivity of its daily returns to the S&amp;P 500 (SPY) over about the past year, computed as the covariance of the two divided by the variance of the market, from Alpaca's free IEX daily candles (split-adjusted). The model uses an adjusted beta, 0.67 x measured + 0.33, the standard correction that pulls noisy single-year estimates toward 1. Holdings without about 100 shared trading days of history are left out and listed.</li>
+          <li><strong className="text-foreground">Portfolio beta:</strong> the value-weighted average of holding betas, using current market values.</li>
+          <li><strong className="text-foreground">Risk score:</strong> portfolio beta divided by 2, as a percentage, limited to 0-100 (beta 1 = 50, beta 2 or more = 100). The labels - lower than, close to, or higher than the market - split at 35 and 65.</li>
+          <li><strong className="text-foreground">Expected return:</strong> risk-free rate + beta x market premium. The risk-free rate is the 10-year U.S. Treasury yield from FRED (the Federal Reserve's data service); the market premium defaults to 5% a year. Both can be changed on the page and the choice is kept in your browser.</li>
+          <li><strong className="text-foreground">Share of risk and "Without it":</strong> a holding's share of risk is its weight times its beta, divided by the portfolio beta. "Without it" recomputes the portfolio with that holding removed and the rest kept in proportion.</li>
+          <li><strong className="text-foreground">Illustrations:</strong> the same fixed list of eight funds (three defensive sector funds, a bond fund, gold, real estate, an S&amp;P 500 fund and a tech-heavy fund) is shown for every portfolio, each added at an amount equal to 10% of the portfolio, so the effect on the score and expected return can be compared. The list is not chosen for anyone's situation.</li>
+        </ul>
+        <p><strong className="text-foreground">Limits:</strong> CAPM prices market-related risk only; risk specific to one company, which is large for a single stock, does not show up in beta. One year of history is a short sample and betas change. The model also ignores how holdings move relative to one another, so real-world diversification can be better or worse than shown. The expected return is what the model implies under its assumptions, not a prediction. Nothing here is a recommendation to buy or sell anything - see the <Link to="/legal" className="underline">full disclaimer</Link>.</p>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader className="flex-row items-center gap-2 space-y-0">
         <Activity className="h-5 w-5 text-primary" />
         <CardTitle className="text-base">Signal tracking</CardTitle>
       </CardHeader>
@@ -104,7 +123,7 @@ const Methodology = () => (
         single page load regardless of whether anything changed. */}
     <div className="flex items-center justify-center gap-2 py-4 text-xs text-muted-foreground">
       <Shield className="h-3 w-3" />
-      <span>Methodology last updated 10/23/2026</span>
+      <span>Methodology last updated 10/31/2026</span>
     </div>
   </div>
 );

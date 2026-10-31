@@ -248,6 +248,25 @@ const handleFunction = async (name: string, bodyText: string | null): Promise<Re
       if (!rows || rows.length < 2) return json({ error: 'No saved candles for this symbol in the demo' }, 404);
       return json({ bars: rows.map(([t, o, h, l, c, v]) => ({ t: new Date(t * 1000).toISOString(), o, h, l, c, v })) });
     }
+    case 'stock-betas': {
+      // Betas from the demo's saved year of daily candles (Top 50 and ETFs), against SPY.
+      const all = (await import('./bars.json')).default as unknown as Record<string, Record<string, number[][]>>;
+      const closes = (sym: string) => new Map((all[sym]?.['1Y'] ?? []).map(([t, , , , c]) => [new Date(t * 1000).toISOString().slice(0, 10), c] as [string, number]));
+      const { computeBeta } = await import('@/lib/beta');
+      // Funds the portfolio page illustrates (sector funds, bonds, gold...) aren't in the saved candles, so their
+      // betas were measured once on the live backend and saved alongside the demo.
+      const saved = (await import('./fundBetas.json')).default as unknown as { betas: Record<string, unknown> };
+      const market = closes('SPY');
+      const betas: Record<string, unknown> = {};
+      const missing: string[] = [];
+      for (const raw of (body.symbols ?? []) as string[]) {
+        const s = String(raw).toUpperCase();
+        if (s === 'SPY') { betas[s] = { beta: 1, r2: 1, volatility: null, observations: 0 }; continue; }
+        const b = computeBeta(closes(s), market);
+        if (b) betas[s] = b; else if (saved.betas[s]) betas[s] = saved.betas[s]; else missing.push(s);
+      }
+      return json({ betas, missing, riskFree: { ratePct: 4.98, asOf: null } });
+    }
     case 'option-quotes': return json({ quotes: [] });
     case 'option-chain-lookup': return json({ error: "Live option chain lookup isn't available in the demo snapshot - it works on the live site." }, 200);
     case 'fundamentals-scanner':

@@ -17,6 +17,7 @@ import { PositionAlertBadge } from '@/components/PositionAlertBadge';
 import { PortfolioRating } from '@/components/PortfolioRating';
 import { PortfolioTrend } from '@/components/PortfolioTrend';
 import { PortfolioAllocation } from '@/components/PortfolioAllocation';
+import { PortfolioRisk } from '@/components/PortfolioRisk';
 import { PortfolioOptions } from '@/components/PortfolioOptions';
 import { PortfolioFutures } from '@/components/PortfolioFutures';
 import { useSymbolNames } from '@/hooks/useSymbolNames';
@@ -199,6 +200,7 @@ const PortfolioPanel = ({ name, accent }: { name: string; accent: string }) => {
       {!isLoading && enriched.length > 0 && (
         <>
           <PortfolioAllocation holdings={enriched} />
+          <PortfolioRisk holdings={enriched} />
           <PortfolioRating enriched={enriched} totalValue={totals.current} pnlPct={totals.pnlPct} winRate={totals.winRate} />
           {user && <PortfolioTrend userId={user.id} portfolioName={name} />}
         </>

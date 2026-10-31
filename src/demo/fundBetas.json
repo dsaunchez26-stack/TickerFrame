@@ -1,0 +1,65 @@
+{
+ "savedAt": "2026-10-31",
+ "betas": {
+  "GLD": {
+   "beta": 0.874,
+   "r2": 0.154,
+   "volatility": 28.3,
+   "observations": 254
+  },
+  "VOO": {
+   "beta": 1.005,
+   "r2": 0.994,
+   "volatility": 12.8,
+   "observations": 254
+  },
+  "SPY": {
+   "beta": 1,
+   "r2": 1,
+   "volatility": null,
+   "observations": 0
+  },
+  "XLU": {
+   "beta": 0.092,
+   "r2": 0.005,
+   "volatility": 15.8,
+   "observations": 254
+  },
+  "XLP": {
+   "beta": -0.12,
+   "r2": 0.01,
+   "volatility": 15.3,
+   "observations": 254
+  },
+  "XLK": {
+   "beta": 1.805,
+   "r2": 0.718,
+   "volatility": 27.1,
+   "observations": 254
+  },
+  "XLV": {
+   "beta": 0.225,
+   "r2": 0.031,
+   "volatility": 16.3,
+   "observations": 254
+  },
+  "QQQ": {
+   "beta": 1.46,
+   "r2": 0.846,
+   "volatility": 20.2,
+   "observations": 254
+  },
+  "VNQ": {
+   "beta": 0.283,
+   "r2": 0.063,
+   "volatility": 14.3,
+   "observations": 254
+  },
+  "AGG": {
+   "beta": 0.117,
+   "r2": 0.124,
+   "volatility": 4.2,
+   "observations": 254
+  }
+ }
+}
