@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "../_shared/cors.ts";
 import { alpacaHeaders } from "../_shared/alpaca.ts";
+import { isServiceRole } from "../_shared/requireUser.ts";
 
 // Real open/high/low/close bars for the stock popup's candle chart, from
 // Alpaca's free IEX feed (IEX trades only, so highs/lows can differ slightly
@@ -36,7 +37,7 @@ Deno.serve(async (req) => {
   } catch { /* handled below */ }
   if (!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(symbol) || !CONFIG[range]) return json({ error: "Invalid symbol or range" }, 400);
   const cfg = CONFIG[range];
-  if (range === "5Y" && req.headers.get("Authorization") !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
+  if (range === "5Y" && !isServiceRole(req)) {
     return json({ error: "Not available" }, 403);
   }
 
