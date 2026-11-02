@@ -267,6 +267,13 @@ const handleFunction = async (name: string, bodyText: string | null): Promise<Re
       }
       return json({ betas, missing, riskFree: { ratePct: 4.98, asOf: null } });
     }
+    case 'symbol-info': {
+      // Names and industries for common funds and stocks, looked up once on the live backend and saved with the demo.
+      const saved = (await import('./symbolInfo.json')).default as unknown as { info: Record<string, unknown> };
+      const info: Record<string, unknown> = {};
+      for (const s of (body.symbols ?? []) as string[]) if (saved.info[String(s).toUpperCase()]) info[String(s).toUpperCase()] = saved.info[String(s).toUpperCase()];
+      return json({ info });
+    }
     case 'option-quotes': return json({ quotes: [] });
     case 'option-chain-lookup': return json({ error: "Live option chain lookup isn't available in the demo snapshot - it works on the live site." }, 200);
     case 'fundamentals-scanner':

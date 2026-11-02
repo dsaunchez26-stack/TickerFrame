@@ -96,7 +96,8 @@ export function whatIfAdd(inputs: RiskInput[], candidate: { symbol: string; beta
   return { before, after, candidate: { symbol: sym, beta: candidate.beta, amount: candidate.amount, weightAfter: row?.weight ?? 0, expectedReturn: expected(candidate.beta, rfPct, erpPct) } };
 }
 
-export const UNCLASSIFIED = 'Not classified';
+export { UNCLASSIFIED } from '@/lib/classify';
+import { UNCLASSIFIED } from '@/lib/classify';
 
 export interface GroupRisk { label: string; weight: number; riskShare: number | null; symbols: string[] }
 

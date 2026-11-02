@@ -1,9 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Loader2, Info, ChevronDown } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useStockData } from '@/hooks/useStockData';
-import { broadSector } from '@/lib/sectorMapping';
+import { useHoldingClasses } from '@/hooks/useHoldingClasses';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useBetas } from '@/hooks/useBetas';
@@ -22,7 +19,6 @@ const ILLUSTRATION_FUNDS: Array<{ symbol: string; label: string }> = [
   { symbol: 'QQQ', label: 'Nasdaq-100 (tech-heavy) fund' },
 ];
 const ILLUSTRATION_SHARE = 0.1; // an amount equal to 10% of the portfolio
-const CLASS_LABEL: Record<string, string> = { Index: 'Index funds', Bonds: 'Bond funds', 'Gold & Silver': 'Gold & silver funds', Crypto: 'Crypto funds', 'Real Estate': 'Real estate funds' };
 
 interface Holding { symbol: string; quantity: number; currentPrice: number }
 
@@ -64,27 +60,9 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
   );
   const summary = useMemo(() => analyzePortfolio(inputs, rf, erp), [inputs, rf, erp]);
 
-  // Sector of each stock (fund types for funds), to show where the market risk is coming from.
-  const { data: stockData } = useStockData('all', 'all');
-  const { data: sectorRows } = useQuery({
-    queryKey: ['allocation-sectors', [...symbols].sort().join(',')],
-    enabled: symbols.length > 0,
-    queryFn: async () => {
-      const { data: rows } = await supabase.from('stock_fundamentals').select('symbol, sector').in('symbol', [...symbols].sort());
-      return new Map((rows ?? []).map((r) => [r.symbol, r.sector as string | null]));
-    },
-    staleTime: 30 * 60_000,
-  });
-  const groups = useMemo(() => {
-    if (!summary) return [];
-    const cls = new Map((stockData?.stocks ?? []).map((x) => [x.symbol, x.assetClass ?? 'Equity']));
-    return groupRisk(summary, (sym) => {
-      const c = cls.get(sym) ?? 'Equity';
-      if (c !== 'Equity') return CLASS_LABEL[c] ?? c;
-      const sector = broadSector(sym, sectorRows?.get(sym) ?? null);
-      return sector === 'Other' ? UNCLASSIFIED : sector;
-    });
-  }, [summary, stockData, sectorRows]);
+  // Sector or fund type of each holding, to show where the market risk is coming from.
+  const { classes } = useHoldingClasses(symbols);
+  const groups = useMemo(() => (summary ? groupRisk(summary, (sym) => classes.get(sym.toUpperCase())?.sector ?? UNCLASSIFIED) : []), [summary, classes]);
   const notes = useMemo(() => (summary ? observations(summary, groups) : []), [summary, groups]);
 
   // "How would other holdings change this?" - opens by itself when the mix looks concentrated or high-risk.
@@ -218,7 +196,7 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
                   </div>
                 ))}
               </div>
-              {groups.some((g) => g.label === UNCLASSIFIED) && <p className="mt-1 text-[10px] text-muted-foreground">"Not classified" is stocks and funds the site doesn't track closely enough to assign a sector; they still count in the score above.</p>}
+              {groups.some((g) => g.label === UNCLASSIFIED) && <p className="mt-1 text-[10px] text-muted-foreground">"Not classified" is holdings whose company or fund type could not be looked up; they still count in the score above.</p>}
               <p className="mt-1 text-[10px] text-muted-foreground">Filled bar = share of the portfolio's value; red mark = share of its market risk. When the red mark sits to the right of the bar's end, that group adds more market risk than its size alone.</p>
             </div>
           )}
