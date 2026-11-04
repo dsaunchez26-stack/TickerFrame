@@ -8,9 +8,13 @@
     <meta name="author" content="Tickerframe" />
     <meta name="theme-color" content="#090b0a" />
     <script>
-      // Apply the saved theme before first paint so there is no flash. Dark is the default.
+      // Apply the theme before first paint so there is no flash: the saved choice if there is one,
+      // otherwise the system setting (dark if the system gives no preference).
       try {
-        if (localStorage.getItem('tf_theme') === 'light') {
+        var saved = null;
+        try { saved = localStorage.getItem('tf_theme'); } catch (e) {}
+        var light = saved ? saved === 'light' : window.matchMedia('(prefers-color-scheme: light)').matches;
+        if (light) {
           document.documentElement.classList.add('light');
           document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f8f7');
         }
