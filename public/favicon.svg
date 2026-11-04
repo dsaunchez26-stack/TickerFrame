@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <style>
+    .g { fill: #74bd94; stroke: #74bd94; }
+    .t { fill: #14201a; }
+    @media (prefers-color-scheme: dark) { .t { fill: #e6e9e7; } }
+  </style>
+  <defs>
+    <mask id="m"><rect width="600" height="600" fill="white"/><path d="M0 0L50 50M600 0L550 50M0 600L50 550M600 600L550 550" stroke="black" stroke-width="16"/></mask>
+  </defs>
+  <path class="g" stroke="none" fill-rule="evenodd" mask="url(#m)" d="M0 0H600V600H0Z M50 50V550H550V50Z"/>
+  <rect class="g" x="99" y="99" width="404" height="404" fill="none" stroke-width="12"/>
+  <rect class="t" x="185" y="188" width="230" height="60"/>
+  <rect class="t" x="270" y="248" width="61" height="162"/>
+</svg>

@@ -8,8 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Activity, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoLink } from '@/components/Logo';
 
 export default function Auth() {
   const { user, loading: authLoading } = useAuth();
@@ -85,13 +86,11 @@ export default function Auth() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <LogoLink className="absolute left-4 top-4" />
       <ThemeToggle className="absolute right-4 top-4" />
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-md bg-primary/10">
-            <Activity className="h-6 w-6 text-primary" />
-          </div>
-          <h1 className="text-lg font-semibold tracking-tight">Tickerframe</h1>
+          <h1 className="sr-only">Tickerframe</h1>
           <p className="text-sm text-muted-foreground">Professional trading research and signals.</p>
         </div>
 

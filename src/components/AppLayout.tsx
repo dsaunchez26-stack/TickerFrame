@@ -4,6 +4,7 @@ import { StockDetailProvider } from '@/context/StockDetailContext';
 import { StockSearchBar } from '@/components/StockSearchBar';
 import { UserMenu } from '@/components/auth/UserMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoLink } from '@/components/Logo';
 import { useEffect, useState } from 'react';
 import { getMarketStatus, marketStatusLabel, type MarketStatus } from '@/lib/marketHours';
 import { OnboardingTour } from '@/components/OnboardingTour';
@@ -32,14 +33,15 @@ export default function AppLayout() {
         <header className="border-b border-border bg-background/80">
           <div className="flex h-12 items-center justify-between px-3">
             <div className="flex shrink-0 items-center gap-2">
+              <LogoLink />
               <div className="md:hidden"><MobileNav /></div>
-              <Link to="/welcome" className="text-sm font-semibold tracking-tight hover:text-primary" aria-label="Tickerframe home">Tickerframe</Link>
               <span className="hidden text-[11px] text-faint sm:inline">Market research</span>
             </div>
             <div className="flex min-w-0 items-center gap-3 pl-2">
               <StockSearchBar />
-              <span className={`status-dot ${statusClass}`}>
-                {isLive ? 'Live' : status === 'closed' ? 'Closed' : status === 'pre' ? 'Pre' : 'After-Hrs'}
+              <span className={`status-dot ${statusClass}`} title={marketStatusLabel(status)}>
+                <span className="hidden sm:inline">{isLive ? 'Live' : status === 'closed' ? 'Closed' : status === 'pre' ? 'Pre' : 'After-Hrs'}</span>
+                <span className="sr-only sm:hidden">{isLive ? 'Live' : status === 'closed' ? 'Closed' : status === 'pre' ? 'Pre' : 'After-Hrs'}</span>
               </span>
               <span className="hidden text-[11px] text-muted-foreground md:inline">{marketStatusLabel(status)}</span>
               <ThemeToggle />

@@ -5,6 +5,7 @@ import { DotField } from '@/components/landing/DotField';
 import { Counter, Reveal, useScrollProgress } from '@/components/landing/motion';
 import { useAuth } from '@/hooks/useAuth';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LogoLink } from '@/components/Logo';
 import { BULLISH_AT } from '@/lib/signalBreakdown';
 import './landing.css';
 
@@ -36,7 +37,7 @@ const Nav = ({ signedIn }: { signedIn: boolean }) => {
   return (
     <header className={`fixed inset-x-0 top-0 z-40 transition-colors ${stuck ? 'border-b border-border bg-background/95' : 'border-b border-transparent'}`}>
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
-        <Link to="/welcome" className="text-sm font-semibold tracking-tight">Tickerframe</Link>
+        <LogoLink />
         <nav className="hidden items-center gap-7 text-xs text-muted-foreground md:flex">
           <a href="#how" className="transition-colors hover:text-foreground">How it works</a>
           <a href="#readings" className="transition-colors hover:text-foreground">Readings</a>
@@ -352,7 +353,7 @@ const Landing = () => {
       <footer className="border-t border-border px-5 py-10">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <span className="text-sm font-semibold tracking-tight">Tickerframe</span>
+            <LogoLink />
             <nav className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
               <Link to="/methodology" className="hover:text-foreground">How readings are generated</Link>
               <Link to="/handbook" className="hover:text-foreground">Handbook</Link>

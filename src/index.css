@@ -69,6 +69,7 @@
     --dot-strong: rgba(255, 255, 255, 0.22);
     --accent-lo: #62b989;
     --accent-hi: #b9f0d1;
+    --logo-green: 147 37% 58%;
     color-scheme: dark;
   }
 
@@ -126,6 +127,7 @@
     --dot-strong: rgba(0, 0, 0, 0.25);
     --accent-lo: #2e8b5b;
     --accent-hi: #5fc58f;
+    --logo-green: 147 52% 33%;
     color-scheme: light;
   }
 }

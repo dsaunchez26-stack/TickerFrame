@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Activity, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { LogoLink } from '@/components/Logo';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -54,12 +55,10 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <LogoLink className="absolute left-4 top-4" />
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-md bg-primary/10">
-            <Activity className="h-6 w-6 text-primary" />
-          </div>
           <h1 className="text-lg font-semibold tracking-tight">Set a new password</h1>
         </div>
         <Card>
