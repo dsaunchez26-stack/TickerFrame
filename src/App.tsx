@@ -8,6 +8,8 @@ import { Outlet } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard.tsx";
 import Auth from "./pages/Auth.tsx";
+import HomeGate from "@/components/HomeGate";
+const Landing = lazy(() => import("./pages/Landing.tsx"));
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OptionsScanProvider } from "@/context/OptionsScanContext";
 import { ValueRadarProvider } from "@/context/ValueRadarContext";
@@ -98,6 +100,11 @@ const App = () => (
           <Routes>
             {/* Public auth routes — must sit OUTSIDE AppLayout so they don't require a session */}
             <Route path="/auth" element={<Auth />} />
+            {/* The landing page is always reachable; "/" shows it to signed-out visitors and the Assistant to everyone else */}
+            <Route path="/welcome" element={<Landing />} />
+            <Route path="/" element={<HomeGate />}>
+              <Route index element={<ChatPage />} />
+            </Route>
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/legal" element={<AppLayout />}>
               <Route index element={<Legal />} />
@@ -114,7 +121,6 @@ const App = () => (
 
             {/* Everything else requires a signed-in user */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="/" element={<ChatPage />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/stocks" element={<Stocks />} />
               <Route path="/stocks/chart" element={<StocksChart />} />
