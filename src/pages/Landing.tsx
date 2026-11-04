@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { DotField } from '@/components/landing/DotField';
 import { Counter, Reveal, useScrollProgress } from '@/components/landing/motion';
 import { useAuth } from '@/hooks/useAuth';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { BULLISH_AT } from '@/lib/signalBreakdown';
 import './landing.css';
 
@@ -33,7 +34,7 @@ const Nav = ({ signedIn }: { signedIn: boolean }) => {
     return () => window.removeEventListener('scroll', on);
   }, []);
   return (
-    <header className={`fixed inset-x-0 top-0 z-40 transition-colors ${stuck ? 'border-b border-border bg-[#090b0a]/95' : 'border-b border-transparent'}`}>
+    <header className={`fixed inset-x-0 top-0 z-40 transition-colors ${stuck ? 'border-b border-border bg-background/95' : 'border-b border-transparent'}`}>
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
         <Link to="/welcome" className="text-sm font-semibold tracking-tight">Tickerframe</Link>
         <nav className="hidden items-center gap-7 text-xs text-muted-foreground md:flex">
@@ -43,6 +44,7 @@ const Nav = ({ signedIn }: { signedIn: boolean }) => {
           <Link to="/handbook" className="transition-colors hover:text-foreground">Handbook</Link>
         </nav>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           {!signedIn && <Link to="/auth" className="px-2 text-xs text-muted-foreground transition-colors hover:text-foreground">Sign in</Link>}
           <Link to={startHref(signedIn)} className="lp-btn inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground">Get started</Link>
         </div>
@@ -55,7 +57,7 @@ const Hero = ({ signedIn }: { signedIn: boolean }) => (
   <section className="relative flex min-h-[100svh] items-center overflow-hidden pt-14">
     <div className="lp-grid pointer-events-none absolute inset-0" />
     <DotField className="absolute inset-0 h-full w-full" />
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#090b0a] to-transparent" />
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent" />
     <div className="relative mx-auto w-full max-w-6xl px-5 py-16">
       <p className="lp-eyebrow lp-fade">Market research for everyone</p>
       <h1 className="lp-h1 mt-5">
@@ -67,7 +69,7 @@ const Hero = ({ signedIn }: { signedIn: boolean }) => (
       </p>
       <div className="lp-fade mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: '1s' }}>
         <Link to={startHref(signedIn)} className="lp-btn inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground">Get started <ArrowRight className="h-4 w-4" /></Link>
-        {!signedIn && <a href={DEMO_HREF} className="lp-btn inline-flex h-11 items-center rounded-md border border-border bg-[#090b0a]/60 px-6 text-sm font-medium transition-colors hover:border-primary/50">Try the live demo</a>}
+        {!signedIn && <a href={DEMO_HREF} className="lp-btn inline-flex h-11 items-center rounded-md border border-border bg-background/60 px-6 text-sm font-medium transition-colors hover:border-primary/50">Try the live demo</a>}
       </div>
       <p className="lp-fade mt-6 text-[11px] text-faint" style={{ animationDelay: '1.2s' }}>
         Tickerframe is a research tool, not a broker. Research and education only; not investment advice.
@@ -146,7 +148,7 @@ const Playground = () => {
 
   return (
     <div className="grid gap-px overflow-hidden rounded-md border border-border bg-border lg:grid-cols-[1.4fr_1fr]">
-      <div className="bg-[#0b0e0c] p-5 sm:p-6">
+      <div className="bg-card p-5 sm:p-6">
         <p className="lp-eyebrow mb-4">Try it: set the three answers</p>
         <div className="space-y-5">
           {PILLARS.map((p, i) => (
@@ -175,7 +177,7 @@ const Playground = () => {
           ))}
         </div>
       </div>
-      <div className="flex flex-col justify-between bg-[#0d100e] p-5 sm:p-6">
+      <div className="flex flex-col justify-between bg-secondary p-5 sm:p-6">
         <div>
           <p className="lp-eyebrow mb-3">The reading</p>
           <div className={`text-4xl font-medium tracking-tight transition-colors sm:text-5xl ${r.tone}`}>{r.label}</div>
@@ -210,7 +212,7 @@ const STEPS = [
 const ExampleCard = ({ p }: { p: number }) => {
   const stage = (from: number) => ({ opacity: p >= from ? 1 : 0.18, transform: p >= from ? 'none' : 'translateY(8px)', transition: 'opacity 0.5s, transform 0.5s' });
   return (
-    <div className="overflow-hidden rounded-md border border-border bg-[#0b0e0c]" aria-hidden="true">
+    <div className="overflow-hidden rounded-md border border-border bg-card" aria-hidden="true">
       <div className="flex items-center justify-between border-b border-border px-4 py-2.5 text-[10px] uppercase tracking-[0.16em] text-faint">
         <span>Example</span><span>Illustration, not live data</span>
       </div>
@@ -248,7 +250,7 @@ const HowItWorks = () => {
         <span className="lp-track absolute bottom-2 left-[11px] top-2 w-px sm:left-[15px]" style={{ ['--p' as string]: `${Math.round(p * 100)}%` }} aria-hidden="true" />
         {STEPS.map((s, i) => (
           <Reveal as="li" key={s.n} delay={i * 80} className="relative">
-            <span className="absolute -left-10 top-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-[#090b0a] text-[10px] tabular-nums text-primary sm:-left-14 sm:h-8 sm:w-8 sm:text-xs">{s.n}</span>
+            <span className="absolute -left-10 top-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background text-[10px] tabular-nums text-primary sm:-left-14 sm:h-8 sm:w-8 sm:text-xs">{s.n}</span>
             <h3 className="text-xl font-medium tracking-tight sm:text-2xl">{s.t}</h3>
             <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">{s.d}</p>
           </Reveal>
@@ -296,8 +298,8 @@ const Landing = () => {
         <Reveal delay={60}><h2 className="mt-3 max-w-3xl text-3xl font-medium tracking-tight sm:text-5xl">The tools of a trading desk, in everyday language.</h2></Reveal>
         <div className="mt-12 grid gap-px overflow-hidden rounded-md border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f, i) => (
-            <Reveal key={f.t} delay={(i % 3) * 80} className="bg-[#0b0e0c]">
-              <div className="lp-tile h-full border border-transparent bg-[#0b0e0c] p-6" onMouseMove={spotlight}>
+            <Reveal key={f.t} delay={(i % 3) * 80} className="bg-card">
+              <div className="lp-tile h-full border border-transparent bg-card p-6" onMouseMove={spotlight}>
                 <div className="mb-8 h-px w-8 bg-primary" />
                 <h3 className="text-base font-medium tracking-tight">{f.t}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.d}</p>
@@ -335,14 +337,14 @@ const Landing = () => {
 
       <section className="relative overflow-hidden border-t border-border">
         <DotField className="absolute inset-0 h-full w-full" spacing={18} />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#090b0a] via-transparent to-[#090b0a]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_45%_at_50%_50%,rgba(9,11,10,0.85),transparent)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_45%_at_50%_50%,hsl(var(--background)/0.85),transparent)]" />
         <div className="relative mx-auto max-w-6xl px-5 py-28 text-center sm:py-40">
           <Reveal><h2 className="mx-auto max-w-3xl text-4xl font-medium tracking-tight sm:text-6xl">Understand the market first. Then decide.</h2></Reveal>
           <Reveal delay={100}><p className="mx-auto mt-5 max-w-md text-sm text-muted-foreground">Create an account in a minute, or open the demo in one click. The demo runs on saved real data and needs no sign-up.</p></Reveal>
           <Reveal delay={180} className="mt-8 flex flex-wrap justify-center gap-3">
             <Link to={startHref(signedIn)} className="lp-btn inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground">Get started <ArrowRight className="h-4 w-4" /></Link>
-            {!signedIn && <a href={DEMO_HREF} className="lp-btn inline-flex h-11 items-center rounded-md border border-border bg-[#090b0a]/70 px-6 text-sm font-medium transition-colors hover:border-primary/50">Try the live demo</a>}
+            {!signedIn && <a href={DEMO_HREF} className="lp-btn inline-flex h-11 items-center rounded-md border border-border bg-background/70 px-6 text-sm font-medium transition-colors hover:border-primary/50">Try the live demo</a>}
           </Reveal>
         </div>
       </section>

@@ -7,6 +7,15 @@
     <meta name="description" content="Institutional-grade scanner for stocks and options. Live signals, backtested scores, factor-weighted picks, and transparent performance tracking. Research and education only." />
     <meta name="author" content="Tickerframe" />
     <meta name="theme-color" content="#090b0a" />
+    <script>
+      // Apply the saved theme before first paint so there is no flash. Dark is the default.
+      try {
+        if (localStorage.getItem('tf_theme') === 'light') {
+          document.documentElement.classList.add('light');
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f8f7');
+        }
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="canonical" href="https://tickerframe.app/" />

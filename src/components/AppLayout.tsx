@@ -3,6 +3,7 @@ import { AppTopNav, MobileNav } from '@/components/AppTopNav';
 import { StockDetailProvider } from '@/context/StockDetailContext';
 import { StockSearchBar } from '@/components/StockSearchBar';
 import { UserMenu } from '@/components/auth/UserMenu';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useEffect, useState } from 'react';
 import { getMarketStatus, marketStatusLabel, type MarketStatus } from '@/lib/marketHours';
 import { OnboardingTour } from '@/components/OnboardingTour';
@@ -41,6 +42,7 @@ export default function AppLayout() {
                 {isLive ? 'Live' : status === 'closed' ? 'Closed' : status === 'pre' ? 'Pre' : 'After-Hrs'}
               </span>
               <span className="hidden text-[11px] text-muted-foreground md:inline">{marketStatusLabel(status)}</span>
+              <ThemeToggle />
               <UserMenu />
             </div>
           </div>

@@ -8,8 +8,10 @@ interface Props {
   line?: boolean;
 }
 
-const ACCENT = [98, 185, 137];
-const BASE = [147, 153, 149];
+const PALETTE = {
+  dark: { accent: [98, 185, 137], base: [147, 153, 149] },
+  light: { accent: [40, 130, 82], base: [70, 80, 74] },
+};
 
 // A grid of dots that drifts like ink: the cursor pushes dots aside and they
 // spring back, and a slowly moving line of brighter green dots traces a price
@@ -29,6 +31,11 @@ export const DotField = ({ className, spacing = 16, line = true }: Props) => {
     const mouse = { x: -9999, y: -9999, active: false };
     let raf = 0;
     let visible = true;
+    const root = document.documentElement;
+    let colors = root.classList.contains('light') ? PALETTE.light : PALETTE.dark;
+    // follow theme switches (the page cross-fades, the dots just change colour)
+    const mo = new MutationObserver(() => { colors = root.classList.contains('light') ? PALETTE.light : PALETTE.dark; });
+    mo.observe(root, { attributes: true, attributeFilter: ['class'] });
     const gap = window.innerWidth < 640 ? spacing + 6 : spacing;
 
     const resize = () => {
@@ -85,7 +92,7 @@ export const DotField = ({ className, spacing = 16, line = true }: Props) => {
           const lift = Math.min(1, Math.hypot(ox[k], oy[k]) / 14);
           const a = 0.3 + glow * 0.7 + lift * 0.3;
           const r = 1.15 + glow * 1.6 + lift * 0.7;
-          const c = glow > 0.04 ? ACCENT : BASE;
+          const c = glow > 0.04 ? colors.accent : colors.base;
           ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${Math.min(a, 1).toFixed(3)})`;
           ctx.fillRect(x - r / 2, y - r / 2, r, r);
         }
@@ -117,7 +124,7 @@ export const DotField = ({ className, spacing = 16, line = true }: Props) => {
 
     return () => {
       cancelAnimationFrame(raf);
-      ro.disconnect(); io.disconnect();
+      ro.disconnect(); io.disconnect(); mo.disconnect();
       window.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerleave', onLeave);
     };
