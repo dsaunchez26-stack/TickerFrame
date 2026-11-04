@@ -115,11 +115,11 @@ export const ValueRadarDetail = ({ row, allRows, onClose }: Props) => {
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-border p-3 text-center">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Balance Sheet Strength</div>
-                <div className="font-heading text-2xl font-bold">{row.balance_sheet_score}<span className="text-xs text-muted-foreground">/100</span></div>
+                <div className="text-2xl font-semibold">{row.balance_sheet_score}<span className="text-xs text-muted-foreground">/100</span></div>
               </div>
               <div className="rounded-lg border border-border p-3 text-center">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Growth & Momentum</div>
-                <div className="font-heading text-2xl font-bold">{row.growth_score}<span className="text-xs text-muted-foreground">/100</span></div>
+                <div className="text-2xl font-semibold">{row.growth_score}<span className="text-xs text-muted-foreground">/100</span></div>
               </div>
             </div>
 

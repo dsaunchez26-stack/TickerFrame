@@ -6,7 +6,7 @@ import { BacktestEvidence } from '@/components/BacktestEvidence';
 const Methodology = () => (
   <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
     <header>
-      <h1 className="font-heading text-3xl font-bold">How Tickerframe Generates Signals</h1>
+      <h1 className="text-lg font-semibold tracking-tight">How Tickerframe Generates Signals</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         An accurate description of the real data sources and rules behind every pick you see - no data source or
         rule mentioned here that isn't actually wired up. Nothing here is investment advice - see the{' '}

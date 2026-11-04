@@ -93,10 +93,10 @@ const DividendIncome = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="border-b border-border bg-card/50">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div>
-            <h1 className="font-heading text-lg font-bold">Dividend Income</h1>
+            <h1 className="text-lg font-semibold">Dividend Income</h1>
             <p className="text-xs text-muted-foreground">
               Steady, cash-generative payers - the counterweight to the growth/momentum screens elsewhere on this site.
             </p>
@@ -174,11 +174,11 @@ const DividendIncome = () => {
                         </td>
                         <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                         <td className="py-2 pr-3 text-muted-foreground">{fmtMarketCap(r.market_cap)}</td>
-                        <td className="py-2 pr-3 font-bold text-signal-buy">{r.dividend_yield!.toFixed(2)}%</td>
+                        <td className="py-2 pr-3 font-semibold text-signal-buy">{r.dividend_yield!.toFixed(2)}%</td>
                         <td className="py-2 pr-3">{r.payout_ratio !== null ? `${r.payout_ratio.toFixed(0)}%` : 'not reported'}</td>
                         <td className="py-2 pr-3">{r.pe_ratio !== null ? r.pe_ratio.toFixed(1) : '-'}</td>
-                        <td className={`py-2 pr-3 font-bold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
-                        <td className={`py-2 pr-3 font-bold ${scoreColor(composite)}`}>{composite.toFixed(0)}</td>
+                        <td className={`py-2 pr-3 font-semibold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
+                        <td className={`py-2 pr-3 font-semibold ${scoreColor(composite)}`}>{composite.toFixed(0)}</td>
                       </tr>
                     ))}
                   </tbody>

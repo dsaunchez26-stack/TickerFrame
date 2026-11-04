@@ -105,13 +105,13 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg border border-border p-3 text-center">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Balance Sheet Strength</div>
-            <div className={`font-heading text-2xl font-bold ${scoreColor(fundamentals.balance_sheet_score)}`}>
+            <div className={`text-2xl font-semibold ${scoreColor(fundamentals.balance_sheet_score)}`}>
               {fundamentals.balance_sheet_score}<span className="text-xs text-muted-foreground">/100</span>
             </div>
           </div>
           <div className="rounded-lg border border-border p-3 text-center">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Growth & Momentum</div>
-            <div className={`font-heading text-2xl font-bold ${scoreColor(fundamentals.growth_score)}`}>
+            <div className={`text-2xl font-semibold ${scoreColor(fundamentals.growth_score)}`}>
               {fundamentals.growth_score}<span className="text-xs text-muted-foreground">/100</span>
             </div>
           </div>
@@ -211,7 +211,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
         {stock && (
           <div className="space-y-4">
             <div className="flex items-baseline gap-3">
-              <span className="text-2xl font-bold">${stock.price.toFixed(2)}</span>
+              <span className="text-2xl font-semibold">${stock.price.toFixed(2)}</span>
               <span className={stock.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}>
                 {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} ({stock.changePercent.toFixed(2)}%)
               </span>
@@ -227,7 +227,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
                 <div className="flex items-center justify-between">
                   {!loadingHistory && candles.length >= 2 ? (
                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                      <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#f0b429' }} />moving average</span>
+                      <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#c4a35a' }} />moving average</span>
                       <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 border-t border-dashed border-muted-foreground" />last close</span>
                     </div>
                   ) : <span />}
@@ -288,7 +288,7 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
         {!stock && !loadingQuote && liveQuote && (
           <div className="space-y-2">
             <div className="flex items-baseline gap-3">
-              <span className="text-2xl font-bold">${liveQuote.price.toFixed(2)}</span>
+              <span className="text-2xl font-semibold">${liveQuote.price.toFixed(2)}</span>
               <span className={liveQuote.changePercent >= 0 ? 'text-signal-buy' : 'text-signal-sell'}>
                 {liveQuote.changePercent >= 0 ? '+' : ''}{liveQuote.changePercent.toFixed(2)}%
               </span>

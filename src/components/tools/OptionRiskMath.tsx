@@ -81,22 +81,22 @@ export const OptionRiskMath = ({ ticker, cp, strike, spot, premium, expiration, 
               <div className="grid gap-3 sm:grid-cols-4">
                 <div className="rounded-lg border border-border p-3">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Contracts</div>
-                  <div className="mt-1 text-lg font-bold">{contracts}</div>
+                  <div className="mt-1 text-lg font-semibold">{contracts}</div>
                   <div className="text-[10px] text-muted-foreground">{fmtUsd(actualCost)} actual cost</div>
                 </div>
                 <div className="rounded-lg border border-signal-sell/30 bg-signal-sell/5 p-3">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Max loss</div>
-                  <div className="mt-1 text-lg font-bold text-signal-sell">{fmtUsd(actualCost)}</div>
+                  <div className="mt-1 text-lg font-semibold text-signal-sell">{fmtUsd(actualCost)}</div>
                   <div className="text-[10px] text-muted-foreground">100% if worthless at expiration</div>
                 </div>
                 <div className="rounded-lg border border-border p-3">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Breakeven</div>
-                  <div className="mt-1 text-lg font-bold">${breakeven.toFixed(2)}</div>
+                  <div className="mt-1 text-lg font-semibold">${breakeven.toFixed(2)}</div>
                   <div className="text-[10px] text-muted-foreground">{breakevenMovePct !== null ? `${breakevenMovePct >= 0 ? '+' : ''}${breakevenMovePct.toFixed(1)}% from spot` : '-'}</div>
                 </div>
                 <div className="rounded-lg border border-border p-3">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Days to expiration</div>
-                  <div className="mt-1 text-lg font-bold">{dte}</div>
+                  <div className="mt-1 text-lg font-semibold">{dte}</div>
                   <div className="text-[10px] text-muted-foreground">{expiration}</div>
                 </div>
               </div>

@@ -42,16 +42,16 @@ const Performance = () => {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold">Performance</h1>
+        <h1 className="text-lg font-semibold tracking-tight">Performance</h1>
         <p className="text-xs text-muted-foreground mt-1">Auto-tracked outcomes for every option pick you've flagged.</p>
       </div>
       <Disclaimer />
 
       {stats && (
         <div className="grid gap-4 grid-cols-3">
-          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Tracked picks</div><div className="text-2xl font-bold">{stats.total}</div></CardContent></Card>
-          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Winning</div><div className="text-2xl font-bold text-signal-buy">{stats.wins}</div></CardContent></Card>
-          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Win rate</div><div className="text-2xl font-bold">{stats.winRate}%</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Tracked picks</div><div className="text-2xl font-semibold">{stats.total}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Winning</div><div className="text-2xl font-semibold text-signal-buy">{stats.wins}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">Win rate</div><div className="text-2xl font-semibold">{stats.winRate}%</div></CardContent></Card>
         </div>
       )}
 

@@ -114,7 +114,7 @@ const SettingsPage = () => {
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-2xl space-y-6 px-4 py-6">
         <div>
-          <h1 className="font-heading text-lg font-bold">Settings</h1>
+          <h1 className="text-lg font-semibold">Settings</h1>
           <p className="text-xs text-muted-foreground">Configure Slack alerts for your portfolio.</p>
         </div>
 

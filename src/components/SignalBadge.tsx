@@ -2,9 +2,9 @@ import type { Stock } from '@/lib/mockData';
 import { signalLabel } from '@/lib/signalLabel';
 
 const styles = {
-  buy: 'bg-signal-buy/15 text-signal-buy',
-  sell: 'bg-signal-sell/15 text-signal-sell',
-  hold: 'bg-signal-hold/15 text-signal-hold',
+  buy: 'text-signal-buy',
+  sell: 'text-signal-sell',
+  hold: 'text-signal-hold',
 };
 
 // The score (-100..+100) is the composite behind the label, so a "hold"
@@ -12,9 +12,9 @@ const styles = {
 export const SignalBadge = ({ signal, score }: { signal: Stock['signal']; score?: number | null }) => (
   <span
     title={score != null ? `Composite reading score ${score > 0 ? '+' : ''}${score} of ±100 - see Methodology` : undefined}
-    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${styles[signal]}`}
+    className={`status-dot whitespace-nowrap ${styles[signal]}`}
   >
     {signalLabel(signal)}
-    {score != null && <span className="font-normal opacity-80">{score > 0 ? '+' : ''}{score}</span>}
+    {score != null && <span className="font-normal tabular-nums text-muted-foreground">{score > 0 ? '+' : ''}{score}</span>}
   </span>
 );

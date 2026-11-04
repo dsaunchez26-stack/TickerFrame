@@ -15,10 +15,10 @@ interface Props {
 // non-wrapping flex row that clipped off-screen on mobile (title running
 // into the Refresh button, "Options Radar" link cut off entirely).
 export const OptionsPageHeader = ({ title, subtitle, loading, onRefresh }: Props) => (
-  <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+  <header className="border-b border-border bg-card/50">
     <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3">
       <div className="min-w-0">
-        <h1 className="truncate font-heading text-lg font-bold">{title}</h1>
+        <h1 className="truncate text-lg font-semibold">{title}</h1>
         <p className="text-xs text-muted-foreground">{subtitle}</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">

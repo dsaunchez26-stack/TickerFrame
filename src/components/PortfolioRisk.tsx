@@ -34,8 +34,8 @@ const dPct = (d: number) => (Math.abs(d) < 0.05 ? '±0.0' : signed(d));
 
 const Meter = ({ score }: { score: number }) => (
   <div>
-    <div className="relative h-2.5 w-full rounded-full bg-gradient-to-r from-signal-buy via-signal-hold to-signal-sell opacity-80">
-      <div className="absolute top-1/2 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded bg-foreground shadow" style={{ left: `${score}%` }} />
+    <div className="relative h-1.5 w-full rounded-full bg-gradient-to-r from-signal-buy/60 via-signal-hold/50 to-signal-sell/60">
+      <div className="absolute top-1/2 h-4 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-sm bg-foreground" style={{ left: `${score}%` }} />
     </div>
     <div className="mt-1 flex justify-between text-[9px] text-muted-foreground"><span>0 none</span><span>50 like the market</span><span>100 twice the market</span></div>
   </div>
@@ -94,7 +94,7 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
   const symbolsMissing = data?.missing ?? [];
 
   return (
-    <div className="mb-3 rounded-lg border border-border bg-card/50 p-3">
+    <div className="mb-3 border-t border-border pt-3">
       <div className="mb-2 flex items-center justify-between">
         <h4 className="text-xs font-semibold">Market risk (CAPM)</h4>
         <span className="text-[10px] text-muted-foreground">Stocks and funds only</span>
@@ -110,21 +110,21 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
       {summary && (
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2">
-            <div className="col-span-3 rounded-md border border-border/60 p-3 sm:col-span-1">
+            <div className="col-span-3 sm:col-span-1">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Risk score</div>
-              <div className="flex items-baseline gap-1"><span className="font-heading text-3xl font-bold">{summary.score}</span><span className="text-xs text-muted-foreground">/ 100</span></div>
+              <div className="flex items-baseline gap-1"><span className="text-2xl font-semibold tabular-nums">{summary.score}</span><span className="text-xs text-muted-foreground">/ 100</span></div>
               <div className="text-[11px] text-muted-foreground">{summary.band}</div>
             </div>
-            <div className="col-span-3 rounded-md border border-border/60 p-3 sm:col-span-2">
+            <div className="col-span-3 border-border/60 sm:col-span-2 sm:border-l sm:pl-4">
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground" title="How much the whole portfolio tends to move when the S&P 500 moves">Portfolio beta</div>
-                  <div className="font-heading text-lg font-bold">{summary.beta.toFixed(2)}</div>
+                  <div className="text-base font-semibold tabular-nums">{summary.beta.toFixed(2)}</div>
                   <div className="text-[10px] text-muted-foreground">S&P 500 move +1% → about {signed(summary.beta, 2)}%</div>
                 </div>
                 <div>
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground" title="Risk-free rate + beta x market risk premium. A model assumption, not a forecast.">CAPM expected return</div>
-                  <div className="font-heading text-lg font-bold">{pct(summary.expectedReturn)}<span className="text-[10px] font-normal text-muted-foreground"> / yr</span></div>
+                  <div className="text-base font-semibold tabular-nums">{pct(summary.expectedReturn)}<span className="text-[10px] font-normal text-muted-foreground"> / yr</span></div>
                   <div className="text-[10px] text-muted-foreground">market itself: {pct(summary.marketReturn)}</div>
                 </div>
               </div>
@@ -132,7 +132,7 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
           </div>
           <Meter score={summary.score} />
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md bg-secondary/30 px-2 py-1.5 text-[10px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-y border-border/60 px-1 py-1.5 text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1"><Info className="h-3 w-3" />Assumptions you can change:</span>
             <label className="inline-flex items-center gap-1">Risk-free rate
               <Input type="number" step="0.1" value={Number(rf.toFixed(2))} onChange={(e) => { const v = Number(e.target.value); setRfOverride(v); save('tf_capm_rf', v); }} className="h-6 w-16 px-1 text-[10px]" />%
@@ -202,12 +202,12 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
           )}
 
           {notes.length > 0 && (
-            <div className="space-y-1 rounded-md border border-border/60 bg-secondary/20 p-2">
+            <div className="space-y-1 border-l-2 border-border pl-3">
               {notes.map((n) => <p key={n.key} className="text-[11px] text-muted-foreground">{n.text}</p>)}
             </div>
           )}
 
-          <div className="rounded-md border border-border/60">
+          <div className="border-y border-border/60">
             <button className="flex w-full items-center justify-between px-2 py-1.5 text-left text-[11px] font-semibold" onClick={() => setLearnOpen(!showLearn)} aria-expanded={showLearn}>
               <span>How different mixes change risk (education)</span>
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showLearn ? 'rotate-180' : ''}`} />
@@ -254,7 +254,7 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
             )}
           </div>
 
-          <div className="rounded-md border border-border/60 p-2">
+          <div className="border-y border-border/60 py-2">
             <div className="mb-1.5 text-[11px] font-semibold">What would adding a stock or fund change?</div>
             <form className="flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); const s = candSym.trim().toUpperCase(); if (s && Number(candAmt) > 0) setSubmitted(s); }}>
               <Input placeholder="Ticker (e.g. VOO)" value={candSym} onChange={(e) => setCandSym(e.target.value.toUpperCase())} className="h-7 w-28 text-xs" />
@@ -264,18 +264,18 @@ export const PortfolioRisk = ({ holdings }: { holdings: Holding[] }) => {
             {submitted && !cand.isFetching && !candBeta && <p className="mt-1.5 text-[11px] text-muted-foreground">No beta available for {submitted} - check the ticker.</p>}
             {whatIf && (
               <div className="mt-2 grid grid-cols-1 gap-1 text-[11px] sm:grid-cols-3">
-                <div className="rounded bg-secondary/30 p-2">
+                <div className="border-l border-border pl-2">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{whatIf.candidate.symbol} on its own</div>
                   <div>beta {whatIf.candidate.beta.toFixed(2)}</div>
                   <div>expected {pct(whatIf.candidate.expectedReturn)} / yr</div>
                   <div className="text-muted-foreground">{pct(whatIf.candidate.weightAfter * 100, 0)} of the new total</div>
                 </div>
-                <div className="rounded bg-secondary/30 p-2">
+                <div className="border-l border-border pl-2">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Risk score</div>
                   <div>{whatIf.before.score} → <strong>{whatIf.after.score}</strong> <span className={whatIf.after.score < whatIf.before.score ? 'text-signal-buy' : whatIf.after.score > whatIf.before.score ? 'text-signal-sell' : ''}>({whatIf.after.score === whatIf.before.score ? '±0' : signed(whatIf.after.score - whatIf.before.score, 0)})</span></div>
                   <div className="text-muted-foreground">beta {whatIf.before.beta.toFixed(2)} → {whatIf.after.beta.toFixed(2)}</div>
                 </div>
-                <div className="rounded bg-secondary/30 p-2">
+                <div className="border-l border-border pl-2">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Expected return</div>
                   <div>{pct(whatIf.before.expectedReturn)} → <strong>{pct(whatIf.after.expectedReturn)}</strong> <span>({dPct(whatIf.after.expectedReturn - whatIf.before.expectedReturn)})</span></div>
                   <div className="text-muted-foreground">per year, model estimate</div>

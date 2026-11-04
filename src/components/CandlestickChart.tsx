@@ -11,8 +11,8 @@ interface Props {
 
 const UP = 'hsl(var(--signal-buy))';
 const DOWN = 'hsl(var(--signal-sell))';
-const MA_COLOR = '#f0b429';
-const BAND_COLOR = '#8b5cf6';
+const MA_COLOR = '#c4a35a';
+const BAND_COLOR = '#7d8fa6';
 
 type ChartType = 'candlestick' | 'line';
 
@@ -29,7 +29,7 @@ const CandleTooltip = ({ active, payload, showBollinger }: { active?: boolean; p
   if (!active || !payload?.length) return null;
   const c = payload[0].payload;
   return (
-    <div className="rounded-md border bg-card px-2 py-1.5 text-[11px] shadow-md">
+    <div className="rounded-md border border-border bg-popover px-2 py-1.5 text-[11px] tabular-nums">
       <div className="mb-0.5 font-semibold">{c.time}</div>
       <div>O ${c.open.toFixed(2)} &nbsp;H ${c.high.toFixed(2)}</div>
       <div>L ${c.low.toFixed(2)} &nbsp;C ${c.close.toFixed(2)}</div>
@@ -175,16 +175,16 @@ export const CandlestickChart = ({ candles, height = 220, showGrid = true, tickI
         <ComposedChart data={data} barCategoryGap="18%" margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id="lineFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.22} />
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.08} />
               <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
             </linearGradient>
           </defs>
-          {showGrid && <CartesianGrid vertical={false} strokeDasharray="2 4" opacity={0.18} />}
-          <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={tickInterval} axisLine={false} tickLine={false} />
+          {showGrid && <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="2 4" opacity={0.6} />}
+          <XAxis dataKey="time" tick={{ fontSize: 10, fill: 'hsl(var(--faint))' }} interval={tickInterval} axisLine={false} tickLine={false} />
           <YAxis
             domain={yDomain}
             ticks={yTicks}
-            tick={{ fontSize: 10 }}
+            tick={{ fontSize: 10, fill: 'hsl(var(--faint))' }}
             width={50}
             axisLine={false}
             tickLine={false}

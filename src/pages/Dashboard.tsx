@@ -13,11 +13,11 @@ import { NewsFeed } from '@/components/options/NewsFeed';
 // live data: current market snapshot, then today's biggest movers with
 // one-click add-to-portfolio.
 const Dashboard = () => (
-  <div className="mx-auto max-w-7xl space-y-6 px-4 py-6">
+  <div className="mx-auto max-w-7xl space-y-5 px-4 py-4">
     <div className="flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h1 className="font-heading text-2xl font-bold">Dashboard</h1>
-        <p className="text-xs text-muted-foreground mt-1">Today's market at a glance.</p>
+        <h1 className="text-lg font-semibold tracking-tight">Dashboard</h1>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">Today's market at a glance.</p>
       </div>
       <UniverseToggle />
     </div>

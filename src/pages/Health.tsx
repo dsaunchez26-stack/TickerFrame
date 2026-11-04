@@ -160,7 +160,7 @@ export default function Health() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <header>
-        <h1 className="font-heading text-3xl font-bold">System Health</h1>
+        <h1 className="text-lg font-semibold tracking-tight">System Health</h1>
         <p className="text-muted-foreground text-sm mt-1">Cron jobs, data freshness, and pipeline integrity at a glance.</p>
       </header>
 
@@ -229,7 +229,7 @@ export default function Health() {
                     const color: Record<string, string> = { ok: 'bg-green-500/15 text-green-500', stale: 'bg-yellow-500/15 text-yellow-500', failing: 'bg-red-500/15 text-red-500', error: 'bg-red-500/15 text-red-500', never: 'bg-muted text-muted-foreground' };
                     return (
                       <tr key={c.job_name} className="border-b last:border-0">
-                        <td className="py-2 pr-3 font-mono text-xs">{c.job_name}</td>
+                        <td className="py-2 pr-3 text-xs">{c.job_name}</td>
                         <td className="py-2 pr-3">{fmtAgo(c.last_ran_at)}</td>
                         <td className="py-2 pr-3"><Badge className={color[status]}>{status}</Badge></td>
                         <td className="py-2 pr-3">{c.ok_24h}/{c.runs_24h}</td>
@@ -309,7 +309,7 @@ export default function Health() {
                   {errors.map(e => (
                     <tr key={e.id} className="border-b last:border-0 align-top">
                       <td className="py-2 pr-3 whitespace-nowrap text-xs text-muted-foreground">{fmtAgo(e.created_at)}</td>
-                      <td className="py-2 pr-3 font-mono text-xs">{e.route ?? '-'}</td>
+                      <td className="py-2 pr-3 text-xs">{e.route ?? '-'}</td>
                       <td className="py-2 pr-3">
                         <details>
                           <summary className="cursor-pointer text-sm">{e.message}</summary>
@@ -318,7 +318,7 @@ export default function Health() {
                           )}
                         </details>
                       </td>
-                      <td className="py-2 pr-3 font-mono text-[10px] text-muted-foreground">{e.user_id ? e.user_id.slice(0, 8) : 'anon'}</td>
+                      <td className="py-2 pr-3 text-[10px] text-muted-foreground">{e.user_id ? e.user_id.slice(0, 8) : 'anon'}</td>
                     </tr>
                   ))}
                 </tbody>

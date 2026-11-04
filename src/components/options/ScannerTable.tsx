@@ -100,7 +100,7 @@ export const ScannerTable = ({ rows, trackedIds, onTrack }: Props) => {
                 const tracked = trackedIds.has(r.id);
                 return (
                   <tr key={r.id} className="border-b last:border-0">
-                    <td className="py-2 pr-3 font-bold text-primary">{r.score}</td>
+                    <td className="py-2 pr-3 font-semibold text-primary">{r.score}</td>
                     <td className="py-2 pr-3">
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => open(r.ticker)} className="font-semibold hover:text-primary hover:underline">{r.ticker}</button>

@@ -101,19 +101,19 @@ export const StockRiskCalculator = () => {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-border p-3">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Shares at this price</div>
-                <div className="mt-1 text-lg font-bold">{shares.toFixed(shares < 10 ? 3 : 1)}</div>
+                <div className="mt-1 text-lg font-semibold">{shares.toFixed(shares < 10 ? 3 : 1)}</div>
                 <div className="text-[10px] text-muted-foreground">{fmtUsd(shares * entry)} deployed</div>
               </div>
               <div className="rounded-lg border border-signal-sell/30 bg-signal-sell/5 p-3">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Dollar risk to stop</div>
-                <div className="mt-1 text-lg font-bold text-signal-sell">{dollarRisk !== null ? fmtUsd(dollarRisk) : '-'}</div>
+                <div className="mt-1 text-lg font-semibold text-signal-sell">{dollarRisk !== null ? fmtUsd(dollarRisk) : '-'}</div>
                 <div className="text-[10px] text-muted-foreground">
                   {stopPrice !== null ? `if it hits $${stopPrice.toFixed(2)} (${stopLossPct}% down)` : 'set a stop-loss %'}
                 </div>
               </div>
               <div className="rounded-lg border border-signal-buy/30 bg-signal-buy/5 p-3">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Dollar gain to target</div>
-                <div className="mt-1 text-lg font-bold text-signal-buy">{dollarGain !== null ? fmtUsd(dollarGain) : '-'}</div>
+                <div className="mt-1 text-lg font-semibold text-signal-buy">{dollarGain !== null ? fmtUsd(dollarGain) : '-'}</div>
                 <div className="text-[10px] text-muted-foreground">
                   {targetPrice !== null ? `if it hits $${targetPrice.toFixed(2)} (${targetPct}% up)` : 'set a target %'}
                 </div>

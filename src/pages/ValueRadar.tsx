@@ -119,8 +119,8 @@ const ValueRadar = () => {
                         <td className="py-2 pr-3">{fmtPct(r.revenue_growth_yoy)}</td>
                         <td className="py-2 pr-3">{fmtPct(r.eps_growth_yoy)}</td>
                         <td className="py-2 pr-3">{fmtPct(r.avg_eps_surprise_pct)}</td>
-                        <td className={`py-2 pr-3 font-bold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
-                        <td className={`py-2 pr-3 font-bold ${scoreColor(r.growth_score)}`}>{r.growth_score}</td>
+                        <td className={`py-2 pr-3 font-semibold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
+                        <td className={`py-2 pr-3 font-semibold ${scoreColor(r.growth_score)}`}>{r.growth_score}</td>
                       </tr>
                     ))}
                   </tbody>

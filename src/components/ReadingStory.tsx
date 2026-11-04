@@ -14,7 +14,7 @@ export const ReadingStory = ({ stock, fundamentals, longTerm = null, compact = f
 
   if (compact) {
     return (
-      <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card p-3">
+      <div className="flex items-start justify-between gap-3 border-y border-border p-3">
         <div className="flex items-start gap-2">
           <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${dot[story.tone]}`} />
           <div>
@@ -28,7 +28,7 @@ export const ReadingStory = ({ stock, fundamentals, longTerm = null, compact = f
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-3 text-xs">
+    <div className="border-y border-border p-3 text-xs">
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="flex items-start gap-2">
           <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${dot[story.tone]}`} />

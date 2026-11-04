@@ -120,10 +120,10 @@ const SectorRotation = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="border-b border-border bg-card/50">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div>
-            <h1 className="font-heading text-lg font-bold">Sector Rotation</h1>
+            <h1 className="text-lg font-semibold">Sector Rotation</h1>
             <p className="text-xs text-muted-foreground">
               Sectors the market has been pricing down lately that still have strong average fundamentals underneath.
             </p>
@@ -168,7 +168,7 @@ const SectorRotation = () => {
                         <div className="font-semibold">{s.sector}</div>
                         <div className="mt-1 flex items-center justify-between text-xs">
                           <span className={momentumColor(s.avgMomentum!)}>{fmtPct(s.avgMomentum!)} momentum</span>
-                          <span className={`font-bold ${scoreColor(s.avgQuality)}`}>{s.avgQuality.toFixed(0)} quality</span>
+                          <span className={`font-semibold ${scoreColor(s.avgQuality)}`}>{s.avgQuality.toFixed(0)} quality</span>
                         </div>
                         <div className="mt-1 text-[10px] text-muted-foreground">{s.peerCount} tracked stocks</div>
                       </button>
@@ -201,10 +201,10 @@ const SectorRotation = () => {
                           className={`cursor-pointer border-b last:border-0 hover:bg-secondary/40 ${selectedSector === s.sector ? 'bg-secondary/30' : ''}`}
                         >
                           <td className="py-2 pr-3 font-semibold">{s.sector}</td>
-                          <td className={`py-2 pr-3 font-bold ${s.avgMomentum !== null ? momentumColor(s.avgMomentum) : 'text-muted-foreground'}`}>
+                          <td className={`py-2 pr-3 font-semibold ${s.avgMomentum !== null ? momentumColor(s.avgMomentum) : 'text-muted-foreground'}`}>
                             {s.avgMomentum !== null ? fmtPct(s.avgMomentum) : '-'}
                           </td>
-                          <td className={`py-2 pr-3 font-bold ${scoreColor(s.avgQuality)}`}>{s.avgQuality.toFixed(0)}</td>
+                          <td className={`py-2 pr-3 font-semibold ${scoreColor(s.avgQuality)}`}>{s.avgQuality.toFixed(0)}</td>
                           <td className="py-2 pr-3 text-muted-foreground">{s.peerCount}</td>
                         </tr>
                       ))}
@@ -252,9 +252,9 @@ const SectorRotation = () => {
                             <td className={`py-2 pr-3 ${momentum !== null ? momentumColor(momentum) : 'text-muted-foreground'}`}>
                               {momentum !== null ? fmtPct(momentum) : '-'}
                             </td>
-                            <td className={`py-2 pr-3 font-bold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
-                            <td className={`py-2 pr-3 font-bold ${scoreColor(r.growth_score)}`}>{r.growth_score}</td>
-                            <td className={`py-2 pr-3 font-bold ${scoreColor(quality)}`}>{quality.toFixed(0)}</td>
+                            <td className={`py-2 pr-3 font-semibold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
+                            <td className={`py-2 pr-3 font-semibold ${scoreColor(r.growth_score)}`}>{r.growth_score}</td>
+                            <td className={`py-2 pr-3 font-semibold ${scoreColor(quality)}`}>{quality.toFixed(0)}</td>
                           </tr>
                         ))}
                       </tbody>

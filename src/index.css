@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,65 +6,59 @@
 
 @layer base {
   :root {
-    --background: 220 20% 4%;
-    --foreground: 160 10% 88%;
+    /* Page #090b0a, surfaces #0d100e / #101411, separators #292e2b */
+    --background: 150 10% 3.9%;
+    --foreground: 140 5% 89.2%;
 
-    --card: 220 18% 7%;
-    --card-foreground: 160 10% 88%;
+    --card: 140 10% 5.7%;
+    --card-foreground: 140 5% 89.2%;
 
-    --popover: 220 18% 7%;
-    --popover-foreground: 160 10% 88%;
+    --popover: 135 11% 7.1%;
+    --popover-foreground: 140 5% 89.2%;
 
-    --primary: 160 100% 40%;
-    --primary-foreground: 220 20% 4%;
+    /* Restrained accent green #62b989 */
+    --primary: 147 38% 55.5%;
+    --primary-foreground: 150 10% 3.9%;
 
-    --secondary: 220 15% 12%;
-    --secondary-foreground: 160 10% 75%;
+    --secondary: 135 11% 7.1%;
+    --secondary-foreground: 140 5% 89.2%;
 
-    --muted: 220 15% 10%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 135 11% 7.1%;
+    --muted-foreground: 140 3% 58.8%;
+    --faint: 146 3% 42.2%;
 
-    --accent: 160 80% 35%;
-    --accent-foreground: 220 20% 4%;
+    --accent: 144 11% 9.2%;
+    --accent-foreground: 140 5% 89.2%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 2 66% 64.3%;
+    --destructive-foreground: 150 10% 3.9%;
 
-    --border: 220 15% 14%;
-    --input: 220 15% 14%;
-    --ring: 160 100% 40%;
+    --border: 144 6% 17.1%;
+    --input: 144 6% 17.1%;
+    --ring: 147 38% 55.5%;
 
-    --radius: 0.5rem;
+    --radius: 0.375rem;
 
-    --signal-buy: 160 100% 40%;
-    --signal-sell: 0 72% 51%;
-    --signal-hold: 45 100% 50%;
-    --chart-up: 160 100% 40%;
-    --chart-down: 0 72% 51%;
-    --chart-volume: 220 60% 50%;
-    --glow-primary: 0 0 20px hsl(160 100% 40% / 0.15);
+    /* Market direction: #53c486 up, #e06b68 down; neutral is a muted amber */
+    --signal-buy: 147 49% 54.7%;
+    --signal-sell: 2 66% 64.3%;
+    --signal-hold: 41 47% 56.1%;
+    --chart-up: 147 49% 54.7%;
+    --chart-down: 2 66% 64.3%;
+    --chart-volume: 211 30% 50.4%;
+    --glow-primary: none;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 140 10% 5.7%;
+    --sidebar-foreground: 140 5% 89.2%;
+    --sidebar-primary: 147 38% 55.5%;
+    --sidebar-primary-foreground: 150 10% 3.9%;
+    --sidebar-accent: 144 11% 9.2%;
+    --sidebar-accent-foreground: 140 5% 89.2%;
+    --sidebar-border: 144 6% 17.1%;
+    --sidebar-ring: 147 38% 55.5%;
 
-    --font-heading: 'Space Grotesk', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-  }
-  .dark {
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --font-heading: 'IBM Plex Sans', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
   }
 }
 
@@ -74,18 +68,112 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-body);
+    @apply text-foreground;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-variant-numeric: tabular-nums;
+    background:
+      radial-gradient(circle at 18% -10%, rgba(69, 112, 86, 0.09), transparent 32rem),
+      radial-gradient(circle at 92% 18%, rgba(73, 90, 81, 0.05), transparent 30rem),
+      #090b0a;
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  /* One family everywhere, including form controls and anything that asks for monospace. */
+  button, input, select, textarea {
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  table, td, th {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Very faint grid; fades out down the page and never sits above content. */
+  .app-shell {
+    position: relative;
+    isolation: isolate;
+    min-height: 100vh;
+  }
+  .app-shell::before {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.011) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.009) 1px, transparent 1px);
+    background-size: 40px 40px;
+    content: '';
+    pointer-events: none;
+    mask-image: linear-gradient(to bottom, black, transparent 72%);
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 72%);
+  }
+  /* Extremely low-opacity grain (about 2.5%), behind everything. */
+  .app-shell::after {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* A section: defined by a fine rule above it, not a box around it. */
+  .section-rule {
+    @apply border-t border-border;
+  }
+
+  /* Summary strip: metrics side by side, split by hairlines. */
+  .stat-strip {
+    @apply flex flex-wrap border-y border-border;
+  }
+  .stat-strip > * {
+    @apply min-w-[8.5rem] flex-1 px-4 py-2.5;
+  }
+  .stat-strip > * + * {
+    @apply border-l border-border;
+  }
+
+  .data-table {
+    @apply w-full text-xs;
+  }
+  :where(.data-table thead th) {
+    @apply whitespace-nowrap border-b border-border px-3 py-1.5 text-left text-[10px] font-medium uppercase tracking-wide text-muted-foreground;
+  }
+  :where(.data-table tbody td) {
+    @apply px-3 py-1.5;
+  }
+  :where(.data-table tbody tr) {
+    @apply border-b border-border/60 transition-colors hover:bg-accent/60;
+  }
+
+  /* Dot + text status, replacing boxed badges. */
+  .status-dot {
+    @apply inline-flex items-center gap-1.5 text-[11px] font-medium;
+  }
+  .status-dot::before {
+    content: '';
+    @apply inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current;
   }
 }
 
 @layer utilities {
   .glow-primary {
-    box-shadow: var(--glow-primary);
+    box-shadow: none;
+  }
+
+  .text-faint {
+    color: hsl(var(--faint));
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 
   .text-signal-buy {

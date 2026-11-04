@@ -13,7 +13,7 @@ export const ValueRadarPageHeader = ({ title, subtitle, scanning, onRefresh }: P
   <div className="border-b border-border">
     <div className="mx-auto flex max-w-7xl flex-wrap items-start justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
-        <h1 className="truncate font-heading text-2xl font-bold">{title}</h1>
+        <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
         <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
       </div>
       <Button size="sm" variant="outline" onClick={onRefresh} disabled={scanning}>

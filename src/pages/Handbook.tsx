@@ -163,7 +163,7 @@ const Handbook = () => {
           <BookOpen className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="font-heading text-2xl font-bold">Handbook</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Handbook</h1>
           <p className="text-xs text-muted-foreground mt-1">
             What every signal, score, and term on the site actually means. See{' '}
             <Link to="/methodology" className="underline hover:text-foreground">How signals are generated</Link> for the full methodology.

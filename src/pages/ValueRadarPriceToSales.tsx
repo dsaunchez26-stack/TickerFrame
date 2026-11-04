@@ -149,7 +149,7 @@ const ValueRadarPriceToSales = () => {
                         <td className="py-2 pr-3 text-muted-foreground">{sector}</td>
                         <td className="py-2 pr-3">${r.price.toFixed(2)}</td>
                         <td className="py-2 pr-3 text-muted-foreground">{fmtMarketCap(r.market_cap)}</td>
-                        <td className="py-2 pr-3 font-bold text-signal-buy">{r.ps_ratio!.toFixed(2)}x</td>
+                        <td className="py-2 pr-3 font-semibold text-signal-buy">{r.ps_ratio!.toFixed(2)}x</td>
                         <td className="py-2 pr-3">
                           {usedSectorRelative && benchmark?.medianPS
                             ? `${(r.ps_ratio! / benchmark.medianPS).toFixed(2)}x (${benchmark.peerCount} peers)`
@@ -157,9 +157,9 @@ const ValueRadarPriceToSales = () => {
                         </td>
                         <td className="py-2 pr-3">{fmtPct(r.net_margin)}</td>
                         <td className="py-2 pr-3">{fmtPct(r.revenue_growth_yoy)}</td>
-                        <td className={`py-2 pr-3 font-bold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
-                        <td className={`py-2 pr-3 font-bold ${scoreColor(r.growth_score)}`}>{r.growth_score}</td>
-                        <td className={`py-2 pr-3 font-bold ${scoreColor(composite)}`}>{composite.toFixed(0)}</td>
+                        <td className={`py-2 pr-3 font-semibold ${scoreColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
+                        <td className={`py-2 pr-3 font-semibold ${scoreColor(r.growth_score)}`}>{r.growth_score}</td>
+                        <td className={`py-2 pr-3 font-semibold ${scoreColor(composite)}`}>{composite.toFixed(0)}</td>
                       </tr>
                     ))}
                   </tbody>

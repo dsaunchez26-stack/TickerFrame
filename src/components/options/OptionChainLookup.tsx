@@ -82,7 +82,7 @@ export const OptionChainLookup = () => {
         {result && !result.error && (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3 text-xs">
-              <span className="font-heading text-sm font-bold">{result.symbol}</span>
+              <span className="text-sm font-semibold">{result.symbol}</span>
               <span>${result.spot.toFixed(2)}</span>
               {result.pattern && <PatternBadge pattern={result.pattern} confidence={result.patternConfidence ?? undefined} size="xs" />}
               {result.expectedMovePct != null && (

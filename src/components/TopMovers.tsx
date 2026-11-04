@@ -1,5 +1,5 @@
 import { useStockData } from '@/hooks/useStockData';
-import { ArrowDownRight, Loader2, Flame, TrendingUp, Clock, Check } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useStockDetail } from '@/context/StockDetailContext';
 import { usePortfolio } from '@/hooks/usePortfolio';
@@ -36,23 +36,22 @@ export const TopMovers = () => {
     });
   }, [data, filter]);
 
-  if (isLoading) return <div className="rounded-lg border border-border bg-card p-6 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  if (isLoading) return <div className="border-y border-border p-6 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   if (!movers.length) return null;
 
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3 flex items-center gap-2">
-        <Flame className="h-4 w-4 text-orange-400" />
-        <h3 className="font-heading text-sm font-semibold text-foreground">Biggest Movers Today</h3>
-        <span className="ml-auto text-[10px] text-muted-foreground">Check ✓ to add to portfolio</span>
+    <div className="border-y border-border">
+      <div className="flex items-center gap-2 pb-2">
+        <h3 className="text-sm font-semibold text-foreground">Biggest Movers Today</h3>
+        <span className="ml-auto text-[11px] text-muted-foreground">Check ✓ to add to portfolio</span>
       </div>
-      <div className="grid gap-0 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x">
+      <div className="grid gap-0 divide-y divide-border border-t border-border sm:grid-cols-2 sm:divide-y-0 sm:divide-x">
         {movers.map((m) => {
           const owned = ownedMap.get(m.symbol);
           const isOwned = !!owned && owned.size > 0;
           const isEditing = editing === m.symbol;
           return (
-            <div key={m.symbol} className="p-4 hover:bg-secondary/30 transition-colors">
+            <div key={m.symbol} className="px-4 py-3 transition-colors hover:bg-accent/40">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex min-w-0 items-center gap-2">
                   <Checkbox checked={isOwned || isEditing} onCheckedChange={(checked) => {
@@ -60,18 +59,18 @@ export const TopMovers = () => {
                     else if (isOwned) { owned!.forEach(pt => { removeStock.mutate({ symbol: m.symbol, portfolio_type: pt }); }); }
                     else { setEditing(null); }
                   }} />
-                  <span className="font-heading text-base font-bold text-foreground cursor-pointer" onClick={() => open(m.symbol)}>{m.symbol}</span>
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${m.direction === 'Long' ? 'bg-signal-buy/15 text-signal-buy' : 'bg-signal-sell/15 text-signal-sell'}`}>
-                    {m.direction === 'Long' ? <TrendingUp className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}{m.direction === 'Long' ? 'Rising' : 'Falling'}
+                  <span className="cursor-pointer text-sm font-semibold text-foreground" onClick={() => open(m.symbol)}>{m.symbol}</span>
+                  <span className={`status-dot ${m.direction === 'Long' ? 'text-signal-buy' : 'text-signal-sell'}`}>
+                    {m.direction === 'Long' ? 'Rising' : 'Falling'}
                   </span>
-                  {isOwned && <span className="rounded-full bg-signal-buy/15 px-2 py-0.5 text-[9px] font-bold uppercase text-signal-buy">In {Array.from(owned!)[0].replace('_',' ')}</span>}
+                  {isOwned && <span className="status-dot text-signal-buy">In {Array.from(owned!)[0].replace('_',' ')}</span>}
                 </div>
-                <span className={`font-heading text-sm font-bold ${m.changePercent >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>{m.changePercent > 0 ? '+' : ''}{m.changePercent.toFixed(2)}%</span>
+                <span className={`text-sm font-semibold tabular-nums ${m.changePercent >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>{m.changePercent > 0 ? '+' : ''}{m.changePercent.toFixed(2)}%</span>
               </div>
               {m.name && <p className="mb-2 truncate text-[10px] text-muted-foreground">{m.name}</p>}
 
               {isEditing && !isOwned && (
-                <div className="mb-3 rounded border border-primary/30 bg-primary/5 p-2 space-y-2">
+                <div className="mb-3 space-y-2 border-y border-border py-2">
                   <Tabs value={ptype} onValueChange={(v) => setPtype(v as any)}>
                     <TabsList className="grid w-full grid-cols-3 h-7">
                       <TabsTrigger value="day_trade" className="text-[10px]">Day</TabsTrigger>
@@ -90,15 +89,15 @@ export const TopMovers = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-2 mb-3 text-[10px] cursor-pointer" onClick={() => open(m.symbol)}>
-                <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">Price</span><p className="font-heading font-semibold text-foreground">${m.price.toFixed(2)}</p></div>
-                <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">RSI (14)</span><p className="font-heading font-semibold text-foreground">{m.rsi != null ? m.rsi.toFixed(0) : '-'}</p></div>
-                <div className="rounded bg-secondary/50 p-2"><span className="block text-muted-foreground">Reading</span><div className="mt-0.5"><SignalBadge signal={m.signal} score={m.signalScore} /></div></div>
+              <div className="mb-2 grid cursor-pointer grid-cols-3 gap-2 text-[11px]" onClick={() => open(m.symbol)}>
+                <div><span className="block text-muted-foreground">Price</span><p className="font-medium tabular-nums text-foreground">${m.price.toFixed(2)}</p></div>
+                <div><span className="block text-muted-foreground">RSI (14)</span><p className="font-medium tabular-nums text-foreground">{m.rsi != null ? m.rsi.toFixed(0) : '-'}</p></div>
+                <div><span className="block text-muted-foreground">Reading</span><div className="mt-0.5"><SignalBadge signal={m.signal} score={m.signalScore} /></div></div>
               </div>
 
-              <div className="flex items-center justify-between text-[10px]">
+              <div className="flex items-center justify-between text-[11px]">
                 <span className="font-medium text-muted-foreground">{m.swing} move today</span>
-                <span className="flex items-center gap-0.5 text-primary/80 font-medium"><Clock className="h-3 w-3" />{m.holdDuration}</span>
+                <span className="text-muted-foreground">{m.holdDuration}</span>
                 <span className="text-muted-foreground">{m.volume > 0 ? `${formatVolume(m.volume)} vol` : 'vol n/a'}</span>
               </div>
             </div>

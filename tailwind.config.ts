@@ -72,18 +72,18 @@ export default {
   		},
   		fontFamily: {
   			heading: [
-  				'Space Grotesk',
+  				'IBM Plex Sans',
   				'sans-serif'
   			],
   			body: [
-  				'DM Sans',
+  				'IBM Plex Sans',
   				'sans-serif'
   			]
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			sm: 'calc(var(--radius) - 2px)'
   		},
   		keyframes: {
   			'accordion-down': {

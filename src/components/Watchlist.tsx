@@ -52,10 +52,10 @@ export const Watchlist = () => {
   const canCollapse = visible > INITIAL;
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="border-y border-border">
       <div className="border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="font-heading text-sm font-semibold text-foreground">Most Bullish Readings</h3>
+          <h3 className="text-sm font-semibold text-foreground">Most Bullish Readings</h3>
           <span className="text-[9px] text-muted-foreground italic">✓ to track</span>
         </div>
         <div className="flex items-center gap-3">
@@ -87,10 +87,10 @@ export const Watchlist = () => {
                     <div className="min-w-0 cursor-pointer flex-1" onClick={() => open(s.symbol)}>
                       <div className="flex items-center gap-2">
                         {isBigMover && <Flame className="h-3 w-3 text-orange-400" />}
-                        <span className="font-heading text-xs font-semibold text-foreground">{s.symbol}</span>
+                        <span className="text-xs font-semibold text-foreground">{s.symbol}</span>
                         <SignalBadge signal={s.signal} score={s.signalScore} />
                         {s.hasReading && <span className="text-[9px] text-muted-foreground" title="14-period RSI: under 30 oversold, over 70 overbought">RSI {s.rsi.toFixed(0)}</span>}
-                        {isOwned && <span className="rounded-full bg-signal-buy/15 px-1.5 py-0.5 text-[9px] font-bold uppercase text-signal-buy">✓</span>}
+                        {isOwned && <span className="rounded-full bg-signal-buy/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-signal-buy">✓</span>}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <p className="truncate text-[10px] text-muted-foreground">{s.name}</p>
@@ -100,7 +100,7 @@ export const Watchlist = () => {
                     </div>
                   </div>
                   <div className="text-right cursor-pointer" onClick={() => open(s.symbol)}>
-                    <p className="font-heading text-xs font-semibold text-foreground">${s.price.toFixed(2)}</p>
+                    <p className="text-xs font-semibold text-foreground">${s.price.toFixed(2)}</p>
                     <p className={`flex items-center justify-end gap-0.5 text-[10px] font-medium ${s.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
                       {s.change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                       {s.changePercent > 0 ? '+' : ''}{s.changePercent.toFixed(2)}%

@@ -20,9 +20,9 @@ export const PennyWatchlist = () => {
   }, [data]);
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="border-y border-border">
       <div className="border-b border-border px-4 py-3">
-        <h3 className="font-heading text-sm font-semibold text-foreground">Penny Stock Watchlist</h3>
+        <h3 className="text-sm font-semibold text-foreground">Penny Stock Watchlist</h3>
         <p className="text-[10px] text-muted-foreground">Sub-$5 names with the biggest moves.</p>
       </div>
       {isLoading ? (
@@ -34,11 +34,11 @@ export const PennyWatchlist = () => {
           {pennyStocks.slice(0, 10).map(s => (
             <div key={s.symbol} className="flex cursor-pointer items-center justify-between px-4 py-2.5 hover:bg-secondary/50" onClick={() => open(s.symbol)}>
               <div>
-                <span className="font-heading text-xs font-semibold text-foreground">{s.symbol}</span>
+                <span className="text-xs font-semibold text-foreground">{s.symbol}</span>
                 <p className="truncate text-[10px] text-muted-foreground">{s.name}</p>
               </div>
               <div className="text-right">
-                <p className="font-heading text-xs font-semibold text-foreground">${s.price.toFixed(2)}</p>
+                <p className="text-xs font-semibold text-foreground">${s.price.toFixed(2)}</p>
                 <p className={`flex items-center justify-end gap-0.5 text-[10px] font-medium ${s.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
                   {s.change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                   {s.changePercent > 0 ? '+' : ''}{s.changePercent.toFixed(2)}%

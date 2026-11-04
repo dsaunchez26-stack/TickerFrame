@@ -21,8 +21,8 @@ export const BestTradeCards = ({ rows }: { rows: OptionRow[] }) => {
         {top.map(r => (
           <div key={r.id} className="rounded-lg border border-border p-3">
             <div className="flex items-center justify-between">
-              <span className="font-heading text-sm font-semibold">{r.ticker} {r.cp}{r.strike}</span>
-              <span className="text-xs font-bold text-primary">{r.score}</span>
+              <span className="text-sm font-semibold">{r.ticker} {r.cp}{r.strike}</span>
+              <span className="text-xs font-semibold text-primary">{r.score}</span>
             </div>
             {symbolNames.get(r.ticker) && <p className="truncate text-[10px] text-muted-foreground">{symbolNames.get(r.ticker)}</p>}
             <p className="mt-0.5 text-[11px] text-muted-foreground">Exp {r.expiration} · Δ{r.delta.toFixed(2)}</p>

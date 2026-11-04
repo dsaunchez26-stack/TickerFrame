@@ -47,55 +47,55 @@ export const Top50Table = () => {
   }, [rows]);
 
   if (isLoading) {
-    return <div className="flex justify-center rounded-lg border border-border bg-card py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+    return <div className="flex justify-center border-y border-border py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
         <div>
-          <h3 className="font-heading text-sm font-semibold">50 largest U.S. companies (S&amp;P 500 members)</h3>
-          <p className="text-[10px] text-muted-foreground">Ranked by live market value. Click any row for the full signal breakdown.</p>
+          <h3 className="text-sm font-semibold">50 largest U.S. companies (S&amp;P 500 members)</h3>
+          <p className="text-[11px] text-muted-foreground">Ranked by live market value. Click any row for the full signal breakdown.</p>
         </div>
-        <div className="flex gap-2 text-[10px] font-semibold">
-          <span className="rounded-full bg-signal-buy/15 px-2 py-0.5 text-signal-buy">{counts.buy} Bullish</span>
-          <span className="rounded-full bg-signal-hold/15 px-2 py-0.5 text-signal-hold">{counts.hold} Neutral</span>
-          <span className="rounded-full bg-signal-sell/15 px-2 py-0.5 text-signal-sell">{counts.sell} Bearish</span>
+        <div className="flex gap-3">
+          <span className="status-dot text-signal-buy">{counts.buy} Bullish</span>
+          <span className="status-dot text-signal-hold">{counts.hold} Neutral</span>
+          <span className="status-dot text-signal-sell">{counts.sell} Bearish</span>
         </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead className="border-b border-border text-left text-muted-foreground">
+      <div className="overflow-x-auto border-t border-border">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="px-4 py-2">#</th>
-              <th className="py-2 pr-3">Company</th>
-              <th className="py-2 pr-3 text-right">Price</th>
-              <th className="py-2 pr-3 text-right">Today</th>
-              <th className="hidden py-2 pr-3 text-right sm:table-cell">Market cap</th>
-              <th className="hidden py-2 pr-3 text-right sm:table-cell">RSI</th>
-              <th className="py-2 pr-4">Reading</th>
+              <th className="w-8">#</th>
+              <th>Company</th>
+              <th className="text-right">Price</th>
+              <th className="text-right">Today</th>
+              <th className="hidden text-right sm:table-cell">Market cap</th>
+              <th className="hidden text-right sm:table-cell">RSI</th>
+              <th>Reading</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={r.symbol} onClick={() => open(r.symbol)} className="cursor-pointer border-b border-border last:border-0 hover:bg-secondary/50">
-                <td className="px-4 py-2 text-muted-foreground">{i + 1}</td>
-                <td className="py-2 pr-3">
-                  <span className="font-heading font-semibold">{r.symbol}</span>
+              <tr key={r.symbol} onClick={() => open(r.symbol)} className="cursor-pointer last:border-0">
+                <td className="text-faint">{i + 1}</td>
+                <td>
+                  <span className="font-semibold text-foreground">{r.symbol}</span>
                   <span className="ml-2 text-muted-foreground">{r.stock?.name ?? ''}</span>
                 </td>
-                <td className="py-2 pr-3 text-right font-semibold">{r.stock ? `$${r.stock.price.toFixed(2)}` : '-'}</td>
-                <td className="py-2 pr-3 text-right">
+                <td className="text-right font-medium tabular-nums">{r.stock ? `$${r.stock.price.toFixed(2)}` : '-'}</td>
+                <td className="text-right tabular-nums">
                   {r.stock ? (
-                    <span className={`inline-flex items-center gap-0.5 font-medium ${r.stock.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
+                    <span className={`inline-flex items-center gap-0.5 ${r.stock.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
                       {r.stock.change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                       {r.stock.changePercent > 0 ? '+' : ''}{r.stock.changePercent.toFixed(2)}%
                     </span>
                   ) : '-'}
                 </td>
-                <td className="hidden py-2 pr-3 text-right text-muted-foreground sm:table-cell">{fmtCap(r.cap)}</td>
-                <td className="hidden py-2 pr-3 text-right sm:table-cell">{r.stock?.hasReading ? r.stock.rsi.toFixed(0) : '-'}</td>
-                <td className="py-2 pr-4">{r.stock ? <SignalBadge signal={r.stock.signal} score={r.stock.signalScore} /> : <span className="text-muted-foreground">loading</span>}</td>
+                <td className="hidden text-right tabular-nums text-muted-foreground sm:table-cell">{fmtCap(r.cap)}</td>
+                <td className="hidden text-right tabular-nums sm:table-cell">{r.stock?.hasReading ? r.stock.rsi.toFixed(0) : '-'}</td>
+                <td>{r.stock ? <SignalBadge signal={r.stock.signal} score={r.stock.signalScore} /> : <span className="text-muted-foreground">loading</span>}</td>
               </tr>
             ))}
           </tbody>

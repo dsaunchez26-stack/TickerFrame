@@ -62,12 +62,12 @@ export const AlertsPanel = () => {
   if (alerts.length === 0) return null;
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="border-y border-border">
       <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Bell className="h-4 w-4 text-primary" />
-          <h3 className="font-heading text-sm font-semibold">Alerts</h3>
-          <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+          <h3 className="text-sm font-semibold">Alerts</h3>
+          <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
             {alerts.length}
           </span>
         </div>
@@ -92,9 +92,9 @@ export const AlertsPanel = () => {
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-heading font-bold text-foreground">{a.symbol}</span>
+                <span className="font-semibold text-foreground">{a.symbol}</span>
                 {a.priority_filer && (
-                  <span className="rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">
+                  <span className="rounded bg-primary px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-primary-foreground">
                     {a.priority_filer.split(' ')[0]} {a.priority_filer.split(' ')[1] ?? ''}
                   </span>
                 )}

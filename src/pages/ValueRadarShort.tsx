@@ -124,8 +124,8 @@ const ValueRadarShort = () => {
                         <td className="py-2 pr-3">${t.price.toFixed(2)}</td>
                         <td className="py-2 pr-3">{fmtRatio(r.debt_to_equity)}</td>
                         <td className="py-2 pr-3">{fmtPct(r.net_margin)}</td>
-                        <td className={`py-2 pr-3 font-bold ${weaknessColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
-                        <td className="py-2 pr-3 font-bold text-signal-sell">{t.bollinger_pct_b!.toFixed(2)}</td>
+                        <td className={`py-2 pr-3 font-semibold ${weaknessColor(r.balance_sheet_score)}`}>{r.balance_sheet_score}</td>
+                        <td className="py-2 pr-3 font-semibold text-signal-sell">{t.bollinger_pct_b!.toFixed(2)}</td>
                         <td className="py-2 pr-3">{t.rsi != null ? t.rsi.toFixed(0) : '-'}</td>
                         <td className="py-2 pr-3 text-muted-foreground">{t.pattern ?? '-'}</td>
                         <td className="py-2 pr-3">

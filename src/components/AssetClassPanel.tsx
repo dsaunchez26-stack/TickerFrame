@@ -26,36 +26,36 @@ export const AssetClassPanel = () => {
   }, [data]);
 
   if (isLoading) {
-    return <div className="flex justify-center rounded-lg border border-border bg-card py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+    return <div className="flex justify-center border-y border-border py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
   if (!groups.length) return null;
 
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
+    <div>
+      <div className="pb-2">
         <div className="flex items-center justify-between">
-          <h3 className="font-heading text-sm font-semibold text-foreground">Asset Classes</h3>
+          <h3 className="text-sm font-semibold text-foreground">Asset Classes</h3>
           <Link to="/stocks/etfs" className="text-[10px] text-muted-foreground underline hover:text-foreground">View all ETFs</Link>
         </div>
-        <p className="text-[10px] text-muted-foreground">Bonds, gold, crypto, real estate and index funds - tracked through exchange-traded funds.</p>
+        <p className="text-[11px] text-muted-foreground">Bonds, gold, crypto, real estate and index funds - tracked through exchange-traded funds.</p>
       </div>
-      <div className="grid gap-px bg-border md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-x-6 border-t border-border md:grid-cols-2 xl:grid-cols-3">
         {groups.map(([assetClass, rows]) => (
-          <div key={assetClass} className="bg-card p-3">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{assetClass}</p>
-            <div className="space-y-2">
+          <div key={assetClass} className="border-b border-border/60 py-3">
+            <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{assetClass}</p>
+            <div className="space-y-0.5">
               {rows.map((s) => (
-                <button key={s.symbol} onClick={() => open(s.symbol)} className="flex w-full items-center justify-between gap-2 rounded text-left transition-colors hover:bg-secondary/50">
+                <button key={s.symbol} onClick={() => open(s.symbol)} className="flex w-full items-center justify-between gap-2 rounded-sm px-1 py-1 text-left transition-colors hover:bg-accent/60">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-heading text-xs font-semibold text-foreground">{s.symbol}</span>
+                      <span className="text-xs font-semibold text-foreground">{s.symbol}</span>
                       <SignalBadge signal={s.signal} score={s.signalScore} />
                     </div>
                     <p className="truncate text-[10px] text-muted-foreground">{s.name}</p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="font-heading text-xs font-semibold text-foreground">${s.price.toFixed(2)}</p>
-                    <p className={`flex items-center justify-end gap-0.5 text-[10px] font-medium ${s.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
+                    <p className="text-xs font-medium tabular-nums text-foreground">${s.price.toFixed(2)}</p>
+                    <p className={`flex items-center justify-end gap-0.5 text-[11px] tabular-nums ${s.change >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
                       {s.change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                       {s.changePercent > 0 ? '+' : ''}{s.changePercent.toFixed(2)}%
                     </p>

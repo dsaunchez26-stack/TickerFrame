@@ -30,15 +30,15 @@ export const OptionPickTracker = ({ picks, pickQuotes }: Props) => {
       <CardHeader><CardTitle className="text-sm font-semibold">Pick Tracker Summary</CardTitle></CardHeader>
       <CardContent className="grid grid-cols-3 gap-4 text-center">
         <div>
-          <div className="text-xl font-bold">{summary.count}</div>
+          <div className="text-xl font-semibold">{summary.count}</div>
           <div className="text-[11px] text-muted-foreground">Tracked</div>
         </div>
         <div>
-          <div className="text-xl font-bold text-signal-buy">{summary.wins}/{summary.count}</div>
+          <div className="text-xl font-semibold text-signal-buy">{summary.wins}/{summary.count}</div>
           <div className="text-[11px] text-muted-foreground">Currently green</div>
         </div>
         <div>
-          <div className={`text-xl font-bold ${summary.avgPct >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
+          <div className={`text-xl font-semibold ${summary.avgPct >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
             {summary.avgPct >= 0 ? '+' : ''}{summary.avgPct.toFixed(1)}%
           </div>
           <div className="text-[11px] text-muted-foreground">Avg move</div>

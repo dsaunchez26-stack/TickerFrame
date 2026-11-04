@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Plus, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Send, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
@@ -232,8 +232,8 @@ const ChatPage = () => {
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="flex h-12 flex-none items-center gap-2 border-b border-border px-4">
           <Link to="/dashboard" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></Link>
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span className="font-heading text-sm font-semibold">Market Intelligence</span>
+          <MessageSquare className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold">Market Intelligence</span>
           <span className="ml-auto text-[10px] text-muted-foreground">Answers use cached market data only</span>
         </div>
 
@@ -241,7 +241,7 @@ const ChatPage = () => {
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto p-6">
             <div className="w-full max-w-2xl">
               <div className="mb-8 text-center">
-                <div className="font-heading text-3xl font-bold sm:text-4xl">
+                <div className="text-xl font-semibold tracking-tight sm:text-2xl">
                   Welcome to Tickerframe{user?.email ? `, ${user.email.split('@')[0]}` : ''}
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">What do you want to know about the market today?</p>
@@ -251,7 +251,7 @@ const ChatPage = () => {
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm hover:border-primary/40 hover:bg-secondary/50 transition-colors"
+                    className="rounded-md border border-border bg-card px-4 py-3 text-left text-sm hover:border-primary/40 hover:bg-secondary/50 transition-colors"
                   >
                     {s}
                   </button>
@@ -268,16 +268,16 @@ const ChatPage = () => {
                 {messages.map((m, i) => (
                   m.role === 'user' ? (
                     <div key={i} className="flex justify-end">
-                      <div className="max-w-[70%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground">
+                      <div className="max-w-[70%] whitespace-pre-wrap rounded-md rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground">
                         {m.content}
                       </div>
                     </div>
                   ) : (
                     <div key={i} className="flex items-start gap-2.5">
                       <div className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-md bg-primary/10">
-                        <Sparkles className="h-3 w-3 text-primary" />
+                        <MessageSquare className="h-3 w-3 text-primary" />
                       </div>
-                      <div className="max-w-[70%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-border bg-card px-4 py-2.5 text-sm">
+                      <div className="max-w-[70%] whitespace-pre-wrap rounded-md rounded-bl-sm border border-border bg-card px-4 py-2.5 text-sm">
                         {m.content || (streaming && i === messages.length - 1 ? <Loader2 className="h-3 w-3 animate-spin" /> : null)}
                       </div>
                     </div>
@@ -289,7 +289,7 @@ const ChatPage = () => {
         )}
 
         <div className="flex-none px-4 pb-5 pt-2">
-          <form onSubmit={(e) => { e.preventDefault(); send(); }} className="mx-auto flex max-w-2xl items-end gap-2 rounded-2xl border border-border bg-card p-2 pl-4">
+          <form onSubmit={(e) => { e.preventDefault(); send(); }} className="mx-auto flex max-w-2xl items-end gap-2 rounded-md border border-border bg-card p-2 pl-4">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}

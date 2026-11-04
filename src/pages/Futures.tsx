@@ -110,10 +110,10 @@ const Futures = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="border-b border-border bg-card/50">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div className="min-w-0">
-            <h1 className="truncate font-heading text-lg font-bold">Futures</h1>
+            <h1 className="truncate text-lg font-semibold">Futures</h1>
             <p className="text-xs text-muted-foreground">Front-month contract specs (tastytrade) and live pricing (Yahoo Finance) across major futures.</p>
           </div>
           <Button size="sm" variant="outline" onClick={load} disabled={loading}>

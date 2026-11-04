@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, LineChart, TrendingUp, TrendingDown, Activity, Briefcase, BarChart3,
   Newspaper, ShieldCheck, Gem, Radar, ListFilter, Wallet, Bookmark, Rss, Coins, Target, Layers, DollarSign, ChevronDown,
-  Calculator, Users, Building2, Percent, RotateCcw, Sparkles, Menu,
+  Calculator, Users, Building2, Percent, RotateCcw, MessageSquare, Menu,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
@@ -53,18 +53,19 @@ const groups: NavGroup[] = [
 ];
 
 const dropdownLinkClass = ({ isActive }: { isActive: boolean }) => cn(
-  'flex w-full items-center gap-2 cursor-pointer',
+  'flex w-full items-center gap-2 cursor-pointer text-xs',
   isActive && 'text-primary font-medium',
 );
 
+// Compact text tabs; the active one gets a thin underline instead of a fill.
 const flatLinkClass = (active: boolean) => cn(
-  'inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
-  active && 'bg-accent/50 text-foreground',
+  '-mb-px inline-flex h-9 items-center gap-1.5 border-b-2 border-transparent px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground',
+  active && 'border-primary text-foreground',
 );
 
 const groupActiveClass = (active: boolean) => cn(
-  'inline-flex h-9 items-center gap-1 rounded-md px-3 text-sm font-medium outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent/50',
-  active && 'bg-accent/50 text-foreground',
+  '-mb-px inline-flex h-9 items-center gap-1 border-b-2 border-transparent px-2.5 text-xs font-medium text-muted-foreground outline-none transition-colors hover:text-foreground data-[state=open]:text-foreground',
+  active && 'border-primary text-foreground',
 );
 
 // Replaces the old left-side vertical sidebar with a horizontal top bar --
@@ -85,20 +86,19 @@ export const AppTopNav = () => {
   const isGroupActive = (g: NavGroup) => g.items.some(item => item.url === pathname);
 
   return (
-    <div className="flex flex-wrap items-center gap-1">
+    <div className="flex flex-wrap items-center">
       <Link to="/dashboard" className={flatLinkClass(pathname === '/dashboard')}>
-        <LayoutDashboard className="h-4 w-4" /> Dashboard
+        Dashboard
       </Link>
       {groups.map(g => (
         <DropdownMenu key={g.label}>
           <DropdownMenuTrigger className={groupActiveClass(isGroupActive(g))}>
-            {g.label} <ChevronDown className="h-3 w-3" />
+            {g.label} <ChevronDown className="h-3 w-3 opacity-60" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuContent align="start" className="w-52">
             {g.items.map(item => (
               <DropdownMenuItem key={item.url} asChild>
                 <NavLink to={item.url} className={dropdownLinkClass}>
-                  <item.icon className="h-4 w-4 shrink-0" />
                   {item.title}
                 </NavLink>
               </DropdownMenuItem>
@@ -107,17 +107,17 @@ export const AppTopNav = () => {
         </DropdownMenu>
       ))}
       <Link to="/futures" className={flatLinkClass(isActive('/futures'))}>
-        <Layers className="h-4 w-4" /> Futures
+        Futures
       </Link>
       <Link to="/patterns" className={flatLinkClass(isActive('/patterns'))}>
-        <Activity className="h-4 w-4" /> Patterns
+        Patterns
       </Link>
       <Link to="/chat" className={flatLinkClass(isActive('/chat') || pathname === '/')}>
-        <Sparkles className="h-4 w-4" /> Assistant
+        Assistant
       </Link>
       {isAdmin && (
         <Link to="/health" className={flatLinkClass(isActive('/health'))}>
-          <ShieldCheck className="h-4 w-4" /> System Health
+          System Health
         </Link>
       )}
     </div>
@@ -133,7 +133,7 @@ export const MobileNav = () => {
   useEffect(() => { setOpen(false); }, [pathname]);
 
   const row = (url: string, title: string, Icon: typeof LineChart) => (
-    <NavLink key={url} to={url} className={({ isActive }) => cn('flex items-center gap-3 rounded-md px-3 py-2.5 text-sm hover:bg-accent', isActive && 'bg-accent/60 font-medium text-primary')}>
+    <NavLink key={url} to={url} className={({ isActive }) => cn('flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent', isActive && 'bg-accent font-medium text-primary')}>
       <Icon className="h-4 w-4 shrink-0" /> {title}
     </NavLink>
   );
@@ -144,9 +144,9 @@ export const MobileNav = () => {
         <Menu className="h-5 w-5" />
       </SheetTrigger>
       <SheetContent side="left" className="w-72 overflow-y-auto p-3">
-        <SheetHeader className="mb-2 text-left"><SheetTitle className="font-heading text-base">Menu</SheetTitle></SheetHeader>
+        <SheetHeader className="mb-2 text-left"><SheetTitle className="text-base">Menu</SheetTitle></SheetHeader>
         {row('/dashboard', 'Dashboard', LayoutDashboard)}
-        {row('/chat', 'Assistant', Sparkles)}
+        {row('/chat', 'Assistant', MessageSquare)}
         {groups.map(g => (
           <div key={g.label} className="mt-3">
             <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{g.label}</div>

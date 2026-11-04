@@ -1,6 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { AppTopNav, MobileNav } from '@/components/AppTopNav';
-import { Activity, Zap } from 'lucide-react';
 import { StockDetailProvider } from '@/context/StockDetailContext';
 import { StockSearchBar } from '@/components/StockSearchBar';
 import { UserMenu } from '@/components/auth/UserMenu';
@@ -22,48 +21,36 @@ export default function AppLayout() {
     return () => clearInterval(id);
   }, []);
   const isLive = status === 'open';
-  const dotClass = isLive ? 'bg-signal-buy' : status === 'closed' ? 'bg-muted-foreground' : 'bg-signal-hold';
-  const pillClass = isLive ? 'bg-signal-buy/10 text-signal-buy'
-    : status === 'closed' ? 'bg-muted/40 text-muted-foreground'
-    : 'bg-signal-hold/10 text-signal-hold';
+  const statusClass = isLive ? 'text-signal-buy' : status === 'closed' ? 'text-muted-foreground' : 'text-signal-hold';
   return (
     <StockDetailProvider>
       <OnboardingTour />
       {!onChatPage && <MarketChat />}
-      <div className="min-h-screen flex w-full flex-col bg-background">
+      <div className="app-shell flex w-full flex-col">
         <DemoBanner />
-        <header className="border-b border-border bg-card/40 backdrop-blur-sm">
+        <header className="border-b border-border bg-background/80">
           <div className="flex h-12 items-center justify-between px-3">
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <div className="md:hidden"><MobileNav /></div>
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
-                <Zap className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="font-heading text-sm font-bold">Tickerframe</span>
-              <span className="text-xs text-muted-foreground hidden sm:inline">Professional Trading Suite</span>
+              <span className="text-sm font-semibold tracking-tight">Tickerframe</span>
+              <span className="hidden text-[11px] text-faint sm:inline">Market research</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3 pl-2">
               <StockSearchBar />
-              <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 ${pillClass}`}>
-                <span className="relative flex h-1.5 w-1.5">
-                  {isLive && <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${dotClass}`} />}
-                  <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${dotClass}`} />
-                </span>
-                <span className="text-[10px] font-semibold">{isLive ? 'Live' : status === 'closed' ? 'Closed' : status === 'pre' ? 'Pre' : 'After-Hrs'}</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground hidden md:inline">
-                <Activity className="mr-1 inline h-3 w-3" />{marketStatusLabel(status)}
+              <span className={`status-dot ${statusClass}`}>
+                {isLive ? 'Live' : status === 'closed' ? 'Closed' : status === 'pre' ? 'Pre' : 'After-Hrs'}
               </span>
+              <span className="hidden text-[11px] text-muted-foreground md:inline">{marketStatusLabel(status)}</span>
               <UserMenu />
             </div>
           </div>
-          <div className="hidden border-t border-border/60 px-3 py-1 md:block">
+          <div className="hidden border-t border-border/60 px-3 md:block">
             <AppTopNav />
           </div>
         </header>
         <main className="flex-1 overflow-x-hidden">
           <Outlet />
-          <footer className="border-t border-border/50 mt-12 py-6 px-4 text-center text-[11px] text-muted-foreground">
+          <footer className="mt-10 border-t border-border py-5 px-4 text-center text-[11px] text-muted-foreground">
             <p className="mb-1">
               <strong className="text-foreground">Tickerframe</strong> · Research & education only · Not investment advice
             </p>

@@ -76,11 +76,11 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.props.fallback) return this.props.fallback;
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6">
-        <div className="max-w-md rounded-lg border border-border bg-card p-6 text-center">
+        <div className="max-w-md border-y border-border p-6 text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-destructive/15">
             <AlertTriangle className="h-5 w-5 text-destructive" />
           </div>
-          <h2 className="mb-1 font-heading text-base font-bold">Something went wrong</h2>
+          <h2 className="mb-1 text-base font-semibold">Something went wrong</h2>
           <p className="mb-4 text-xs text-muted-foreground">
             {this.state.error.message || 'An unexpected error occurred rendering this view.'}
           </p>

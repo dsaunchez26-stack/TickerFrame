@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
-import { MessageSquare, Send, Loader2, Sparkles, Maximize2 } from 'lucide-react';
+import { MessageSquare, Send, Loader2, Maximize2 } from 'lucide-react';
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
@@ -137,16 +137,16 @@ export const MarketChat = () => {
       <SheetTrigger asChild>
         <Button
           size="icon"
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg glow-primary"
+          className="fixed bottom-6 right-6 z-50 h-11 w-11 rounded-full"
           aria-label="Open market chat"
         >
-          <MessageSquare className="h-6 w-6" />
+          <MessageSquare className="h-5 w-5" />
         </Button>
       </SheetTrigger>
       <SheetContent className="flex w-full flex-col p-0 sm:max-w-md">
         <SheetHeader className="flex-row items-center justify-between border-b border-border px-4 py-3 space-y-0">
-          <SheetTitle className="flex items-center gap-2 font-heading">
-            <Sparkles className="h-4 w-4 text-primary" />
+          <SheetTitle className="flex items-center gap-2 ">
+            <MessageSquare className="h-4 w-4 text-primary" />
             Market Intelligence
           </SheetTitle>
           <Link to="/chat" className="text-muted-foreground hover:text-foreground" aria-label="Open full chat">
@@ -165,7 +165,7 @@ export const MarketChat = () => {
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="rounded-md border border-border bg-card px-3 py-2 text-left text-xs hover:bg-secondary/50 transition-colors"
+                    className="border-y border-border px-3 py-2 text-left text-xs hover:bg-secondary/50 transition-colors"
                   >
                     {s}
                   </button>

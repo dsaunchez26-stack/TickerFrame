@@ -55,14 +55,14 @@ export const EarningsBadge = ({ earnings, referenceDate, size = 'sm', className 
     tooltip = `${fmtDate(earnings.date)}${hourLabel(earnings.hour) ? ` (${hourLabel(earnings.hour)})` : ''} - earnings reactions can move a stock (and anything derived from it) sharply in either direction.`;
   }
 
-  const colorClass = urgent ? 'bg-signal-sell/15 text-signal-sell border-signal-sell/30' : 'bg-signal-hold/15 text-signal-hold border-signal-hold/30';
+  const colorClass = urgent ? 'border-transparent bg-transparent px-0 text-signal-sell' : 'border-transparent bg-transparent px-0 text-signal-hold';
   const sizeClass = size === 'xs' ? 'text-[9px] gap-0.5 px-1.5 py-0' : 'text-[10px] gap-1 px-2 py-0.5';
   const Icon = urgent ? AlertTriangle : CalendarClock;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="outline" className={`${colorClass} ${sizeClass} ${className} font-semibold whitespace-nowrap cursor-help`}>
+        <Badge variant="outline" className={`${colorClass} ${sizeClass} ${className} font-medium whitespace-nowrap cursor-help`}>
           <Icon className="h-3 w-3" />
           {label}
         </Badge>

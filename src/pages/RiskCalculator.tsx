@@ -10,9 +10,9 @@ const RiskCalculator = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="border-b border-border bg-card/50">
         <div className="mx-auto max-w-5xl px-4 py-3">
-          <h1 className="font-heading text-lg font-bold">Risk Calculator</h1>
+          <h1 className="text-lg font-semibold">Risk Calculator</h1>
           <p className="text-xs text-muted-foreground">
             Pick a stock, option, or future, enter your position, and see the dollar risk, breakeven, and profit math before you decide anything.
           </p>

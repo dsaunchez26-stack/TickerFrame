@@ -19,7 +19,7 @@ const Patterns = () => {
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold">Pattern Hub</h1>
+        <h1 className="text-lg font-semibold tracking-tight">Pattern Hub</h1>
         <p className="text-xs text-muted-foreground mt-1">Every chart pattern currently detected across the tracked universe.</p>
       </div>
       <Disclaimer />
@@ -40,7 +40,7 @@ const Patterns = () => {
                   className="cursor-pointer rounded-lg border border-border p-3 hover:border-primary/40 hover:bg-secondary/40"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-heading text-sm font-semibold">{s.symbol}</span>
+                    <span className="text-sm font-semibold">{s.symbol}</span>
                     <span className="text-xs text-muted-foreground">${s.price.toFixed(2)}</span>
                   </div>
                   {s.name && <p className="truncate text-[10px] text-muted-foreground">{s.name}</p>}

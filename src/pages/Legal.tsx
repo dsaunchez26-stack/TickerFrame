@@ -4,7 +4,7 @@ import { ShieldAlert } from 'lucide-react';
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <section className="space-y-2">
-    <h2 className="font-heading text-lg font-bold">{title}</h2>
+    <h2 className="text-lg font-semibold">{title}</h2>
     <div className="text-sm text-muted-foreground space-y-2 leading-relaxed">{children}</div>
   </section>
 );
@@ -16,7 +16,7 @@ const Legal = () => (
         <ShieldAlert className="h-5 w-5 text-amber-400" />
       </div>
       <div>
-        <h1 className="font-heading text-2xl font-bold">Disclaimers</h1>
+        <h1 className="text-lg font-semibold tracking-tight">Disclaimers</h1>
         {/* Fixed to the date this content was actually last edited -- new
             Date() here would silently relabel it "updated today" on every
             single page load regardless of whether anything changed,

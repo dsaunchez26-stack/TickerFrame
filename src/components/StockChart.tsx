@@ -43,7 +43,7 @@ export const StockChart = ({ symbol: controlledSymbol, onSymbolChange }: Props =
       <CardContent>
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#f0b429' }} />moving average</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#c4a35a' }} />moving average</span>
             <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 border-t border-dashed border-muted-foreground" />last close</span>
           </div>
           <div className="flex items-center gap-0.5 rounded-md border border-border p-0.5 text-[10px]">

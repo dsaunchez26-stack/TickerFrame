@@ -57,9 +57,9 @@ export const Indicators = ({ symbol }: Props = {}) => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="flex items-center justify-center rounded-lg border border-border bg-card p-6">
+          <div key={i} className="flex items-center justify-center py-4">
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         ))}
@@ -70,15 +70,12 @@ export const Indicators = ({ symbol }: Props = {}) => {
   if (!indicators) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="stat-strip">
       {indicators.map((ind) => (
-        <div key={ind.label} className="rounded-lg border border-border bg-card p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{ind.label}</span>
-            <span className={statusColor[ind.status]}>{ind.icon}</span>
-          </div>
-          <p className={`font-heading text-xl font-bold ${statusColor[ind.status]}`}>{ind.value}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">{ind.sub}</p>
+        <div key={ind.label}>
+          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{ind.label}</span>
+          <p className={`text-base font-semibold tabular-nums ${statusColor[ind.status]}`}>{ind.value}</p>
+          <p className="text-[11px] text-muted-foreground">{ind.sub}</p>
         </div>
       ))}
     </div>

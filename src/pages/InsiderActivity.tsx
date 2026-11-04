@@ -72,10 +72,10 @@ const InsiderActivity = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="border-b border-border bg-card/50">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div>
-            <h1 className="font-heading text-lg font-bold">Insider Activity</h1>
+            <h1 className="text-lg font-semibold">Insider Activity</h1>
             <p className="text-xs text-muted-foreground">
               Open-market insider buys (SEC Form 4) and new 5%+ holder filings (Schedule 13D/13G), pulled directly from SEC EDGAR.
             </p>

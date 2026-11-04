@@ -168,7 +168,7 @@ export const PortfolioFutures = ({ portfolioName }: Props) => {
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-heading text-sm font-bold">{p.product_code} {p.product_name}</span>
+                    <span className="text-sm font-semibold">{p.product_code} {p.product_name}</span>
                     <PositionAlertBadge pnlPct={pnlPct} targetGainPct={p.target_gain_pct} stopLossPct={p.stop_loss_pct} size="xs" />
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap gap-x-2">
@@ -178,7 +178,7 @@ export const PortfolioFutures = ({ portfolioName }: Props) => {
                 <div className="text-right mr-2">
                   {pnl !== null ? (
                     <>
-                      <div className={`text-xs font-bold flex items-center gap-0.5 ${pnl >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
+                      <div className={`text-xs font-semibold flex items-center gap-0.5 ${pnl >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
                         {pnl >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                         {pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}
                       </div>

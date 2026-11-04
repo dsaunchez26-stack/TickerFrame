@@ -100,7 +100,7 @@ export const PortfolioRating = ({ enriched, totalValue, pnlPct, winRate }: Props
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between text-sm font-semibold">
           <span>Portfolio Rating</span>
-          <span className={`font-heading text-xl font-bold ${scoreColor}`}>{analysis.score}<span className="text-xs text-muted-foreground">/100</span></span>
+          <span className={`text-xl font-semibold ${scoreColor}`}>{analysis.score}<span className="text-xs text-muted-foreground">/100</span></span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2.5 pt-0">

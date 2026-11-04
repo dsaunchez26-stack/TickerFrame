@@ -38,9 +38,9 @@ export const MarketOverview = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="flex items-center justify-center rounded-lg border border-border bg-card p-6">
+          <div key={i} className="flex items-center justify-center py-4">
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         ))}
@@ -51,16 +51,13 @@ export const MarketOverview = () => {
   if (!stats) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="stat-strip">
       {stats.map((s) => (
-        <div key={s.label} className="rounded-lg border border-border bg-card p-3">
-          <div className="mb-1 flex items-center justify-between">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{s.label}</span>
-            <span className={s.color || 'text-muted-foreground'}>{s.icon}</span>
-          </div>
-          <p className={`font-heading text-lg font-bold ${s.color || 'text-foreground'}`}>{s.value}</p>
-          {s.name && <p className="truncate text-[10px] text-muted-foreground">{s.name}</p>}
-          <p className="text-[10px] text-muted-foreground">{s.sub}</p>
+        <div key={s.label} className="min-w-0">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{s.label}</span>
+          <p className={`text-base font-semibold leading-tight tabular-nums ${s.color || 'text-foreground'}`}>{s.value}</p>
+          {s.name && <p className="truncate text-[11px] text-muted-foreground">{s.name}</p>}
+          <p className={`text-[11px] tabular-nums ${s.color || 'text-muted-foreground'}`}>{s.sub}</p>
         </div>
       ))}
     </div>

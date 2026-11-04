@@ -14,14 +14,14 @@ export const PatternBadge = ({ pattern, confidence, size = 'sm', className = '' 
   if (!meta) return null;
   const Icon = meta.icon;
   const colorClass =
-    meta.bias === 'bullish' ? 'bg-signal-buy/15 text-signal-buy border-signal-buy/30'
-    : meta.bias === 'bearish' ? 'bg-signal-sell/15 text-signal-sell border-signal-sell/30'
-    : 'bg-muted text-muted-foreground border-border';
+    meta.bias === 'bullish' ? 'border-transparent bg-transparent px-0 text-signal-buy'
+    : meta.bias === 'bearish' ? 'border-transparent bg-transparent px-0 text-signal-sell'
+    : 'border-transparent bg-transparent px-0 text-muted-foreground';
   const sizeClass = size === 'xs' ? 'text-[9px] gap-0.5 px-1.5 py-0' : 'text-[10px] gap-1 px-2 py-0.5';
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="outline" className={`${colorClass} ${sizeClass} ${className} font-semibold whitespace-nowrap cursor-help`}>
+        <Badge variant="outline" className={`${colorClass} ${sizeClass} ${className} font-medium whitespace-nowrap cursor-help`}>
           <Icon className="h-3 w-3" />
           {meta.label}
           {confidence ? <span className="opacity-70">· {confidence}%</span> : null}

@@ -68,8 +68,8 @@ export const BudgetPicks = ({ rows }: { rows: OptionRow[] }) => {
               {band.picks.map(r => (
                 <div key={r.id} className="rounded-lg border border-border p-3">
                   <div className="flex items-center justify-between">
-                    <button onClick={() => open(r.ticker)} className="font-heading text-sm font-semibold hover:text-primary hover:underline">{r.ticker} {r.cp}{r.strike}</button>
-                    <span className="text-xs font-bold text-primary">{r.score}</span>
+                    <button onClick={() => open(r.ticker)} className="text-sm font-semibold hover:text-primary hover:underline">{r.ticker} {r.cp}{r.strike}</button>
+                    <span className="text-xs font-semibold text-primary">{r.score}</span>
                   </div>
                   {symbolNames.get(r.ticker) && <p className="truncate text-[10px] text-muted-foreground">{symbolNames.get(r.ticker)}</p>}
                   <p className="mt-0.5 text-[11px] text-muted-foreground">Exp {r.expiration} · Δ{r.delta.toFixed(2)}</p>

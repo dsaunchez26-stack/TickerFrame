@@ -27,7 +27,7 @@ export const PositionAlertBadge = ({ pnlPct, targetGainPct, stopLossPct, size = 
       {hitTarget && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge variant="outline" className={`bg-signal-buy/15 text-signal-buy border-signal-buy/30 ${sizeClass} font-semibold whitespace-nowrap cursor-help`}>
+            <Badge variant="outline" className={`border-transparent bg-transparent px-0 text-signal-buy ${sizeClass} font-medium whitespace-nowrap cursor-help`}>
               <Target className="h-3 w-3" />
               Target hit: {pnlPct >= 0 ? '+' : ''}{pnlPct.toFixed(0)}%
             </Badge>
@@ -43,7 +43,7 @@ export const PositionAlertBadge = ({ pnlPct, targetGainPct, stopLossPct, size = 
       {hitStop && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge variant="outline" className={`bg-signal-sell/15 text-signal-sell border-signal-sell/30 ${sizeClass} font-semibold whitespace-nowrap cursor-help`}>
+            <Badge variant="outline" className={`border-transparent bg-transparent px-0 text-signal-sell ${sizeClass} font-medium whitespace-nowrap cursor-help`}>
               <ShieldAlert className="h-3 w-3" />
               Stop level hit: {pnlPct.toFixed(0)}%
             </Badge>

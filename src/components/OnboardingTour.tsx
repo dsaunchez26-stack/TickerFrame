@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Sparkles, LineChart, ListFilter, Briefcase, BookOpen, ShieldAlert } from 'lucide-react';
+import { MessageSquare, LineChart, ListFilter, Briefcase, BookOpen, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,7 +9,7 @@ const RESHOW_AFTER_DAYS = 14;
 
 const STEPS = [
   {
-    icon: Sparkles,
+    icon: MessageSquare,
     title: 'Welcome to Tickerframe',
     body: "A research dashboard for stocks, options, and futures - real data, transparent scoring, no hype. This is the Assistant, your home screen: search a ticker or ask it a question any time.",
   },

@@ -178,7 +178,7 @@ export const PortfolioOptions = ({ portfolioName }: Props) => {
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-heading text-sm font-bold">{p.row.ticker} {p.row.cp === 'P' ? 'Put' : 'Call'} ${p.row.strike}</span>
+                    <span className="text-sm font-semibold">{p.row.ticker} {p.row.cp === 'P' ? 'Put' : 'Call'} ${p.row.strike}</span>
                     {isExpired && <span className="text-[9px] rounded bg-muted px-1 py-0.5 text-muted-foreground">Expired</span>}
                     {!isExpired && <EarningsBadge earnings={earningsBySymbol.get(p.row.ticker)} referenceDate={p.row.expiration} size="xs" />}
                     <PositionAlertBadge pnlPct={pnlPct} targetGainPct={p.targetGainPct ?? null} stopLossPct={p.stopLossPct ?? null} size="xs" />
@@ -188,7 +188,7 @@ export const PortfolioOptions = ({ portfolioName }: Props) => {
                   </div>
                 </div>
                 <div className="text-right mr-2">
-                  <div className={`text-xs font-bold flex items-center gap-0.5 ${pnl >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
+                  <div className={`text-xs font-semibold flex items-center gap-0.5 ${pnl >= 0 ? 'text-signal-buy' : 'text-signal-sell'}`}>
                     {pnl >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                     {pnl >= 0 ? '+' : ''}${pnl.toFixed(0)}
                   </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, RefreshCw, TrendingUp, Zap } from 'lucide-react';
+import { ArrowLeft, Loader2, RefreshCw, TrendingUp } from 'lucide-react';
 import { TickerBanner } from '@/components/options/TickerBanner';
 import { PutCallRatio } from '@/components/options/PutCallRatio';
 import { BestTradeCards } from '@/components/options/BestTradeCards';
@@ -31,13 +31,10 @@ const Options = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+      <header className="border-b border-border bg-card/50">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary glow-primary">
-              <Zap className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <h1 className="font-heading text-lg font-bold">Options Radar</h1>
+            <h1 className="text-lg font-semibold tracking-tight">Options Radar</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <span className="text-[11px] text-muted-foreground">
