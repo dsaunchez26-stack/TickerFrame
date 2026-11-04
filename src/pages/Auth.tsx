@@ -14,9 +14,10 @@ export default function Auth() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  // Signing in always lands on the Assistant (the home screen at '/'), even if
-  // the visitor was bounced to the login page from a deeper link.
-  const HOME = '/';
+  // Signing in always lands on the landing page, even if the visitor was
+  // bounced to the login page from a deeper link. From there "Open the app"
+  // goes to the Assistant.
+  const HOME = '/welcome';
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');

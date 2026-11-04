@@ -32,7 +32,7 @@ export default function AppLayout() {
           <div className="flex h-12 items-center justify-between px-3">
             <div className="flex shrink-0 items-center gap-2">
               <div className="md:hidden"><MobileNav /></div>
-              <span className="text-sm font-semibold tracking-tight">Tickerframe</span>
+              <Link to="/welcome" className="text-sm font-semibold tracking-tight hover:text-primary" aria-label="Tickerframe home">Tickerframe</Link>
               <span className="hidden text-[11px] text-faint sm:inline">Market research</span>
             </div>
             <div className="flex min-w-0 items-center gap-3 pl-2">
