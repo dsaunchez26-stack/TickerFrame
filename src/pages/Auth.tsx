@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate, Navigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
+import { Link, useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,12 +14,15 @@ export default function Auth() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  // Signing in always lands on the landing page, even if the visitor was
-  // bounced to the login page from a deeper link. From there "Open the app"
-  // goes to the Assistant.
-  const HOME = '/welcome';
+  const [params] = useSearchParams();
+  // Signing in lands on the landing page, even if the visitor was bounced to
+  // the login page from a deeper link. A brand-new account goes straight to
+  // the dashboard. (The ref is set before sign-up so the redirect below sees
+  // it even when the session appears before the request finishes.)
+  const justSignedUp = useRef(false);
+  const HOME = justSignedUp.current ? '/dashboard' : '/welcome';
 
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup'>(params.get('mode') === 'signup' ? 'signup' : 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -49,18 +52,26 @@ export default function Auth() {
         navigate(HOME, { replace: true });
       } else {
         if (password.length < 8) throw new Error('Password must be at least 8 characters.');
-        const { error } = await supabase.auth.signUp({
+        justSignedUp.current = true;
+        const { data, error } = await supabase.auth.signUp({
           email, password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/dashboard`,
             data: { display_name: displayName || email.split('@')[0] },
           },
         });
         if (error) throw error;
-        toast({ title: 'Account created', description: 'Check your email to verify your address, then sign in.' });
-        setMode('signin');
+        if (data.session) {
+          toast({ title: 'Account created' });
+          navigate('/dashboard', { replace: true });
+        } else {
+          toast({ title: 'Account created', description: 'Check your email to verify your address, then sign in.' });
+          justSignedUp.current = false;
+          setMode('signin');
+        }
       }
     } catch (err) {
+      justSignedUp.current = false;
       toast({
         title: 'Authentication failed',
         description: err instanceof Error ? err.message : 'Try again.',

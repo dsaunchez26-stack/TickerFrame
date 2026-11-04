@@ -10,6 +10,9 @@ import './landing.css';
 // The demo needs a full page load (it switches the data layer on at startup), so it is a plain link.
 const DEMO_HREF = '/?demo=1';
 
+// Where "Get started" goes: straight to the dashboard for people with an account, to sign-up for everyone else.
+const startHref = (signedIn: boolean) => (signedIn ? '/dashboard' : '/auth?mode=signup');
+
 const MARQUEE = [
   'Plain-English readings', 'Candles or a simple line', 'Live headlines', 'Portfolio risk score',
   'Trend', 'Momentum', 'Stretch', 'A handbook for every term', 'Tested in public', 'An assistant that answers from the data',
@@ -40,14 +43,8 @@ const Nav = ({ signedIn }: { signedIn: boolean }) => {
           <Link to="/handbook" className="transition-colors hover:text-foreground">Handbook</Link>
         </nav>
         <div className="flex items-center gap-2">
-          {signedIn ? (
-            <Link to="/" className="lp-btn inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground">Open the app</Link>
-          ) : (
-            <>
-              <Link to="/auth" className="px-2 text-xs text-muted-foreground transition-colors hover:text-foreground">Sign in</Link>
-              <a href={DEMO_HREF} className="lp-btn inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground">Try the demo</a>
-            </>
-          )}
+          {!signedIn && <Link to="/auth" className="px-2 text-xs text-muted-foreground transition-colors hover:text-foreground">Sign in</Link>}
+          <Link to={startHref(signedIn)} className="lp-btn inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground">Get started</Link>
         </div>
       </div>
     </header>
@@ -69,14 +66,8 @@ const Hero = ({ signedIn }: { signedIn: boolean }) => (
         Live prices, readings in plain English and the evidence behind them, so anyone can understand the market before they trade it.
       </p>
       <div className="lp-fade mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: '1s' }}>
-        {signedIn ? (
-          <Link to="/" className="lp-btn inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground">Open the app <ArrowRight className="h-4 w-4" /></Link>
-        ) : (
-          <>
-            <a href={DEMO_HREF} className="lp-btn inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground">Try the live demo <ArrowRight className="h-4 w-4" /></a>
-            <Link to="/auth" className="lp-btn inline-flex h-11 items-center rounded-md border border-border bg-[#090b0a]/60 px-6 text-sm font-medium transition-colors hover:border-primary/50">Create an account</Link>
-          </>
-        )}
+        <Link to={startHref(signedIn)} className="lp-btn inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground">Get started <ArrowRight className="h-4 w-4" /></Link>
+        {!signedIn && <a href={DEMO_HREF} className="lp-btn inline-flex h-11 items-center rounded-md border border-border bg-[#090b0a]/60 px-6 text-sm font-medium transition-colors hover:border-primary/50">Try the live demo</a>}
       </div>
       <p className="lp-fade mt-6 text-[11px] text-faint" style={{ animationDelay: '1.2s' }}>
         Tickerframe is a research tool, not a broker. Research and education only; not investment advice.
@@ -348,16 +339,10 @@ const Landing = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_45%_at_50%_50%,rgba(9,11,10,0.85),transparent)]" />
         <div className="relative mx-auto max-w-6xl px-5 py-28 text-center sm:py-40">
           <Reveal><h2 className="mx-auto max-w-3xl text-4xl font-medium tracking-tight sm:text-6xl">Understand the market first. Then decide.</h2></Reveal>
-          <Reveal delay={100}><p className="mx-auto mt-5 max-w-md text-sm text-muted-foreground">Open the demo in one click. It runs on saved real data and needs no sign-up.</p></Reveal>
+          <Reveal delay={100}><p className="mx-auto mt-5 max-w-md text-sm text-muted-foreground">Create an account in a minute, or open the demo in one click. The demo runs on saved real data and needs no sign-up.</p></Reveal>
           <Reveal delay={180} className="mt-8 flex flex-wrap justify-center gap-3">
-            {signedIn ? (
-              <Link to="/" className="lp-btn inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground">Open the app <ArrowRight className="h-4 w-4" /></Link>
-            ) : (
-              <>
-                <a href={DEMO_HREF} className="lp-btn inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground">Try the live demo <ArrowRight className="h-4 w-4" /></a>
-                <Link to="/auth" className="lp-btn inline-flex h-11 items-center rounded-md border border-border bg-[#090b0a]/70 px-6 text-sm font-medium transition-colors hover:border-primary/50">Create an account</Link>
-              </>
-            )}
+            <Link to={startHref(signedIn)} className="lp-btn inline-flex h-11 items-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground">Get started <ArrowRight className="h-4 w-4" /></Link>
+            {!signedIn && <a href={DEMO_HREF} className="lp-btn inline-flex h-11 items-center rounded-md border border-border bg-[#090b0a]/70 px-6 text-sm font-medium transition-colors hover:border-primary/50">Try the live demo</a>}
           </Reveal>
         </div>
       </section>
