@@ -17,7 +17,7 @@ const TTL_MS = 24 * 3600_000;
 const YAHOO = "https://query1.finance.yahoo.com/v8/finance/chart";
 
 interface Series { t: number[]; c: number[]; a: number[] }
-interface Stored { wk: Series; mo: Series; name: string | null; currency: string | null; source?: "tiingo" | "yahoo" }
+interface Stored { wk: Series; mo: Series; name: string | null; currency: string | null; source?: "tiingo" | "yahoo"; fallbackReason?: string }
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -79,12 +79,16 @@ async function fetchYahoo(symbol: string): Promise<Stored> {
 // every later split factor, then keep the last trading day of each week.
 async function fetchTiingo(symbol: string, key: string): Promise<Stored> {
   const t = encodeURIComponent(symbol.replace(".", "-"));
-  const headers = { "Content-Type": "application/json", Authorization: `Token ${key}` };
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Token ${key}`,
+    "User-Agent": "Mozilla/5.0 (compatible; TickerframeBot/1.0)",
+  };
   const [res, meta] = await Promise.all([
     fetch(`https://api.tiingo.com/tiingo/daily/${t}/prices?startDate=1900-01-01&columns=date,close,adjClose,splitFactor`, { headers }),
     fetch(`https://api.tiingo.com/tiingo/daily/${t}`, { headers }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
   ]);
-  if (!res.ok) throw new Error(`tiingo returned ${res.status}`);
+  if (!res.ok) throw new Error(`tiingo returned ${res.status}: ${(await res.text()).slice(0, 120).replace(/\s+/g, " ")}`);
   const rows: Array<{ date: string; close: number; adjClose: number; splitFactor?: number }> = await res.json();
   if (!Array.isArray(rows) || rows.length < 2) throw new Error("tiingo has no history for that symbol");
 
@@ -117,14 +121,16 @@ async function fetchTiingo(symbol: string, key: string): Promise<Stored> {
 
 async function fetchHistory(symbol: string): Promise<Stored> {
   const key = Deno.env.get("TIINGO_API_KEY");
+  let fallbackReason = key ? undefined : "no TIINGO_API_KEY set";
   if (key) {
     try {
       return await fetchTiingo(symbol, key);
     } catch (e) {
-      console.warn(`tiingo failed for ${symbol}, falling back to yahoo:`, e instanceof Error ? e.message : e);
+      fallbackReason = e instanceof Error ? e.message : String(e);
+      console.warn(`tiingo failed for ${symbol}, falling back to yahoo:`, fallbackReason);
     }
   }
-  return await fetchYahoo(symbol);
+  return { ...(await fetchYahoo(symbol)), fallbackReason };
 }
 
 const slice = (s: Series, years: number | null): Series => {
@@ -137,7 +143,7 @@ const slice = (s: Series, years: number | null): Series => {
 
 const respond = (stored: Stored, range: Range, extra: Record<string, unknown>) => {
   const s = slice(stored[KIND[range]], YEARS[range]);
-  return json({ ...s, interval: KIND[range] === "wk" ? "week" : "month", name: stored.name, currency: stored.currency, source: stored.source ?? "yahoo", ...extra });
+  return json({ ...s, interval: KIND[range] === "wk" ? "week" : "month", name: stored.name, currency: stored.currency, source: stored.source ?? "yahoo", ...(stored.fallbackReason ? { fallbackReason: stored.fallbackReason } : {}), ...extra });
 };
 
 Deno.serve(async (req) => {
