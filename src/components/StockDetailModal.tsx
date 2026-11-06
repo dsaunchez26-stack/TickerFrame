@@ -9,6 +9,8 @@ import { NewsList } from '@/components/NewsList';
 import { useLongTermContext } from '@/hooks/useLongTermContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useStockCandles, TIMEFRAMES, type Timeframe } from '@/hooks/useStockCandles';
+import { LongHistoryChart } from '@/components/LongHistoryChart';
+import { LONG_RANGES, isLongRange, type LongRange } from '@/lib/longHistory';
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
@@ -35,11 +37,13 @@ const scoreColor = (score: number) => (score >= 65 ? 'text-signal-buy' : score >
 export const StockDetailModal = ({ symbol, onClose }: Props) => {
   const { data } = useStockData('core', 'all');
   const stock = useMemo(() => data?.stocks.find(s => s.symbol === symbol) ?? null, [data, symbol]);
-  const [timeframe, setTimeframe] = useState<Timeframe>('1D');
+  const [view, setView] = useState<Timeframe | LongRange>('1D');
+  const longRange = isLongRange(view) ? view : null;
+  const timeframe: Timeframe = longRange ? '1Y' : (view as Timeframe);
   const [tab, setTab] = useState('overview');
   const { data: longTerm } = useLongTermContext(stock ? symbol : null);
   useEffect(() => { setTab('overview'); }, [symbol]);
-  const { candles, loading: loadingHistory, source: candleSource } = useStockCandles(symbol, timeframe);
+  const { candles, loading: loadingHistory, source: candleSource } = useStockCandles(longRange ? null : symbol, timeframe);
 
   // For a ticker outside the ~114 we actively track, there's no cached
   // price/history to fall back on -- reuse the same on-demand Finnhub quote
@@ -225,42 +229,48 @@ export const StockDetailModal = ({ symbol, onClose }: Props) => {
               </TabsList>
               <TabsContent value="overview" className="mt-3 space-y-3">
                 <div className="flex items-center justify-between">
-                  {!loadingHistory && candles.length >= 2 ? (
+                  {!longRange && !loadingHistory && candles.length >= 2 ? (
                     <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                       <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#c4a35a' }} />moving average</span>
                       <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 border-t border-dashed border-muted-foreground" />last close</span>
                     </div>
                   ) : <span />}
                   <div className="flex items-center gap-0.5 rounded-md border border-border p-0.5 text-[10px]">
-                    {TIMEFRAMES.map(tf => (
+                    {[...TIMEFRAMES, ...LONG_RANGES].map(tf => (
                       <button
                         key={tf.key}
-                        onClick={() => setTimeframe(tf.key)}
-                        className={`rounded px-1.5 py-0.5 ${timeframe === tf.key ? 'bg-secondary font-semibold' : 'text-muted-foreground'}`}
+                        onClick={() => setView(tf.key)}
+                        className={`rounded px-1.5 py-0.5 ${view === tf.key ? 'bg-secondary font-semibold' : 'text-muted-foreground'}`}
                       >
                         {tf.label}
                       </button>
                     ))}
                   </div>
                 </div>
-                <div>
-                  {loadingHistory ? (
-                    <div className="flex h-52 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
-                  ) : candles.length < 2 ? (
-                    <div className="flex h-52 flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
-                      <span>Not enough price history yet for this range.</span>
-                      <span className="text-[10px] text-muted-foreground/70">Try another range.</span>
+                {longRange ? (
+                  <LongHistoryChart symbol={symbol} range={longRange} height={208} />
+                ) : (
+                  <>
+                    <div>
+                      {loadingHistory ? (
+                        <div className="flex h-52 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+                      ) : candles.length < 2 ? (
+                        <div className="flex h-52 flex-col items-center justify-center gap-1 text-center text-xs text-muted-foreground">
+                          <span>Not enough price history yet for this range.</span>
+                          <span className="text-[10px] text-muted-foreground/70">Try another range.</span>
+                        </div>
+                      ) : (
+                        <CandlestickChart candles={candles} height={208} tickInterval={Math.ceil(candles.length / 6)} />
+                      )}
                     </div>
-                  ) : (
-                    <CandlestickChart candles={candles} height={208} tickInterval={Math.ceil(candles.length / 6)} />
-                  )}
-                </div>
-                {!loadingHistory && candles.length >= 2 && (
-                  <p className="pt-2 text-[10px] leading-relaxed text-muted-foreground/70">
-                    {candleSource === 'exchange'
-                      ? 'Candles are real open/high/low/close bars from the IEX exchange feed, which covers IEX trading only, so highs and lows can differ slightly from consolidated figures.'
-                      : 'Built from this site\'s own price snapshots (no exchange open/high/low), so this view is approximate.'}
-                  </p>
+                    {!loadingHistory && candles.length >= 2 && (
+                      <p className="pt-2 text-[10px] leading-relaxed text-muted-foreground/70">
+                        {candleSource === 'exchange'
+                          ? 'Candles are real open/high/low/close bars from the IEX exchange feed, which covers IEX trading only, so highs and lows can differ slightly from consolidated figures.'
+                          : 'Built from this site\'s own price snapshots (no exchange open/high/low), so this view is approximate.'}
+                      </p>
+                    )}
+                  </>
                 )}
                 <ReadingStory stock={stock} fundamentals={fundamentals} compact onMore={() => setTab('reading')} />
               </TabsContent>

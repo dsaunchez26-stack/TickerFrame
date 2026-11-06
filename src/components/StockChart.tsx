@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStockData } from '@/hooks/useStockData';
 import { CandlestickChart } from '@/components/CandlestickChart';
 import { useStockCandles, TIMEFRAMES, type Timeframe } from '@/hooks/useStockCandles';
+import { LongHistoryChart } from '@/components/LongHistoryChart';
+import { LONG_RANGES, isLongRange, type LongRange } from '@/lib/longHistory';
 import { Loader2 } from 'lucide-react';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -22,8 +24,10 @@ export const StockChart = ({ symbol: controlledSymbol, onSymbolChange }: Props =
   const [localSymbol, setLocalSymbol] = useState('');
   const symbol = controlledSymbol ?? localSymbol;
   const setSymbol = onSymbolChange ?? setLocalSymbol;
-  const [timeframe, setTimeframe] = useState<Timeframe>('1D');
-  const { candles, loading } = useStockCandles(symbol || null, timeframe);
+  const [view, setView] = useState<Timeframe | LongRange>('1D');
+  const longRange = isLongRange(view) ? view : null;
+  const timeframe: Timeframe = longRange ? '1Y' : (view as Timeframe);
+  const { candles, loading } = useStockCandles(longRange ? null : symbol || null, timeframe);
 
   useEffect(() => {
     if (!symbol && stocks.length) setSymbol(stocks[0].symbol);
@@ -42,22 +46,27 @@ export const StockChart = ({ symbol: controlledSymbol, onSymbolChange }: Props =
       </CardHeader>
       <CardContent>
         <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#c4a35a' }} />moving average</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 border-t border-dashed border-muted-foreground" />last close</span>
-          </div>
+          {longRange ? <span /> : (
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3" style={{ backgroundColor: '#c4a35a' }} />moving average</span>
+              <span className="flex items-center gap-1"><span className="inline-block h-0.5 w-3 border-t border-dashed border-muted-foreground" />last close</span>
+            </div>
+          )}
           <div className="flex items-center gap-0.5 rounded-md border border-border p-0.5 text-[10px]">
-            {TIMEFRAMES.map(tf => (
+            {[...TIMEFRAMES, ...LONG_RANGES].map(tf => (
               <button
                 key={tf.key}
-                onClick={() => setTimeframe(tf.key)}
-                className={`rounded px-1.5 py-0.5 ${timeframe === tf.key ? 'bg-secondary font-semibold' : 'text-muted-foreground'}`}
+                onClick={() => setView(tf.key)}
+                className={`rounded px-1.5 py-0.5 ${view === tf.key ? 'bg-secondary font-semibold' : 'text-muted-foreground'}`}
               >
                 {tf.label}
               </button>
             ))}
           </div>
         </div>
+        {longRange && symbol ? (
+          <LongHistoryChart symbol={symbol} range={longRange} height={256} />
+        ) : (
         <div className="h-64">
           {loading ? (
             <div className="flex h-full items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
@@ -72,6 +81,7 @@ export const StockChart = ({ symbol: controlledSymbol, onSymbolChange }: Props =
             <CandlestickChart candles={candles} height={256} tickInterval={Math.ceil(candles.length / 8)} />
           )}
         </div>
+        )}
       </CardContent>
     </Card>
   );
